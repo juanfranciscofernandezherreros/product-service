@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>courses-service — Documentación funcional</title>
+<style>
+:root{--bg:#f7f8fa;--card:#fff;--ink:#1c2433;--muted:#5b6678;--acc:#2f6feb;--border:#e3e7ee;--code:#eef1f6;}
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--ink);line-height:1.55}
+header{background:linear-gradient(135deg,#2f6feb,#1b3e8c);color:#fff;padding:32px 24px}
+header h1{margin:0 0 6px;font-size:28px}
+header p{margin:0;opacity:.9}
+main{max-width:1000px;margin:0 auto;padding:24px 16px 64px}
+section{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px 22px;margin:18px 0}
+h2{margin-top:0;font-size:21px;border-bottom:2px solid var(--acc);padding-bottom:6px}
+h3{font-size:16px;margin:18px 0 6px}
+code,pre{font-family:ui-monospace,SFMono-Regular,Consolas,monospace}
+pre{background:var(--code);border:1px solid var(--border);border-radius:8px;padding:12px;overflow:auto;font-size:12.5px}
+table{width:100%;border-collapse:collapse;margin:8px 0;font-size:13.5px}
+th,td{text-align:left;padding:7px 9px;border:1px solid var(--border);vertical-align:top}
+th{background:#f0f3f9}
+.method{display:inline-block;font-weight:700;font-size:11px;padding:2px 7px;border-radius:5px;color:#fff;margin-right:6px}
+.post{background:#1f9d55}.get{background:#2f6feb}.put{background:#8a5a0f}.del{background:#c0392b}
+.ep{border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin:14px 0}
+.path{font-family:ui-monospace,monospace;font-weight:600}
+.muted{color:var(--muted);font-size:13px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:740px){.grid2{grid-template-columns:1fr}}
+.pill{display:inline-block;background:var(--code);border:1px solid var(--border);border-radius:20px;padding:2px 10px;font-size:12px;margin:2px}
+</style>
+</head>
+<body>
+<header>
+  <h1>courses-service</h1>
+  <p>Dominio Courses · Arquitectura hexagonal · Java 21 + Spring Boot 3 · Database-First (Flyway + JPA validate)</p>
+</header>
+<main>
+
+<section>
+  <h2>1. Propósito y reglas de negocio</h2>
+  <ul>
+    <li><strong>Cursos</strong>: CRUD completo. <code>nombre</code> obligatorio; <code>activo</code> por defecto <code>true</code>.</li>
+    <li><strong>Unidades</strong>: <code>slug</code> único (409 si se duplica); <code>orden</code> por defecto 100, <code>publicado</code> por defecto true. Filtrables por nivel y publicado.</li>
+    <li><strong>Actividades</strong>: <code>slug</code> único con patrón <code>^[a-z0-9][a-z0-9-]{2,99}$</code>; <code>destreza</code> del enum; <code>orden</code> por defecto 1, <code>publicado</code> por defecto false. Filtrables por destreza/publicado (paginado).</li>
+    <li><strong>Preguntas de actividad</strong>: <code>orden</code> positivo y único por actividad (409); <code>tipo</code> del enum; media opcional (<code>audio</code>/<code>imagen</code> con URL https). La actividad debe existir (404).</li>
+    <li><strong>Intentos</strong>: registran respuestas/detalle (JSON) y contadores no negativos; la actividad debe existir (404).</li>
+  </ul>
+  <p class="muted">Errores uniformes <code>{ code, message }</code>: <code>BAD_REQUEST</code> (400), <code>RESOURCE_NOT_FOUND</code> (404), <code>RESOURCE_ALREADY_EXISTS</code> (409), <code>INTERNAL_ERROR</code> (500).</p>
+</section>
+
+<section>
+  <h2>2. Arquitectura hexagonal</h2>
+  <svg viewBox="0 0 900 300" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Diagrama hexagonal del servicio" style="width:100%;height:auto">
+    <rect x="0" y="0" width="900" height="300" fill="#fff"/>
+    <rect x="20" y="90" width="185" height="120" rx="10" fill="#eaf1ff" stroke="#2f6feb"/>
+    <text x="112" y="126" text-anchor="middle" font-size="14" font-weight="700" fill="#1b3e8c">Adaptador IN</text>
+    <text x="112" y="148" text-anchor="middle" font-size="12" fill="#1c2433">Course/Unit/Activity</text>
+    <text x="112" y="166" text-anchor="middle" font-size="12" fill="#1c2433">Controllers</text>
+    <text x="112" y="184" text-anchor="middle" font-size="12" fill="#1c2433">DTOs (record)</text>
+    <rect x="262" y="70" width="195" height="160" rx="10" fill="#f3f7ee" stroke="#1f9d55"/>
+    <text x="359" y="106" text-anchor="middle" font-size="14" font-weight="700" fill="#1a6e3c">Aplicación</text>
+    <text x="359" y="130" text-anchor="middle" font-size="12" fill="#1c2433">CoursesUseCase</text>
+    <text x="359" y="148" text-anchor="middle" font-size="12" fill="#1c2433">CoursesService</text>
+    <text x="359" y="166" text-anchor="middle" font-size="12" fill="#1c2433">CoursesOutPorts</text>
+    <polygon points="525,150 565,90 645,90 685,150 645,210 565,210" fill="#fff6e8" stroke="#b7791f"/>
+    <text x="605" y="145" text-anchor="middle" font-size="14" font-weight="700" fill="#8a5a0f">Dominio</text>
+    <text x="605" y="165" text-anchor="middle" font-size="11" fill="#1c2433">records puros</text>
+    <rect x="705" y="90" width="175" height="120" rx="10" fill="#eaf1ff" stroke="#2f6feb"/>
+    <text x="792" y="126" text-anchor="middle" font-size="14" font-weight="700" fill="#1b3e8c">Adaptador OUT</text>
+    <text x="792" y="148" text-anchor="middle" font-size="12" fill="#1c2433">JPA + Specification</text>
+    <text x="792" y="166" text-anchor="middle" font-size="12" fill="#1c2433">Spring Data</text>
+    <text x="792" y="184" text-anchor="middle" font-size="12" fill="#1c2433">PostgreSQL</text>
+    <line x1="205" y1="150" x2="260" y2="150" stroke="#5b6678" stroke-width="2" marker-end="url(#a)"/>
+    <line x1="457" y1="150" x2="523" y2="150" stroke="#5b6678" stroke-width="2" marker-end="url(#a)"/>
+    <line x1="685" y1="150" x2="703" y2="150" stroke="#5b6678" stroke-width="2" marker-end="url(#a)"/>
+    <defs><marker id="a" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#5b6678"/></marker></defs>
+    <text x="450" y="262" text-anchor="middle" font-size="12" fill="#5b6678">HTTP → casos de uso → puertos → dominio · persistencia a PostgreSQL vía adaptador de salida</text>
+  </svg>
+</section>
+
+<section>
+  <h2>3. Catálogo funcional de endpoints (Request / Response)</h2>
+
+  <div class="ep">
+    <div><span class="method post">POST</span><span class="path">/v1/courses</span></div>
+    <div class="grid2">
+      <div><h3>Request</h3><pre>{ "nombre": "Curso B2 First",
+  "descripcion": "Preparacion B2",
+  "activo": true }</pre></div>
+      <div><h3>Response 201</h3><pre>{ "id":1, "nombre":"Curso B2 First",
+  "descripcion":"Preparacion B2",
+  "activo":true, "creadoEn":"2026-11-08T12:00:00Z" }</pre></div>
+    </div>
+    <h3>Error 400</h3><pre>{ "code":"BAD_REQUEST", "message":"nombre: must not be blank" }</pre>
+  </div>
+
+  <div class="ep">
+    <div><span class="method get">GET</span><span class="path">/v1/courses?activo=</span>
+         &nbsp;<span class="method get">GET</span><span class="method put">PUT</span><span class="method del">DELETE</span><span class="path">/v1/courses/{id}</span></div>
+    <div class="grid2">
+      <div><h3>Request</h3><pre>GET list → query activo (opc.)
+GET/PUT/DELETE → path id
+PUT → { "nombre":"...", "descripcion":"...",
+        "activo":false }</pre></div>
+      <div><h3>Response</h3><pre>200 [ {Course} ]  /  200 { Course }
+204 (DELETE, sin cuerpo)
+404 { "code":"RESOURCE_NOT_FOUND",
+      "message":"Course not found: 9" }</pre></div>
+    </div>
+  </div>
+
+  <div class="ep">
+    <div><span class="method get">GET</span><span class="method post">POST</span><span class="path">/v1/courses/units</span>
+         &nbsp;<span class="method get">GET</span><span class="path">/v1/courses/units/{id}</span></div>
+    <div class="grid2">
+      <div><h3>Request (POST)</h3><pre>{ "slug":"unidad-1", "titulo":"Unidad 1",
+  "descripcion":"...", "nivel":"B2",
+  "orden":10, "publicado":true }</pre></div>
+      <div><h3>Response</h3><pre>201 { "id":1, "slug":"unidad-1", "titulo":"Unidad 1",
+      "nivel":"B2", "orden":10, "publicado":true }
+GET list → query nivel, publicado (opc.)
+409 si el slug ya existe · 404 en GET /{id}</pre></div>
+    </div>
+  </div>
+
+  <div class="ep">
+    <div><span class="method get">GET</span><span class="method post">POST</span><span class="path">/v1/courses/activities?destreza=&publicado=&offset=&limit=</span></div>
+    <div class="grid2">
+      <div><h3>Request (POST)</h3><pre>{ "slug":"act-reading-1", "titulo":"Reading 1",
+  "descripcion":"...", "destreza":"reading",
+  "unidadId":1, "articuloSlug":"mi-post",
+  "orden":1, "publicado":true }</pre></div>
+      <div><h3>Response</h3><pre>201 { "id":1, "slug":"act-reading-1",
+      "destreza":"reading", "orden":1,
+      "publicado":true, "creadoEn":"..." }
+GET list → { "items":[...], "total":N, "offset":0, "limit":20 }
+400 slug/destreza inválidos · 409 slug duplicado</pre></div>
+    </div>
+  </div>
+
+  <div class="ep">
+    <div><span class="method get">GET</span><span class="method post">POST</span><span class="path">/v1/courses/activities/{id}/questions</span></div>
+    <p class="muted">La actividad debe existir (404). <code>configuracion</code> es JSON (objeto); se devuelve como JSON crudo.</p>
+    <div class="grid2">
+      <div><h3>Request (POST)</h3><pre>{ "orden":1, "tipo":"seleccion",
+  "enunciado":"Elige la correcta",
+  "configuracion":{ "opciones":["a","b"] },
+  "medioTipo":"audio",
+  "medioUrl":"https://cdn/x.mp3",
+  "medioAlt":"audio" }</pre></div>
+      <div><h3>Response</h3><pre>201 { "id":1, "actividadId":5, "orden":1,
+      "tipo":"seleccion", "enunciado":"...",
+      "configuracion":{ "opciones":["a","b"] },
+      "medioTipo":"audio", "medioUrl":"https://cdn/x.mp3" }
+400 media inválida · 409 orden duplicado · 404 actividad</pre></div>
+    </div>
+  </div>
+
+  <div class="ep">
+    <div><span class="method post">POST</span><span class="path">/v1/courses/activities/{id}/attempts</span></div>
+    <p class="muted">La actividad debe existir (404). <code>respuestas</code> y <code>detalle</code> son JSON (objeto); contadores &ge; 0.</p>
+    <div class="grid2">
+      <div><h3>Request</h3><pre>{ "usuarioId":"u-uuid",
+  "respuestas":{ "1":"a" },
+  "detalle":{ "1":true },
+  "aciertos":1, "evaluables":1,
+  "pendientesRevision":0 }</pre></div>
+      <div><h3>Response 201</h3><pre>{ "id":"att-uuid", "usuarioId":"u-uuid",
+  "actividadId":5, "respuestas":{"1":"a"},
+  "detalle":{"1":true}, "aciertos":1,
+  "evaluables":1, "pendientesRevision":0,
+  "fecha":"..." }</pre></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2>4. Modelo de datos (esquema exacto)</h2>
+  <p class="muted">Fuente de verdad: <code>db/migration/V1__init.sql</code>. Flyway crea; JPA valida.</p>
+
+  <h3>cursos</h3>
+  <table><tr><th>Columna</th><th>Tipo</th><th>Nulo</th><th>Clave / Regla</th></tr>
+    <tr><td>id</td><td>bigint (identity)</td><td>NO</td><td>PK</td></tr>
+    <tr><td>nombre</td><td>varchar(255)</td><td>NO</td><td>no vacío (dominio)</td></tr>
+    <tr><td>descripcion</td><td>text</td><td>SÍ</td><td></td></tr>
+    <tr><td>activo</td><td>boolean</td><td>NO</td><td>default true</td></tr>
+    <tr><td>creado_en</td><td>timestamptz</td><td>NO</td><td>default now()</td></tr>
+  </table>
+
+  <h3>unidades_curso</h3>
+  <table><tr><th>Columna</th><th>Tipo</th><th>Nulo</th><th>Clave / Regla</th></tr>
+    <tr><td>id</td><td>bigint (identity)</td><td>NO</td><td>PK</td></tr>
+    <tr><td>slug</td><td>varchar(255)</td><td>NO</td><td>UNIQUE</td></tr>
+    <tr><td>titulo</td><td>varchar(255)</td><td>NO</td><td></td></tr>
+    <tr><td>descripcion</td><td>text</td><td>SÍ</td><td></td></tr>
+    <tr><td>nivel</td><td>varchar(50)</td><td>NO</td><td></td></tr>
+    <tr><td>orden</td><td>integer</td><td>NO</td><td>default 100</td></tr>
+    <tr><td>publicado</td><td>boolean</td><td>NO</td><td>default true</td></tr>
+  </table>
+
+  <h3>actividades</h3>
+  <table><tr><th>Columna</th><th>Tipo</th><th>Nulo</th><th>Clave / Regla</th></tr>
+    <tr><td>id</td><td>bigint (identity)</td><td>NO</td><td>PK</td></tr>
+    <tr><td>slug</td><td>varchar(255)</td><td>NO</td><td>UNIQUE · patrón ^[a-z0-9][a-z0-9-]{2,99}$ (dominio)</td></tr>
+    <tr><td>titulo</td><td>varchar(255)</td><td>NO</td><td></td></tr>
+    <tr><td>descripcion</td><td>text</td><td>SÍ</td><td></td></tr>
+    <tr><td>destreza</td><td>varchar(20)</td><td>NO</td><td>CHECK IN (reading, use_of_english, writing, listening, speaking, vocabulary, grammar) · default use_of_english</td></tr>
+    <tr><td>unidad_id</td><td>bigint</td><td>SÍ</td><td></td></tr>
+    <tr><td>articulo_slug</td><td>varchar(255)</td><td>SÍ</td><td></td></tr>
+    <tr><td>orden</td><td>integer</td><td>NO</td><td>default 1</td></tr>
+    <tr><td>publicado</td><td>boolean</td><td>NO</td><td>default false</td></tr>
+    <tr><td>creado_en</td><td>timestamptz</td><td>NO</td><td>default now()</td></tr>
+  </table>
+
+  <h3>actividad_preguntas</h3>
+  <table><tr><th>Columna</th><th>Tipo</th><th>Nulo</th><th>Clave / Regla</th></tr>
+    <tr><td>id</td><td>bigint (identity)</td><td>NO</td><td>PK</td></tr>
+    <tr><td>actividad_id</td><td>bigint</td><td>NO</td><td>UNIQUE(actividad_id, orden)</td></tr>
+    <tr><td>orden</td><td>integer</td><td>NO</td><td>CHECK &gt; 0</td></tr>
+    <tr><td>tipo</td><td>varchar(20)</td><td>NO</td><td>CHECK IN (seleccion, texto_corto, huecos, transformacion, redaccion)</td></tr>
+    <tr><td>enunciado</td><td>text</td><td>NO</td><td></td></tr>
+    <tr><td>configuracion</td><td>text (JSON)</td><td>NO</td><td>default '{}'</td></tr>
+    <tr><td>medio_tipo</td><td>varchar(10)</td><td>SÍ</td><td>CHECK IN (audio, imagen)</td></tr>
+    <tr><td>medio_url</td><td>varchar(500)</td><td>SÍ</td><td>https (dominio)</td></tr>
+    <tr><td>medio_alt</td><td>text</td><td>SÍ</td><td></td></tr>
+  </table>
+
+  <h3>actividad_intentos</h3>
+  <table><tr><th>Columna</th><th>Tipo</th><th>Nulo</th><th>Clave / Regla</th></tr>
+    <tr><td>id</td><td>uuid</td><td>NO</td><td>PK (generado en app)</td></tr>
+    <tr><td>usuario_id</td><td>uuid</td><td>NO</td><td></td></tr>
+    <tr><td>actividad_id</td><td>bigint</td><td>NO</td><td></td></tr>
+    <tr><td>respuestas</td><td>text (JSON)</td><td>NO</td><td></td></tr>
+    <tr><td>detalle</td><td>text (JSON)</td><td>NO</td><td></td></tr>
+    <tr><td>aciertos</td><td>integer</td><td>NO</td><td>CHECK &ge; 0</td></tr>
+    <tr><td>evaluables</td><td>integer</td><td>NO</td><td>CHECK &ge; 0</td></tr>
+    <tr><td>pendientes_revision</td><td>integer</td><td>NO</td><td>CHECK &ge; 0</td></tr>
+    <tr><td>fecha</td><td>timestamptz</td><td>NO</td><td>default now()</td></tr>
+  </table>
+</section>
+
+<section>
+  <h2>5. Entornos y evidencias de calidad</h2>
+  <p>
+    <span class="pill">local · PostgreSQL (Docker)</span>
+    <span class="pill">dev · PostgreSQL (env vars)</span>
+    <span class="pill">test · H2 modo PostgreSQL + Flyway</span>
+  </p>
+  <ul>
+    <li><strong>JUnit 5 + Mockito</strong>: casos de uso y dominio (29 tests).</li>
+    <li><strong>ArchUnit</strong>: aislamiento hexagonal (dominio y aplicación sin infraestructura).</li>
+    <li><strong>Cucumber BDD</strong>: 12 escenarios sobre HTTP real · reporte <code>target/cucumber-reports/cucumber.html</code>.</li>
+    <li><strong>JaCoCo</strong>: cobertura <strong>86%</strong> (regla ≥80% enlazada a <code>verify</code>).</li>
+    <li><strong>Checkstyle</strong>: 0 violaciones.</li>
+  </ul>
+  <p class="muted">Verificado con <code>mvn clean verify</code> → BUILD SUCCESS (43 tests).</p>
+</section>
+
+</main>
+</body>
+</html>
