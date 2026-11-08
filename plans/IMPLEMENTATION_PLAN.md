@@ -21,7 +21,8 @@
 - **ArchUnit:** aislamiento del dominio.
 - **JUnit 5 + Mockito:** dominio, casos de uso y controlador (`@WebMvcTest`).
 - **Cucumber BDD:** escenarios de `specs/acceptance-criteria.md` con reporte HTML (`target/cucumber-reports/cucumber.html`).
-- **Docs:** `backend-transactions/README.md`, `backend-transactions/CLAUDE.md`, `backend-transactions/docs/index.html`.
+- **Cobertura:** JaCoCo con regla `check` ≥ **80%** global enlazada a `verify`; informe en `target/site/jacoco/index.html`.
+- **Docs:** `backend-transactions/README.md`, `backend-transactions/CLAUDE.md`, `backend-transactions/docs/index.html` **con Request y Response de cada endpoint**.
 - **Docker:** `backend-transactions/docker-compose.yml` (PostgreSQL `transaction_db`).
 
 ## 4. Modelo de error

@@ -91,33 +91,89 @@
         <tr><td><span class="method get">GET</span></td><td><code>/v1/transactions/{id}</code></td><td>Obtener por UUID</td><td><span class="ok">200</span> / <span class="err">400</span> / <span class="err">404</span> / <span class="err">500</span></td></tr>
       </tbody>
     </table>
+    <h3>POST /v1/transactions</h3>
     <div class="grid">
       <div>
-        <p><strong>POST</strong> — petición</p>
+        <p><strong>Request</strong> — cuerpo JSON (<code>amount</code> ≥ 0.01, <code>currency</code> 3 letras,
+        <code>type</code> credit|debit, <code>account_id</code> UUID; <code>description</code> opcional)</p>
         <pre>{
   "amount": 150.50,
   "currency": "EUR",
   "type": "debit",
-  "account_id": "f47ac10b-58cc-4372-a567-0e02b2c3d479"
+  "account_id": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
+  "description": "Compra en supermercado"
 }</pre>
       </div>
       <div>
-        <p><strong>201 Created</strong> — respuesta</p>
+        <p><strong>Response 201 Created</strong></p>
         <pre>{
-  "id": "a0eebc99-...",
+  "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
   "amount": 150.50,
   "currency": "EUR",
   "type": "debit",
   "status": "pending",
-  "account_id": "f47ac10b-...",
+  "account_id": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
+  "description": "Compra en supermercado",
   "created_at": "2026-06-06T14:30:00Z"
 }</pre>
       </div>
     </div>
-    <p><strong>GET /v1/transactions</strong> devuelve un envoltorio paginado:</p>
-    <pre>{ "total": 100, "limit": 20, "offset": 0, "data": [ { ...transaction } ] }</pre>
-    <p>Errores con forma <code>{ code, message }</code>: <code>INVALID_REQUEST</code> (400),
-    <code>NOT_FOUND</code> (404), <code>INTERNAL_ERROR</code> (500).</p>
+
+    <h3>GET /v1/transactions</h3>
+    <div class="grid">
+      <div>
+        <p><strong>Request</strong> — query params: <code>limit</code> (1..100, def. 20),
+        <code>offset</code> (≥ 0, def. 0), <code>status</code> (opcional: pending|completed|failed|cancelled)</p>
+        <pre>GET /v1/transactions?limit=20&amp;offset=0&amp;status=completed</pre>
+      </div>
+      <div>
+        <p><strong>Response 200 OK</strong> — envoltorio paginado</p>
+        <pre>{
+  "total": 100,
+  "limit": 20,
+  "offset": 0,
+  "data": [
+    { "id": "a0eebc99-...", "amount": 150.50, "currency": "EUR",
+      "type": "debit", "status": "completed",
+      "account_id": "f47ac10b-...", "created_at": "2026-06-06T14:30:00Z" }
+  ]
+}</pre>
+      </div>
+    </div>
+
+    <h3>GET /v1/transactions/{id}</h3>
+    <div class="grid">
+      <div>
+        <p><strong>Request</strong> — path param <code>id</code> (UUID)</p>
+        <pre>GET /v1/transactions/a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11</pre>
+      </div>
+      <div>
+        <p><strong>Response 200 OK</strong></p>
+        <pre>{
+  "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+  "amount": 150.50,
+  "currency": "EUR",
+  "type": "debit",
+  "status": "completed",
+  "account_id": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
+  "created_at": "2026-06-06T14:30:00Z"
+}</pre>
+      </div>
+    </div>
+
+    <h3>Respuestas de error</h3>
+    <p>Todos los errores usan la forma <code>{ code, message }</code>:</p>
+    <div class="grid">
+      <div>
+        <p><strong>400 Bad Request</strong> (<code>INVALID_REQUEST</code>)</p>
+        <pre>{ "code": "INVALID_REQUEST", "message": "amount: amount must be at least 0.01" }</pre>
+      </div>
+      <div>
+        <p><strong>404 Not Found</strong> (<code>NOT_FOUND</code>)</p>
+        <pre>{ "code": "NOT_FOUND", "message": "Transaction not found with id: a0eebc99-..." }</pre>
+      </div>
+    </div>
+    <p>Además, <code>500 Internal Server Error</code> → <code>{ "code": "INTERNAL_ERROR", "message": "Unexpected error" }</code>.</p>
   </section>
 
   <section id="entornos">

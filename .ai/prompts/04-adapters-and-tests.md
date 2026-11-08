@@ -6,5 +6,6 @@ Implementa:
 3. Perfiles `application.yml` (`spring.application.name` igual a `SERVICE_NAME`), `application-local.yml`, `application-dev.yml` y `application-test.yml` según `CLAUDE.md`.
 4. Tests unitarios/WebMvcTest en JUnit 5 y escenarios en Cucumber BDD (`.feature` + Step Definitions) con reporte HTML en `target/cucumber-reports/cucumber.html` por cada endpoint de `specs/crud-spec.yaml`.
 5. Test de ArchUnit verificando que `domain` no depende de `infrastructure`.
-6. `backend/README.md` y `backend/CLAUDE.md` (documentación y guía operativa para arrancar PostgreSQL con Docker, compilar, probar y verificar).
+6. Configura **JaCoCo** (`jacoco-maven-plugin`) con `report` y una regla `check` (`BUNDLE`, `LINE` ≥ 0.80) enlazada a `verify`, y escribe los tests necesarios para superar el **80% de cobertura global** del microservicio.
+7. `backend/README.md` y `backend/CLAUDE.md` (documentación y guía operativa para arrancar PostgreSQL con Docker, compilar, probar y verificar).
 Actualiza `plans/TASKS.md` al terminar.

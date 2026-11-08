@@ -42,7 +42,10 @@ Si se solicita ejecutar o continuar el flujo de generación del CRUD, **DEBES se
 ## Documentación Funcional Oficial en HTML (`backend/docs/index.html`)
 - Al finalizar la verificación en la Fase 5, es **OBLIGATORIO** generar un documento HTML autocontenido (CSS embebido, limpio, navegable y listo para publicar en GitHub/GitLab Pages) en `backend/docs/index.html` que explique **de forma funcional** todo lo desarrollado:
   - Propósito del servicio (`<SERVICE_NAME>`) y reglas de negocio implementadas.
-  - Catálogo funcional de endpoints (método, ruta, ejemplos JSON de entrada/salida, códigos HTTP y validaciones).
+  - Catálogo funcional de endpoints (método, ruta, códigos HTTP y validaciones).
+  - **Request y Response por cada endpoint (OBLIGATORIO):** para cada endpoint de `specs/crud-spec.yaml`, el documento debe mostrar explícitamente:
+    - **Request:** parámetros (path/query) y, cuando aplique, el cuerpo JSON de ejemplo y su esquema (campos, tipos, obligatoriedad y validaciones).
+    - **Response:** el cuerpo JSON de ejemplo de la respuesta de éxito por su código HTTP y, al menos, un ejemplo del cuerpo de error (`{ code, message }` o la estructura de error del servicio).
   - Modelo de datos y flujos principales.
   - Resumen de entornos (`local` con Docker PostgreSQL y `dev`) y evidencias de calidad (tests JUnit 5, ArchUnit y Cucumber BDD).
 
@@ -61,7 +64,8 @@ Si se solicita ejecutar o continuar el flujo de generación del CRUD, **DEBES se
    - Cada endpoint definido en `specs/crud-spec.yaml` DEBE tener:
      1. Test unitario en JUnit 5 + Mockito para su Caso de Uso y Controlador.
      2. Escenario Cucumber BDD (`.feature` + Step Definitions) validando el flujo completo (happy path y errores).
+   - **Cobertura global mínima (OBLIGATORIO):** el microservicio completo debe superar el **80% de cobertura** (líneas/instrucciones) medido con **JaCoCo**. Configura el plugin `jacoco-maven-plugin` con `report` y una regla `check` (`BUNDLE`, `LINE` ≥ 0.80) enlazada a `verify`, de modo que `mvnw.cmd clean verify` falle si no se alcanza. El informe HTML queda en `target/site/jacoco/index.html`.
 4. **Planificación y Tareas:**
    - Antes de escribir código, actualiza `plans/IMPLEMENTATION_PLAN.md` y `plans/TASKS.md` marcando el progreso.
 5. **Verificación Final contra Especificaciones:**
-   - Ninguna tarea se considera terminada hasta que `mvnw.cmd clean verify` pase en verde, exista el reporte HTML de Cucumber, exista `backend/docs/index.html`, se haya auditado frente a `specs/crud-spec.yaml` y se haya completado el commit y push al repositorio remoto.
+   - Ninguna tarea se considera terminada hasta que `mvnw.cmd clean verify` pase en verde, exista el reporte HTML de Cucumber, se cumpla la **cobertura ≥ 80%** (JaCoCo), exista `backend/docs/index.html` **con el Request y Response de cada endpoint**, se haya auditado frente a `specs/crud-spec.yaml` y se haya completado el commit y push al repositorio remoto.
