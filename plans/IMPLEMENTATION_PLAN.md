@@ -1,24 +1,28 @@
-# Plan de Implementación (Java 21 + Docker PostgreSQL + Git Push)
-
-> Este archivo debe ser completado por la IA en la Fase 1 antes de generar código.
+# Plan de Implementación — Transaction Service (Java 21 + Docker PostgreSQL)
 
 ## 1. Resumen de la Especificación
-- Nombre del Microservicio: **product-service** (ver `.ai/project-context.txt`)
+- Nombre del Microservicio: **transaction-service** (nuevo proyecto en `backend-transactions/`, sin tocar `product-service`).
 - Versión de Java: **Java 21**
-- Entidad principal: **Product** (id: UUID, sku: String [min 3], name: String [min 2], price: BigDecimal [>= 0.01]).
-- Endpoints a implementar (base `/api/v1/products`): `POST` (201/400), `GET` lista (200), `GET /{id}` (200/404), `PUT /{id}` (200/400/404), `DELETE /{id}` (204/404).
-
-> Estado: implementado y verificado. `docker-compose.yml` (PostgreSQL `product_db`), perfiles `local`/`dev`/`test`, reporte HTML Cucumber, `backend/docs/index.html` y docs generados. `mvn clean verify` en verde. Pendiente opcional: `git push` al remoto (REMOTE_URL no provisto).
+- Entidad principal: **Transaction** (id: UUID, amount: BigDecimal [>= 0.01], currency: String [3], type: credit|debit, status: pending|completed|failed|cancelled, account_id: UUID, description: opcional, created_at: date-time).
+- Endpoints (`specs/crud-spec.yaml`, base `/v1`):
+  - `POST   /v1/transactions`      → 201 / 400 / 500
+  - `GET    /v1/transactions`      → 200 (paginado `limit`/`offset` + filtro `status`) / 400 / 500
+  - `GET    /v1/transactions/{id}` → 200 / 400 / 404 / 500
 
 ## 2. Diseño por Capas (Hexagonal)
-- **Domain:** Entidades, Value Objects (`record`), Excepciones de dominio.
-- **Application:** Puertos de entrada/salida, Casos de Uso.
-- **Infrastructure:** Controladores REST, Entidades JPA (PostgreSQL via Docker Compose), Mappers, Repositorios, Perfiles (`local`, `dev`, `test`).
+- **Domain:** `Transaction` inmutable con invariantes; enums `TransactionType`, `TransactionStatus`; excepciones de dominio. Java puro.
+- **Application:** puertos `in`/`out`, `TransactionService` (crear, obtener, listar paginado/filtrado), inyección por constructor.
+- **Infrastructure:**
+  - `adapter.in.web`: `TransactionController`, DTOs (`TransactionRequest`, `TransactionResponse`, `PagedTransactionsResponse`, `ErrorResponse {code,message}`), mapper, `GlobalExceptionHandler`.
+  - `adapter.out.persistence`: `TransactionJpaEntity`, repositorio Spring Data con filtro por estado y paginación por offset, adapter y mapper.
+  - `config`: wiring `@Bean` + perfiles (`local`, `dev`, `test`).
 
-## 3. Estrategia de Testing, Reportes, Documentación HTML y Git
-- **Docker Compose:** Levantamiento de PostgreSQL para el perfil `local`.
-- **ArchUnit:** Validar aislamiento del dominio.
-- **JUnit 5:** Cobertura unitaria de cada Caso de Uso y Controlador.
-- **Cucumber BDD:** Un `.feature` cubriendo todos los endpoints con reporte HTML en `target/cucumber-reports/cucumber.html`.
-- **Documentación:** `backend/README.md`, `backend/CLAUDE.md` y `backend/docs/index.html`.
-- **Git Push:** Inicialización de repositorio y sincronización con el remoto indicado en `.ai/project-context.txt`.
+## 3. Testing, Reportes y Documentación
+- **ArchUnit:** aislamiento del dominio.
+- **JUnit 5 + Mockito:** dominio, casos de uso y controlador (`@WebMvcTest`).
+- **Cucumber BDD:** escenarios de `specs/acceptance-criteria.md` con reporte HTML (`target/cucumber-reports/cucumber.html`).
+- **Docs:** `backend-transactions/README.md`, `backend-transactions/CLAUDE.md`, `backend-transactions/docs/index.html`.
+- **Docker:** `backend-transactions/docker-compose.yml` (PostgreSQL `transaction_db`).
+
+## 4. Modelo de error
+- `{ code, message }` — 400 `INVALID_REQUEST`, 404 `NOT_FOUND`, 500 `INTERNAL_ERROR`.

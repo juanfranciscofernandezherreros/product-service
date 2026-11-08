@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>transaction-service — Documentación Funcional</title>
+<style>
+  :root { --bg:#fff; --fg:#1f2933; --muted:#52606d; --accent:#2563eb; --border:#e4e7eb;
+          --code-bg:#f5f7fa; --ok:#0a7d33; --err:#b91c1c; }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif; color:var(--fg); background:var(--bg); line-height:1.6; }
+  header { background:linear-gradient(135deg,#0f766e,#2563eb); color:#fff; padding:2.5rem 1.5rem; }
+  header h1 { margin:0 0 .3rem; font-size:2rem; }
+  header p { margin:0; opacity:.9; }
+  nav { position:sticky; top:0; background:var(--bg); border-bottom:1px solid var(--border); padding:.75rem 1.5rem; display:flex; gap:1rem; flex-wrap:wrap; font-size:.9rem; }
+  nav a { color:var(--accent); text-decoration:none; } nav a:hover { text-decoration:underline; }
+  main { max-width:960px; margin:0 auto; padding:1.5rem; }
+  section { margin:2rem 0; }
+  h2 { border-bottom:2px solid var(--border); padding-bottom:.3rem; }
+  table { width:100%; border-collapse:collapse; margin:1rem 0; font-size:.92rem; }
+  th,td { border:1px solid var(--border); padding:.55rem .7rem; text-align:left; vertical-align:top; }
+  th { background:var(--code-bg); }
+  code,pre { font-family:ui-monospace,SFMono-Regular,Menlo,monospace; }
+  code { background:var(--code-bg); padding:.1rem .35rem; border-radius:4px; }
+  pre { background:var(--code-bg); padding:1rem; border-radius:8px; overflow-x:auto; border:1px solid var(--border); }
+  .method { font-weight:700; padding:.1rem .5rem; border-radius:4px; color:#fff; font-size:.82rem; }
+  .post { background:#16a34a; } .get { background:#2563eb; }
+  .ok { color:var(--ok); } .err { color:var(--err); }
+  .grid { display:grid; grid-template-columns:1fr 1fr; gap:1rem; }
+  @media (max-width:680px){ .grid { grid-template-columns:1fr; } }
+  footer { color:var(--muted); font-size:.85rem; text-align:center; padding:2rem 1rem; border-top:1px solid var(--border); }
+</style>
+</head>
+<body>
+<header>
+  <h1>transaction-service</h1>
+  <p>Documentación Funcional Oficial · API de Transacciones Financieras · Java 21 · Spring Boot 3 · Hexagonal</p>
+</header>
+<nav>
+  <a href="#proposito">Propósito</a>
+  <a href="#reglas">Reglas</a>
+  <a href="#modelo">Modelo</a>
+  <a href="#endpoints">Endpoints</a>
+  <a href="#entornos">Entornos</a>
+  <a href="#calidad">Calidad</a>
+</nav>
+<main>
+  <section id="proposito">
+    <h2>1. Propósito</h2>
+    <p><strong>transaction-service</strong> registra y consulta <em>transacciones financieras</em>
+    (crédito/débito) asociadas a cuentas. Sigue arquitectura hexagonal, con el dominio aislado
+    de la infraestructura REST y de persistencia.</p>
+  </section>
+
+  <section id="reglas">
+    <h2>2. Reglas de negocio</h2>
+    <ul>
+      <li><strong>amount</strong> obligatorio y <strong>&ge; 0.01</strong>.</li>
+      <li><strong>currency</strong> obligatorio, código ISO de <strong>3 letras</strong>.</li>
+      <li><strong>type</strong> obligatorio: <code>credit</code> o <code>debit</code>.</li>
+      <li><strong>account_id</strong> (UUID) obligatorio.</li>
+      <li>Al crear: se genera el <strong>id</strong>, el <strong>status</strong> inicial es <code>pending</code> y se sella <strong>created_at</strong>.</li>
+    </ul>
+  </section>
+
+  <section id="modelo">
+    <h2>3. Modelo de datos</h2>
+    <table>
+      <thead><tr><th>Campo</th><th>Tipo</th><th>Notas</th></tr></thead>
+      <tbody>
+        <tr><td><code>id</code></td><td>UUID</td><td>Generado por el sistema</td></tr>
+        <tr><td><code>amount</code></td><td>Decimal</td><td>&ge; 0.01</td></tr>
+        <tr><td><code>currency</code></td><td>String(3)</td><td>Código ISO</td></tr>
+        <tr><td><code>type</code></td><td>enum</td><td>credit | debit</td></tr>
+        <tr><td><code>status</code></td><td>enum</td><td>pending | completed | failed | cancelled</td></tr>
+        <tr><td><code>account_id</code></td><td>UUID</td><td>Cuenta propietaria</td></tr>
+        <tr><td><code>description</code></td><td>String</td><td>Opcional</td></tr>
+        <tr><td><code>created_at</code></td><td>date-time</td><td>Instante de creación</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="endpoints">
+    <h2>4. Catálogo de endpoints</h2>
+    <p>Base: <code>/v1/transactions</code></p>
+    <table>
+      <thead><tr><th>Método</th><th>Ruta</th><th>Descripción</th><th>Códigos</th></tr></thead>
+      <tbody>
+        <tr><td><span class="method post">POST</span></td><td><code>/v1/transactions</code></td><td>Crear transacción</td><td><span class="ok">201</span> / <span class="err">400</span> / <span class="err">500</span></td></tr>
+        <tr><td><span class="method get">GET</span></td><td><code>/v1/transactions</code></td><td>Listar (paginado + filtro <code>status</code>)</td><td><span class="ok">200</span> / <span class="err">400</span> / <span class="err">500</span></td></tr>
+        <tr><td><span class="method get">GET</span></td><td><code>/v1/transactions/{id}</code></td><td>Obtener por UUID</td><td><span class="ok">200</span> / <span class="err">400</span> / <span class="err">404</span> / <span class="err">500</span></td></tr>
+      </tbody>
+    </table>
+    <div class="grid">
+      <div>
+        <p><strong>POST</strong> — petición</p>
+        <pre>{
+  "amount": 150.50,
+  "currency": "EUR",
+  "type": "debit",
+  "account_id": "f47ac10b-58cc-4372-a567-0e02b2c3d479"
+}</pre>
+      </div>
+      <div>
+        <p><strong>201 Created</strong> — respuesta</p>
+        <pre>{
+  "id": "a0eebc99-...",
+  "amount": 150.50,
+  "currency": "EUR",
+  "type": "debit",
+  "status": "pending",
+  "account_id": "f47ac10b-...",
+  "created_at": "2026-06-06T14:30:00Z"
+}</pre>
+      </div>
+    </div>
+    <p><strong>GET /v1/transactions</strong> devuelve un envoltorio paginado:</p>
+    <pre>{ "total": 100, "limit": 20, "offset": 0, "data": [ { ...transaction } ] }</pre>
+    <p>Errores con forma <code>{ code, message }</code>: <code>INVALID_REQUEST</code> (400),
+    <code>NOT_FOUND</code> (404), <code>INTERNAL_ERROR</code> (500).</p>
+  </section>
+
+  <section id="entornos">
+    <h2>5. Entornos</h2>
+    <table>
+      <thead><tr><th>Perfil</th><th>Base de datos</th><th>ddl-auto</th></tr></thead>
+      <tbody>
+        <tr><td><code>local</code></td><td>PostgreSQL vía Docker (<code>localhost:5432/transaction_db</code>)</td><td><code>update</code></td></tr>
+        <tr><td><code>dev</code></td><td>PostgreSQL por variables de entorno</td><td><code>validate</code></td></tr>
+        <tr><td><code>test</code></td><td>H2 en memoria (modo PostgreSQL)</td><td><code>create-drop</code></td></tr>
+      </tbody>
+    </table>
+    <pre>cd backend-transactions
+docker compose up -d
+./mvnw spring-boot:run</pre>
+  </section>
+
+  <section id="calidad">
+    <h2>6. Evidencias de calidad</h2>
+    <ul>
+      <li><strong>JUnit 5 + Mockito:</strong> dominio, servicio y controlador (<code>@WebMvcTest</code>).</li>
+      <li><strong>ArchUnit:</strong> aislamiento del dominio.</li>
+      <li><strong>Cucumber BDD:</strong> escenarios por endpoint; reporte HTML en <code>target/cucumber-reports/cucumber.html</code>.</li>
+      <li><strong>Checkstyle:</strong> sin violaciones.</li>
+    </ul>
+    <pre>cd backend-transactions
+./mvnw clean verify</pre>
+  </section>
+</main>
+<footer>transaction-service · Documentación generada (Java 21 · Hexagonal · PostgreSQL).</footer>
+</body>
+</html>
