@@ -1,9 +1,17 @@
 spring:
   datasource:
-    url: jdbc:postgresql://${DB_HOST_DEV}:5432/${DB_NAME_DEV}
+    # Supabase dev (proyecto wnluofonzteaqtlfshgy). La contraseña NO va en el repo:
+    # se inyecta por variable de entorno DB_PASS_DEV.
+    url: jdbc:postgresql://${DB_HOST_DEV:db.wnluofonzteaqtlfshgy.supabase.co}:5432/${DB_NAME_DEV:postgres}
     driver-class-name: org.postgresql.Driver
-    username: ${DB_USER_DEV}
+    username: ${DB_USER_DEV:postgres}
     password: ${DB_PASS_DEV}
   jpa:
     show-sql: false
     database-platform: org.hibernate.dialect.PostgreSQLDialect
+    hibernate:
+      # El esquema de Supabase ya existe y lo gestiona Supabase: el servicio no lo crea ni lo valida.
+      ddl-auto: none
+  flyway:
+    # No ejecutar migraciones contra la base gestionada de Supabase.
+    enabled: false
