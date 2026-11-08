@@ -2,7 +2,7 @@ openapi: 3.0.3
 info:
   title: Product CRUD API
   version: 1.0.0
-  description: Especificación contractual para el CRUD de Productos.
+  description: Especificación contractual para el CRUD de Productos en Java 21 con PostgreSQL vía Docker.
 paths:
   /api/v1/products:
     post:

@@ -1,26 +1,59 @@
-# CLAUDE.md - Backend Java Spring Boot (Arquitectura Hexagonal)
+# CLAUDE.md - Orquestador AI CRUD (Java 21 + Spring Boot 3 + Hexagonal + Docker PGSQL)
+
+## Contexto del Proyecto (Generado por `run-ai-crud.bat`)
+Antes de ejecutar cualquier fase, lee el archivo `.ai/project-context.txt` (creado automáticamente por `run-ai-crud.bat`) para conocer:
+- **Nombre del Microservicio (`SERVICE_NAME`):** Úsalo en `pom.xml` (`<artifactId>` y `<name>`), en `application.yml` (`spring.application.name`), en `README.md` y en `docs/index.html`.
+- **Repositorio Remoto (`REMOTE_URL`):** Úsalo para configurar `git remote add origin <REMOTE_URL>` y hacer `git push -u origin main`.
 
 ## Ejecución Secuencial Obligatoria (.bat y Fases)
 Si se solicita ejecutar o continuar el flujo de generación del CRUD, **DEBES seguir estrictamente este orden** (automatizado en `run-ai-crud.bat`):
 1. `01-plan-and-tasks.md` -> Analizar specs y actualizar `plans/IMPLEMENTATION_PLAN.md` y `plans/TASKS.md`.
-2. `02-domain.md` -> Implementar capa de dominio puro.
+2. `02-domain.md` -> Implementar capa de dominio puro en **Java 21**.
 3. `03-application.md` -> Implementar puertos, casos de uso y tests JUnit 5.
-4. `04-adapters-and-tests.md` -> Implementar adaptadores REST/JPA, tests JUnit 5 por endpoint, Cucumber BDD y ArchUnit.
-5. `05-e2e-verification.md` -> Ejecutar `mvnw.cmd clean verify` y validar cumplimiento total.
+4. `04-adapters-and-tests.md` -> Implementar microservicio en `backend/` (Java 21, REST/JPA PostgreSQL, `docker-compose.yml` para local, perfiles `local`/`dev`/`test`, JUnit 5, Cucumber BDD con reporte HTML, ArchUnit, `backend/README.md` y `backend/CLAUDE.md`).
+5. `05-e2e-verification.md` -> Ejecutar `mvnw.cmd clean verify`, verificar reporte HTML de Cucumber, generar la **Documentación Funcional Oficial en HTML** (`backend/docs/index.html`), hacer commit y push al repositorio Git remoto indicado.
 
-*Nota para ejecución en Windows:* El script principal `run-ai-crud.bat` solicita primero la **carpeta destino** del proyecto, prepara el entorno en dicha ruta y orquesta estas 5 fases en orden con el modelo `claude-3-5-sonnet-20241022` (configurable vía variable `MODEL`). No saltes fases ni ejecutes fases posteriores si la anterior falló.
+## Stack Tecnológico Obligatorio
+- **Lenguaje:** **Java 21** (`<java.version>21</java.version>` en `pom.xml`). Aprovecha `record` para DTOs y Value Objects, `switch` pattern matching donde aplique y APIs modernas de Java 21.
+- **Framework:** Spring Boot 3.x (Web, Data JPA, Validation).
+- **Base de Datos:** PostgreSQL levantada mediante `docker-compose.yml` en local.
 
-## Comandos de Compilación, Calidad y Test
+## Comandos de Compilación, Calidad y Test (en `backend/`)
+- Levantar PostgreSQL local: `docker compose up -d`
 - Build & Full Verify: `mvnw.cmd clean verify` (o `./mvnw clean verify`)
 - Tests Unitarios (JUnit 5): `mvnw.cmd test`
 - Tests de Aceptación (Cucumber BDD): `mvnw.cmd verify -Dspring.profiles.active=test`
 - Análisis Estático: `mvnw.cmd checkstyle:check`
 
+## Base de Datos y Entornos (PostgreSQL + Docker + Spring Profiles)
+- Persistencia obligatoria en **PostgreSQL** usando Spring Data JPA.
+- Genera un `docker-compose.yml` en la raíz del microservicio `backend/` para levantar PostgreSQL en local (`port: 5432`, `db: product_db`, `user: postgres`, `password: postgres`).
+- Genera los siguientes perfiles en `backend/src/main/resources/`:
+  - `application.yml`: Configuración común con `spring.application.name: <SERVICE_NAME>`, `spring.profiles.active: ${SPRING_PROFILES_ACTIVE:local}` y `open-in-view: false`.
+  - `application-local.yml`: Conexión a PostgreSQL local vía Docker (`jdbc:postgresql://localhost:5432/product_db`, `ddl-auto: update`, `show-sql: true`).
+  - `application-dev.yml`: Conexión a PostgreSQL de desarrollo parametrizada con variables de entorno (`jdbc:postgresql://${DB_HOST_DEV}:5432/${DB_NAME_DEV}`, `${DB_USER_DEV}`, `${DB_PASS_DEV}`, `ddl-auto: validate`, `show-sql: false`).
+- Para tests automatizados (`backend/src/test/resources/application-test.yml`): usa H2 en memoria en modo PostgreSQL (`jdbc:h2:mem:testdb;MODE=PostgreSQL`) o Testcontainers para que `mvnw.cmd clean verify` funcione sin depender de contenedores activos.
+
+## Reporte HTML de Cucumber BDD
+- Configura el runner de Cucumber con el plugin:
+  `plugin = {"pretty", "html:target/cucumber-reports/cucumber.html", "json:target/cucumber-reports/cucumber.json"}`
+- El reporte HTML debe quedar generado tras ejecutar `mvnw.cmd clean verify` en `backend/target/cucumber-reports/cucumber.html`.
+
+## Documentación Funcional Oficial en HTML (`backend/docs/index.html`)
+- Al finalizar la verificación en la Fase 5, es **OBLIGATORIO** generar un documento HTML autocontenido (CSS embebido, limpio, navegable y listo para publicar en GitHub/GitLab Pages) en `backend/docs/index.html` que explique **de forma funcional** todo lo desarrollado:
+  - Propósito del servicio (`<SERVICE_NAME>`) y reglas de negocio implementadas.
+  - Catálogo funcional de endpoints (método, ruta, ejemplos JSON de entrada/salida, códigos HTTP y validaciones).
+  - Modelo de datos y flujos principales.
+  - Resumen de entornos (`local` con Docker PostgreSQL y `dev`) y evidencias de calidad (tests JUnit 5, ArchUnit y Cucumber BDD).
+
+## Git y Repositorio Remoto
+- Al finalizar la Fase 5, inicializa Git (`git init`), configura el remote (`git remote add origin <REMOTE_URL>`), añade todos los ficheros (`git add .`), haz commit (`git commit -m "feat: initial hexagonal crud microservice <SERVICE_NAME> in java 21"`) y push (`git push -u origin main`).
+
 ## Reglas Estrictas de Arquitectura y Código
 1. **Arquitectura Hexagonal (Ports & Adapters):**
-   - `domain`: Puro Java. **CERO** anotaciones de Spring, JPA o Lombok (salvo `@Getter` si es imprescindible; preferir Java `record` o POJOs inmutables).
+   - `domain`: Puro Java 21. **CERO** anotaciones de Spring, JPA o Lombok (preferir Java `record` o POJOs inmutables).
    - `application`: Casos de uso (`UseCase`) y puertos (`ports.in`, `ports.out`). Orquestan la lógica de negocio.
-   - `infrastructure.adapters.in.web`: Controladores REST, DTOs de entrada/salida, validación con `jakarta.validation`.
+   - `infrastructure.adapters.in.web`: Controladores REST, DTOs de entrada/salida (`record`), validación con `jakarta.validation`.
    - `infrastructure.adapters.out.persistence`: Entidades JPA separadas del dominio, mappers explícitos y repositorios Spring Data.
 2. **Inyección de Dependencias:**
    - **SIEMPRE** inyección por constructor (`private final`). **PROHIBIDO** `@Autowired` en campos.
@@ -30,5 +63,5 @@ Si se solicita ejecutar o continuar el flujo de generación del CRUD, **DEBES se
      2. Escenario Cucumber BDD (`.feature` + Step Definitions) validando el flujo completo (happy path y errores).
 4. **Planificación y Tareas:**
    - Antes de escribir código, actualiza `plans/IMPLEMENTATION_PLAN.md` y `plans/TASKS.md` marcando el progreso.
-5. **Verificación Final:**
-   - Ninguna tarea se considera terminada hasta que `mvnw.cmd clean verify` pase sin errores de Checkstyle, ArchUnit, JUnit ni Cucumber.
+5. **Verificación Final contra Especificaciones:**
+   - Ninguna tarea se considera terminada hasta que `mvnw.cmd clean verify` pase en verde, exista el reporte HTML de Cucumber, exista `backend/docs/index.html`, se haya auditado frente a `specs/crud-spec.yaml` y se haya completado el commit y push al repositorio remoto.
