@@ -55,3 +55,60 @@ microservicio y consultando por su endpoint REST** hacen falta dos cosas:
    requerir un ajuste de mapeo (p. ej. columnas `jsonb`). Con `ddl-auto: none` el
    servicio arranca igualmente; el ajuste, si hiciera falta, sería en el momento de leer
    esas columnas.
+
+## Alternativa sin contraseña: acceso como el frontend (REST + clave publicable)
+Los microservicios pueden leer Supabase **igual que el frontend**: por la API REST
+(PostgREST) con la **clave publicable** (`sb_publishable_…`), en lugar de JDBC con
+contraseña. Prueba ejecutada el 8 de noviembre de 2026:
+
+```bash
+curl "https://wnluofonzteaqtlfshgy.supabase.co/rest/v1/articulos?select=id,titulo&limit=1" \
+  -H "apikey: sb_publishable_Ef-AXAapcwaPExEFS6kmug_tKLaulM8" \
+  -H "Authorization: Bearer sb_publishable_Ef-AXAapcwaPExEFS6kmug_tKLaulM8"
+```
+
+| Dominio · tabla | HTTP | Resultado |
+|---|---|---|
+| content · articulos | 200 | `{"id":162,"titulo":"Unidad 12 · Pronouns and determiners \| Curso B2"}` |
+| content · movie_subtitle_phrases | 200 | frase real devuelta |
+| courses · unidades_curso | 200 | `{"slug":"libro-ingles-unidad-01","titulo":"1. Present tenses","nivel":"Grammar"}` |
+| courses · actividades | 200 | `{"slug":"demostracion-motor-universal","destreza":"use_of_english"}` |
+| battle · battle_questions | 401 | permission denied (RLS) |
+| vocabulary · vocabulario_items | 401 | permission denied (RLS) |
+| exams · examenes | 401 | permission denied (RLS) |
+| access · roles | 401 | permission denied (RLS) |
+| social · perfiles_publicos | 401 | permission denied (RLS) |
+
+**Conclusión:**
+- Con la **clave publicable**, el backend lee lo mismo que un visitante anónimo: las
+  **tablas públicas** (content, courses devolvieron datos reales). Las demás devuelven
+  `permission denied` por sus políticas **RLS** (comportamiento correcto y deseado).
+- Para que un microservicio lea **todas** las tablas desde el backend (saltándose RLS)
+  se usa la **`service_role` key** de Supabase (secreta, en el panel), nunca la
+  publicable ni en el repositorio.
+- Implementarlo de forma permanente supone añadir un **adaptador de salida REST**
+  (alternativo al JPA/JDBC) que llame a `…/rest/v1/<tabla>` con la clave en cabecera.
+  Es un cambio de arquitectura por servicio, no una simple variable de configuración.
+
+## Forma recomendada (política de acceso)
+Confirmado con los permisos reales (`information_schema.role_table_grants`): las tablas que
+devuelven 401 al anónimo solo conceden `SELECT` al rol `authenticated`; por eso en la web
+funcionan (el usuario va autenticado y su petición lleva el **JWT** de rol `authenticated`).
+
+Política recomendada (recogida también en el SDD raíz `CLAUDE.md`):
+1. **Lecturas de un usuario → REST + reenvío de su JWT.** El microservicio reenvía
+   `Authorization: Bearer <jwt_del_usuario>` + `apikey: <clave publicable>` a
+   `…/rest/v1/<tabla>`. Respeta RLS, replica exactamente la web y **no guarda secretos**.
+2. **Backend sin usuario (batch/admin) → `service_role` key**, como **secreto en variable
+   de entorno** (`SUPABASE_SERVICE_ROLE_KEY`), nunca en el repositorio.
+3. **Nunca** `service_role` para peticiones de usuario, **nunca** secretos en Git.
+
+| Tabla | `anon` (publicable) | `authenticated` (JWT de sesión) |
+|---|---|---|
+| articulos | ✅ | ✅ |
+| unidades_curso | ✅ | ✅ |
+| examenes | — | ✅ |
+| vocabulario_items | — | ✅ |
+| roles | — | ✅ |
+| perfiles_publicos | — | ✅ |
+

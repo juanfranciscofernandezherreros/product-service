@@ -26,3 +26,9 @@
 
 ## Verificación final
 `mvnw.cmd clean verify` en verde (Checkstyle + ArchUnit + JUnit + Cucumber + JaCoCo ≥ 80%) y docs generadas.
+
+## Acceso a datos en Supabase (dev)
+Política completa en el SDD raíz (`../CLAUDE.md`) y en `../specs/VERIFICACION-DATOS.md`.
+- Lecturas en nombre del usuario: por la **API REST de Supabase** reenviando su **JWT** (`Authorization: Bearer <jwt>` + `apikey: <clave publicable>`), respetando RLS. Sin secretos en el repo.
+- Tareas de backend sin usuario: **`service_role` key** como secreto en variable de entorno (`SUPABASE_SERVICE_ROLE_KEY`), nunca en Git.
+- La clave publicable solo alcanza tablas públicas; la contraseña `postgres` (JDBC) se salta RLS y queda para administración controlada.

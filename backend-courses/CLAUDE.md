@@ -22,3 +22,9 @@ Microservicio del dominio **Courses** generado desde el orquestador AI CRUD (Dat
 - Cada endpoint tiene test unitario y escenario Cucumber.
 - Cobertura global ≥80% (actual 86%).
 - No commitear/pushear sin petición explícita del usuario.
+
+## Acceso a datos en Supabase (dev)
+Política completa en el SDD raíz (`../CLAUDE.md`) y en `../specs/VERIFICACION-DATOS.md`.
+- Lecturas en nombre del usuario: por la **API REST de Supabase** reenviando su **JWT** (`Authorization: Bearer <jwt>` + `apikey: <clave publicable>`), respetando RLS. Sin secretos en el repo.
+- Tareas de backend sin usuario: **`service_role` key** como secreto en variable de entorno (`SUPABASE_SERVICE_ROLE_KEY`), nunca en Git.
+- La clave publicable solo alcanza tablas públicas; la contraseña `postgres` (JDBC) se salta RLS y queda para administración controlada.
