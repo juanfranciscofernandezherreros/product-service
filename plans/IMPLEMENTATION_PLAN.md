@@ -1,29 +1,30 @@
-# Plan de Implementación — Transaction Service (Java 21 + Docker PostgreSQL)
+# Plan de Implementación — Fund Service (Java 21 + Docker PostgreSQL)
 
 ## 1. Resumen de la Especificación
-- Nombre del Microservicio: **transaction-service** (nuevo proyecto en `backend-transactions/`, sin tocar `product-service`).
-- Versión de Java: **Java 21**
-- Entidad principal: **Transaction** (id: UUID, amount: BigDecimal [>= 0.01], currency: String [3], type: credit|debit, status: pending|completed|failed|cancelled, account_id: UUID, description: opcional, created_at: date-time).
-- Endpoints (`specs/crud-spec.yaml`, base `/v1`):
-  - `POST   /v1/transactions`      → 201 / 400 / 500
-  - `GET    /v1/transactions`      → 200 (paginado `limit`/`offset` + filtro `status`) / 400 / 500
-  - `GET    /v1/transactions/{id}` → 200 / 400 / 404 / 500
+- Microservicio: **fund-service** (nuevo proyecto en `backend-funds/`, sin tocar los demás).
+- Java 21. Contrato: `specs/crud-spec.yaml` (Fondos de Inversión v1.1.0, base `/v1`).
+- Agregados: **Fund** (clave natural ISIN), **NavPoint** (histórico por fondo), **Order** (suscripción/reembolso).
+- Endpoints:
+  - `GET    /v1/funds`            → 200 (paginado + filtro `category`/`currency`)
+  - `POST   /v1/funds`           → 201 / 400 / 409
+  - `GET    /v1/funds/{isin}`    → 200 / 404
+  - `PUT    /v1/funds/{isin}`    → 200 / 400 / 404
+  - `DELETE /v1/funds/{isin}`    → 204 / 404 / 422
+  - `GET    /v1/funds/{isin}/nav`→ 200 (filtro `startDate`/`endDate`)
+  - `POST   /v1/orders`          → 201
 
 ## 2. Diseño por Capas (Hexagonal)
-- **Domain:** `Transaction` inmutable con invariantes; enums `TransactionType`, `TransactionStatus`; excepciones de dominio. Java puro.
-- **Application:** puertos `in`/`out`, `TransactionService` (crear, obtener, listar paginado/filtrado), inyección por constructor.
-- **Infrastructure:**
-  - `adapter.in.web`: `TransactionController`, DTOs (`TransactionRequest`, `TransactionResponse`, `PagedTransactionsResponse`, `ErrorResponse {code,message}`), mapper, `GlobalExceptionHandler`.
-  - `adapter.out.persistence`: `TransactionJpaEntity`, repositorio Spring Data con filtro por estado y paginación por offset, adapter y mapper.
-  - `config`: wiring `@Bean` + perfiles (`local`, `dev`, `test`).
+- **Domain:** `Fund`, `NavPoint`, `Order` (inmutables, invariantes); enums `OperationType`, `OrderStatus`; excepciones (`FundNotFound`, `FundAlreadyExists`, `InvalidFund`, `InvalidOrder`, `FundHasActivePositions`).
+- **Application:** puertos `in`/`out` + casos de uso (`FundService`, `NavService`, `OrderService`), inyección por constructor.
+- **Infrastructure:** adaptadores web (controllers Funds/Nav/Orders, DTOs, mappers, `GlobalExceptionHandler` con `{code,message}`), persistencia JPA (Fund/Nav/Order), perfiles y wiring `@Bean`.
 
-## 3. Testing, Reportes y Documentación
-- **ArchUnit:** aislamiento del dominio.
-- **JUnit 5 + Mockito:** dominio, casos de uso y controlador (`@WebMvcTest`).
-- **Cucumber BDD:** escenarios de `specs/acceptance-criteria.md` con reporte HTML (`target/cucumber-reports/cucumber.html`).
-- **Cobertura:** JaCoCo con regla `check` ≥ **80%** global enlazada a `verify`; informe en `target/site/jacoco/index.html`.
-- **Docs:** `backend-transactions/README.md`, `backend-transactions/CLAUDE.md`, `backend-transactions/docs/index.html` **con Request y Response de cada endpoint**.
-- **Docker:** `backend-transactions/docker-compose.yml` (PostgreSQL `transaction_db`).
+## 3. Reglas e interpretaciones
+- Error con forma `{ code, message }`: `VALIDATION_ERROR`/`BAD_REQUEST` (400), `RESOURCE_NOT_FOUND` (404), `RESOURCE_ALREADY_EXISTS` (409), `FUND_HAS_ACTIVE_POSITIONS` (422).
+- **422:** un fondo tiene posiciones activas si existe una orden suya con estado ≠ `REJECTED`.
+- `currentNav` y el histórico NAV derivan de `NavPoint` (el contrato solo expone lectura del NAV).
 
-## 4. Modelo de error
-- `{ code, message }` — 400 `INVALID_REQUEST`, 404 `NOT_FOUND`, 500 `INTERNAL_ERROR`.
+## 4. Testing, Reportes, Cobertura y Documentación
+- ArchUnit (aislamiento del dominio), JUnit 5 + Mockito (dominio, casos de uso, `@WebMvcTest`), Cucumber BDD (reporte HTML).
+- **JaCoCo ≥ 80%** global (regla `check` en `verify`).
+- Docs: `README.md`, `CLAUDE.md`, `docs/index.html` (con **diagrama SVG** y **Request/Response por endpoint**).
+- Docker: `docker-compose.yml` (PostgreSQL `fund_db`).

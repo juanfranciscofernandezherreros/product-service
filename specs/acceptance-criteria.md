@@ -1,33 +1,63 @@
 # Criterios de Aceptación (BDD)
 
-## Feature: Gestión de Transacciones Financieras
+## Feature: Gestión de Fondos de Inversión (CRUD completo + NAV + Órdenes)
 
-### Escenario 1: Crear una transacción válida (POST /v1/transactions)
-- **Dado** que envío una petición con amount 150.50, currency "EUR", type "debit" y account_id válido
-- **Cuando** invoco el endpoint `POST /v1/transactions`
-- **Entonces** recibo un código HTTP 201 Created, con su UUID generado, `status` "pending" y `created_at` informado.
+### Escenario 1: Crear un fondo válido (POST /funds)
+- **Dado** que envío un fondo con ISIN "ES0123456789", nombre, categoría, divisa "EUR" y riskLevel 5
+- **Cuando** invoco `POST /funds`
+- **Entonces** recibo HTTP 201 Created con el detalle del fondo.
 
-### Escenario 2: Rechazar una transacción inválida (POST /v1/transactions)
-- **Dado** que envío una petición con amount 0 y currency "E"
-- **Cuando** invoco el endpoint `POST /v1/transactions`
-- **Entonces** recibo un código HTTP 400 Bad Request con un error `{ code, message }`.
+### Escenario 2: Rechazar fondo duplicado (POST /funds)
+- **Dado** que ya existe un fondo con ISIN "ES0123456789"
+- **Cuando** invoco `POST /funds` con el mismo ISIN
+- **Entonces** recibo HTTP 409 Conflict con error `{ code, message }` y code "RESOURCE_ALREADY_EXISTS".
 
-### Escenario 3: Obtener una transacción por ID (GET /v1/transactions/{id})
-- **Dado** que existe una transacción registrada con un ID específico
-- **Cuando** invoco `GET /v1/transactions/{id}`
-- **Entonces** recibo HTTP 200 OK con los datos de la transacción.
+### Escenario 3: Rechazar fondo inválido (POST /funds)
+- **Dado** que envío un fondo con riskLevel 9 (fuera de 1..7)
+- **Cuando** invoco `POST /funds`
+- **Entonces** recibo HTTP 400 Bad Request con error `{ code, message }`.
 
-### Escenario 4: Obtener una transacción inexistente (GET /v1/transactions/{id})
-- **Dado** un identificador aleatorio que no corresponde a ninguna transacción
-- **Cuando** invoco `GET /v1/transactions/{id}`
-- **Entonces** recibo HTTP 404 Not Found con un error `{ code, message }`.
+### Escenario 4: Obtener detalle de un fondo (GET /funds/{isin})
+- **Dado** que existe un fondo registrado
+- **Cuando** invoco `GET /funds/{isin}`
+- **Entonces** recibo HTTP 200 OK con su detalle.
 
-### Escenario 5: Listar transacciones con paginación (GET /v1/transactions)
-- **Dado** que existen varias transacciones registradas
-- **Cuando** invoco `GET /v1/transactions?limit=2&offset=0`
-- **Entonces** recibo HTTP 200 OK con `total`, `limit`, `offset` y un array `data` de como máximo 2 elementos.
+### Escenario 5: Fondo inexistente (GET /funds/{isin})
+- **Cuando** invoco `GET /funds/{isin}` con un ISIN que no existe
+- **Entonces** recibo HTTP 404 Not Found con error `{ code, message }`.
 
-### Escenario 6: Filtrar transacciones por estado (GET /v1/transactions?status=completed)
-- **Dado** que existen transacciones en distintos estados
-- **Cuando** invoco `GET /v1/transactions?status=completed`
-- **Entonces** recibo HTTP 200 OK y todas las transacciones devueltas tienen `status` "completed".
+### Escenario 6: Actualizar un fondo (PUT /funds/{isin})
+- **Dado** que existe un fondo registrado
+- **Cuando** invoco `PUT /funds/{isin}` con nuevos datos válidos
+- **Entonces** recibo HTTP 200 OK con el detalle actualizado.
+
+### Escenario 7: Eliminar un fondo (DELETE /funds/{isin})
+- **Dado** que existe un fondo sin posiciones activas
+- **Cuando** invoco `DELETE /funds/{isin}`
+- **Entonces** recibo HTTP 204 No Content.
+
+### Escenario 8: Eliminar un fondo inexistente (DELETE /funds/{isin})
+- **Cuando** invoco `DELETE /funds/{isin}` con un ISIN que no existe
+- **Entonces** recibo HTTP 404 Not Found.
+
+### Escenario 9: No eliminar un fondo con posiciones activas (DELETE /funds/{isin})
+- **Dado** que existe un fondo con una orden de suscripción activa (no rechazada)
+- **Cuando** invoco `DELETE /funds/{isin}`
+- **Entonces** recibo HTTP 422 Unprocessable Entity con error `{ code, message }`.
+
+### Escenario 10: Listar fondos con paginación y filtro (GET /funds)
+- **Dado** que existen varios fondos en distintas divisas
+- **Cuando** invoco `GET /funds?currency=EUR&limit=2&offset=0`
+- **Entonces** recibo HTTP 200 OK con `total` e `items` (máximo 2) y todos con currency "EUR".
+
+### Escenario 11: Consultar histórico NAV (GET /funds/{isin}/nav)
+- **Dado** que existe un fondo registrado
+- **Cuando** invoco `GET /funds/{isin}/nav`
+- **Entonces** recibo HTTP 200 OK con `isin` y un array `history`.
+
+### Escenario 12: Emitir una orden (POST /orders)
+- **Dado** que existe un fondo registrado
+- **Cuando** invoco `POST /orders` con accountId, ISIN, operationType "SUBSCRIPTION" y amount 1000.00
+- **Entonces** recibo HTTP 201 Created con `orderId`, `status` "PENDING" y `createdAt`.
+
+> **Nota de interpretación:** el contrato no define un recurso de "posiciones"; se interpreta que un fondo tiene **posiciones activas** cuando existe al menos una orden suya con estado distinto de `REJECTED`. El valor liquidativo (`currentNav`) y el histórico `NAV` se derivan de los `NavPoint` registrados (el contrato solo expone su lectura).
