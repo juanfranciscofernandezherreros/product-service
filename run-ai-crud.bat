@@ -43,10 +43,10 @@ set /a FAIL=0
 
 :: Recorre el manifiesto: ignora comentarios (#) y lineas vacias.
 :: Cada servicio se procesa en la subrutina :process (exit /b solo retorna, no rompe el bucle).
-for /f "usebackq eol=# tokens=1-4 delims=;" %%A in ("%MANIFEST%") do (
+for /f "usebackq eol=# tokens=1-5 delims=;" %%A in ("%MANIFEST%") do (
     if not "%%A"=="" (
         set /a COUNT+=1
-        call :process "%%A" "%%B" "%%C" "%%D"
+        call :process "%%A" "%%B" "%%C" "%%D" "%%E"
         if errorlevel 1 set /a FAIL+=1
     )
 )
@@ -60,25 +60,29 @@ pause
 exit /b 0
 
 :: ----------------------------------------------------------------------
-:: :process  SERVICE_NAME  TARGET_DIR  REMOTE_URL  SPEC_FILE
+:: :process  SERVICE_NAME  TARGET_DIR  REMOTE_URL  SPEC_FILE  DB_SPEC
 :: ----------------------------------------------------------------------
 :process
 set "SERVICE_NAME=%~1"
 set "TARGET_DIR=%~2"
 set "REMOTE_URL=%~3"
 set "SPEC_FILE=%~4"
+set "DB_SPEC=%~5"
+if "%DB_SPEC%"=="" set "DB_SPEC=specs\database-spec.sql"
 
 echo.
 echo ########################################################
 echo #  Microservicio: %SERVICE_NAME%
 echo #  Carpeta : %TARGET_DIR%
 echo #  Remoto  : %REMOTE_URL%
-echo #  Spec    : %SPEC_FILE%
+echo #  OpenAPI : %SPEC_FILE%
+echo #  Esquema : %DB_SPEC%
 echo ########################################################
 
 if "%TARGET_DIR%"=="" ( echo [ERROR] TARGET_DIR vacio para %SERVICE_NAME%. & exit /b 1 )
 if "%REMOTE_URL%"=="" ( echo [ERROR] REMOTE_URL vacio para %SERVICE_NAME%. & exit /b 1 )
 if not exist "%ROOT%%SPEC_FILE%" ( echo [ERROR] No existe el contrato %SPEC_FILE%. & exit /b 1 )
+if not exist "%ROOT%%DB_SPEC%" ( echo [ERROR] No existe el esquema de BD %DB_SPEC%. & exit /b 1 )
 
 if not exist "%TARGET_DIR%" mkdir "%TARGET_DIR%"
 
@@ -90,6 +94,7 @@ xcopy /E /I /Y "%ROOT%plans" "%TARGET_DIR%\plans" >nul
 xcopy /E /I /Y "%ROOT%.ai" "%TARGET_DIR%\.ai" >nul
 if not exist "%TARGET_DIR%\specs" mkdir "%TARGET_DIR%\specs"
 copy /Y "%ROOT%%SPEC_FILE%" "%TARGET_DIR%\specs\crud-spec.yaml" >nul
+copy /Y "%ROOT%%DB_SPEC%" "%TARGET_DIR%\specs\database-spec.sql" >nul
 if exist "%ROOT%specs\acceptance-criteria.md" copy /Y "%ROOT%specs\acceptance-criteria.md" "%TARGET_DIR%\specs\" >nul
 
 (

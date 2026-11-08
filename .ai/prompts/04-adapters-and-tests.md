@@ -1,7 +1,8 @@
 Lee `.ai/project-context.txt` para usar el `SERVICE_NAME` exacto.
 Configura `backend/pom.xml` con **Java 21** (`<java.version>21</java.version>`), `<artifactId>` igual al `SERVICE_NAME`, Spring Boot 3, PostgreSQL, Checkstyle, ArchUnit, JUnit 5 y Cucumber BDD.
 Implementa:
-1. `docker-compose.yml` en la raíz de `backend/` para levantar PostgreSQL en local (`port: 5432`, `db: product_db`, `user: postgres`, `password: postgres`).
+1. `docker-compose.yml` en la raíz de `backend/` para levantar PostgreSQL en local: `POSTGRES_DB` = nombre de la directiva `-- database:` de `specs/database-spec.sql` (si falta, `<SERVICE_NAME>_db`), `user: postgres`, `password: postgres`, `port: 5432`.
+1b. **Esquema SDD con Flyway:** añade `flyway-core` (+ `flyway-database-postgresql`) al `pom.xml`, copia el DDL de `specs/database-spec.sql` a `src/main/resources/db/migration/V1__init.sql`, y configura `spring.jpa.hibernate.ddl-auto: validate` en `local`/`dev` (Flyway crea las tablas; Hibernate solo valida). El perfil `test` usa H2 (`create-drop`, Flyway off) o Testcontainers con el mismo `V1__init.sql`. Las entidades JPA deben coincidir 1:1 con el DDL.
 2. Adaptadores de salida (Spring Data JPA para PostgreSQL con entidades separadas del dominio y mappers) y adaptadores de entrada (Controladores REST con `jakarta.validation`).
 3. Perfiles `application.yml` (`spring.application.name` igual a `SERVICE_NAME`), `application-local.yml`, `application-dev.yml` y `application-test.yml` según `CLAUDE.md`.
 4. Tests unitarios/WebMvcTest en JUnit 5 y escenarios en Cucumber BDD (`.feature` + Step Definitions) con reporte HTML en `target/cucumber-reports/cucumber.html` por cada endpoint de `specs/crud-spec.yaml`.

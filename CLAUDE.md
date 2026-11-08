@@ -31,6 +31,13 @@ Si se solicita ejecutar o continuar el flujo de generación del CRUD, **DEBES se
 - Tests de Aceptación (Cucumber BDD): `mvnw.cmd verify -Dspring.profiles.active=test`
 - Análisis Estático: `mvnw.cmd checkstyle:check`
 
+## Esquema de Base de Datos como Especificación (SDD + Flyway)
+Además del contrato OpenAPI (`specs/crud-spec.yaml`), el esquema PostgreSQL se define como especificación en **`specs/database-spec.sql`** (DDL) y es la **fuente de verdad** del modelo de datos:
+- **Creación de la base de datos:** el nombre se toma de la directiva `-- database: <nombre_db>` del fichero (si falta, `<SERVICE_NAME>_db`). `docker-compose.yml` crea esa base con `POSTGRES_DB`, y `application-local.yml`/`application-dev.yml` apuntan a ella.
+- **Creación de las tablas (Flyway):** copia el DDL de `specs/database-spec.sql` a `src/main/resources/db/migration/V1__init.sql`. Añade `flyway-core` (y `flyway-database-postgresql`) y deja que Flyway cree las tablas al arrancar. **Configura `spring.jpa.hibernate.ddl-auto: validate`** en `local`/`dev`: Hibernate NO crea el esquema, solo valida que las entidades JPA coinciden 1:1 con las tablas declaradas (columnas, tipos, PK/FK, UNIQUE, NOT NULL). Si no coinciden, el arranque falla: eso es SDD.
+- **Tests:** para que `mvnw.cmd clean verify` sea autónomo, el perfil `test` usa H2 (modo PostgreSQL) con `ddl-auto: create-drop` y Flyway deshabilitado, **o** Testcontainers PostgreSQL aplicando el mismo `V1__init.sql` (opción más fiel; úsala si Docker está disponible).
+- **Coherencia obligatoria:** las entidades JPA, los nombres de tabla/columna y los tipos deben derivarse del DDL, no al revés. Cualquier cambio de modelo empieza en `specs/database-spec.sql`.
+
 ## Base de Datos y Entornos (PostgreSQL + Docker + Spring Profiles)
 - Persistencia obligatoria en **PostgreSQL** usando Spring Data JPA.
 - Genera un `docker-compose.yml` en la raíz del microservicio `backend/` para levantar PostgreSQL en local (`port: 5432`, `db: product_db`, `user: postgres`, `password: postgres`).
@@ -52,7 +59,7 @@ Si se solicita ejecutar o continuar el flujo de generación del CRUD, **DEBES se
   - **Request y Response por cada endpoint (OBLIGATORIO):** para cada endpoint de `specs/crud-spec.yaml`, el documento debe mostrar explícitamente:
     - **Request:** parámetros (path/query) y, cuando aplique, el cuerpo JSON de ejemplo y su esquema (campos, tipos, obligatoriedad y validaciones).
     - **Response:** el cuerpo JSON de ejemplo de la respuesta de éxito por su código HTTP y, al menos, un ejemplo del cuerpo de error (`{ code, message }` o la estructura de error del servicio).
-  - Modelo de datos y flujos principales.
+  - **Modelo de datos exacto (OBLIGATORIO):** el documento debe reflejar fielmente el esquema de `specs/database-spec.sql`: por cada tabla, sus columnas con tipo PostgreSQL, nulabilidad, claves primarias/foráneas, UNIQUE e índices, tal y como se crean en la base de datos.
   - **Diagrama (OBLIGATORIO):** al menos un diagrama embebido como **SVG inline** (sin imágenes externas) que represente la arquitectura hexagonal del servicio (adaptadores de entrada/web → aplicación/puertos y casos de uso → dominio, y adaptador de salida → PostgreSQL) o el flujo principal de una petición.
   - Resumen de entornos (`local` con Docker PostgreSQL y `dev`) y evidencias de calidad (tests JUnit 5, ArchUnit y Cucumber BDD).
 

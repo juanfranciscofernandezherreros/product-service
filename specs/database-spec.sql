@@ -1,0 +1,59 @@
+-- =====================================================================
+--  Especificacion de Base de Datos (PostgreSQL) — fuente de verdad (SDD)
+-- =====================================================================
+--  Este fichero define la base de datos y las tablas del microservicio.
+--  Es la FUENTE DE VERDAD del esquema: Flyway lo aplica como migracion y
+--  JPA se configura en modo 'validate' para comprobar que las entidades
+--  coinciden exactamente con estas tablas.
+--
+--  Directiva opcional (primera linea util): nombre de la base de datos.
+--    -- database: <nombre_db>
+--  Si no se indica, se usa "<service>_db".
+--
+--  Reglas:
+--   * Define aqui CREATE TABLE / indices / constraints (DDL PostgreSQL valido).
+--   * NO incluyas CREATE DATABASE: la base la crea docker-compose/init con el
+--     nombre de la directiva "-- database:".
+--   * Las columnas, tipos, PK/FK, UNIQUE y NOT NULL declarados aqui deben
+--     reflejarse 1:1 en las entidades JPA (SDD).
+--
+--  Ejemplo (borra y sustituye por tu esquema real):
+-- ---------------------------------------------------------------------
+-- -- database: fund_db
+--
+-- CREATE TABLE funds (
+--     isin                    VARCHAR(12)     PRIMARY KEY,
+--     name                    VARCHAR(255)    NOT NULL,
+--     category                VARCHAR(255)    NOT NULL,
+--     currency                VARCHAR(3)      NOT NULL,
+--     current_nav             NUMERIC(18,6),
+--     risk_level              INTEGER         NOT NULL CHECK (risk_level BETWEEN 1 AND 7),
+--     management_fee          NUMERIC(10,4),
+--     depositary_fee          NUMERIC(10,4),
+--     assets_under_management NUMERIC(20,2),
+--     description             VARCHAR(2000)
+-- );
+--
+-- CREATE TABLE nav_points (
+--     id        BIGSERIAL      PRIMARY KEY,
+--     isin      VARCHAR(12)    NOT NULL REFERENCES funds(isin) ON DELETE CASCADE,
+--     nav_date  DATE           NOT NULL,
+--     nav       NUMERIC(18,6)  NOT NULL,
+--     UNIQUE (isin, nav_date)
+-- );
+--
+-- CREATE INDEX idx_nav_points_isin_date ON nav_points (isin, nav_date);
+--
+-- CREATE TABLE orders (
+--     order_id       UUID           PRIMARY KEY,
+--     account_id     VARCHAR(64)    NOT NULL,
+--     isin           VARCHAR(12)    NOT NULL,
+--     operation_type VARCHAR(20)    NOT NULL,
+--     amount         NUMERIC(20,2)  NOT NULL,
+--     currency       VARCHAR(3)     NOT NULL,
+--     status         VARCHAR(20)    NOT NULL,
+--     created_at     TIMESTAMPTZ    NOT NULL
+-- );
+--
+-- CREATE INDEX idx_orders_isin_status ON orders (isin, status);
+-- =====================================================================
