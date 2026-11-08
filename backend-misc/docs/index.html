@@ -1,0 +1,277 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>misc-service — Documentación funcional</title>
+<style>
+:root{--bg:#f7f8fa;--card:#fff;--ink:#1c2433;--muted:#5b6678;--acc:#2f6feb;--border:#e3e7ee;--code:#eef1f6;--ok:#1f9d55;--warn:#b7791f;}
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--ink);line-height:1.55}
+header{background:linear-gradient(135deg,#2f6feb,#1b3e8c);color:#fff;padding:32px 24px}
+header h1{margin:0 0 6px;font-size:28px}
+header p{margin:0;opacity:.9}
+main{max-width:980px;margin:0 auto;padding:24px 16px 64px}
+section{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px 22px;margin:18px 0}
+h2{margin-top:0;font-size:21px;border-bottom:2px solid var(--acc);padding-bottom:6px}
+h3{font-size:16px;margin:18px 0 6px}
+code,pre{font-family:ui-monospace,SFMono-Regular,Consolas,monospace}
+pre{background:var(--code);border:1px solid var(--border);border-radius:8px;padding:12px;overflow:auto;font-size:13px}
+table{width:100%;border-collapse:collapse;margin:8px 0;font-size:14px}
+th,td{text-align:left;padding:8px 10px;border:1px solid var(--border)}
+th{background:#f0f3f9}
+.method{display:inline-block;font-weight:700;font-size:12px;padding:2px 8px;border-radius:5px;color:#fff;margin-right:8px}
+.post{background:#1f9d55}.get{background:#2f6feb}.patch{background:#b7791f}
+.ep{border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin:14px 0}
+.path{font-family:ui-monospace,monospace;font-weight:600}
+.muted{color:var(--muted);font-size:13px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:720px){.grid2{grid-template-columns:1fr}}
+.pill{display:inline-block;background:var(--code);border:1px solid var(--border);border-radius:20px;padding:2px 10px;font-size:12px;margin:2px}
+</style>
+</head>
+<body>
+<header>
+  <h1>misc-service</h1>
+  <p>Dominio Misc — sugerencias, bitácora de usuario y borradores de writing · Arquitectura hexagonal · Java 21 + Spring Boot 3 · Database-First (Flyway + JPA validate)</p>
+</header>
+<main>
+
+<section>
+  <h2>1. Propósito y reglas de negocio</h2>
+  <p>Este servicio agrupa tres capacidades transversales del producto:</p>
+  <ul>
+    <li><strong>Sugerencias</strong>: cualquier persona propone mejoras; una sugerencia nace en estado <code>pendiente</code> y transita a <code>publicada</code> o <code>rechazada</code>. Título 5–100 car., descripción 10–1000 car.</li>
+    <li><strong>Bitácora</strong> (por usuario): categorías (nombre 1–60 car.) y anotaciones (contenido 1–10000 car.) que pueden asociarse opcionalmente a una categoría del mismo usuario.</li>
+    <li><strong>Borradores de writing</strong> (por usuario): tipo obligatorio (<code>essay, article, review, email_informal, email_formal, report, story</code>), título (por defecto «Mi writing B2») y contenido.</li>
+  </ul>
+  <p class="muted">Errores uniformes <code>{ code, message }</code>: <code>BAD_REQUEST</code> (400), <code>RESOURCE_NOT_FOUND</code> (404), <code>INTERNAL_ERROR</code> (500).</p>
+</section>
+
+<section>
+  <h2>2. Arquitectura hexagonal</h2>
+  <svg viewBox="0 0 900 300" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Diagrama hexagonal del servicio" style="width:100%;height:auto">
+    <rect x="0" y="0" width="900" height="300" fill="#fff"/>
+    <!-- entrada -->
+    <rect x="20" y="90" width="180" height="120" rx="10" fill="#eaf1ff" stroke="#2f6feb"/>
+    <text x="110" y="130" text-anchor="middle" font-size="14" font-weight="700" fill="#1b3e8c">Adaptador IN</text>
+    <text x="110" y="152" text-anchor="middle" font-size="12" fill="#1c2433">REST Controllers</text>
+    <text x="110" y="170" text-anchor="middle" font-size="12" fill="#1c2433">DTOs (record)</text>
+    <text x="110" y="188" text-anchor="middle" font-size="12" fill="#1c2433">ExceptionHandler</text>
+    <!-- aplicacion -->
+    <rect x="260" y="70" width="190" height="160" rx="10" fill="#f3f7ee" stroke="#1f9d55"/>
+    <text x="355" y="108" text-anchor="middle" font-size="14" font-weight="700" fill="#1a6e3c">Aplicación</text>
+    <text x="355" y="132" text-anchor="middle" font-size="12" fill="#1c2433">MiscUseCase (port.in)</text>
+    <text x="355" y="150" text-anchor="middle" font-size="12" fill="#1c2433">MiscService</text>
+    <text x="355" y="168" text-anchor="middle" font-size="12" fill="#1c2433">MiscOutPorts (port.out)</text>
+    <!-- dominio -->
+    <polygon points="520,150 560,90 640,90 680,150 640,210 560,210" fill="#fff6e8" stroke="#b7791f"/>
+    <text x="600" y="145" text-anchor="middle" font-size="14" font-weight="700" fill="#8a5a0f">Dominio</text>
+    <text x="600" y="165" text-anchor="middle" font-size="11" fill="#1c2433">modelos puros</text>
+    <!-- salida -->
+    <rect x="700" y="90" width="180" height="120" rx="10" fill="#eaf1ff" stroke="#2f6feb"/>
+    <text x="790" y="130" text-anchor="middle" font-size="14" font-weight="700" fill="#1b3e8c">Adaptador OUT</text>
+    <text x="790" y="152" text-anchor="middle" font-size="12" fill="#1c2433">JPA + Mapper</text>
+    <text x="790" y="170" text-anchor="middle" font-size="12" fill="#1c2433">Spring Data</text>
+    <text x="790" y="188" text-anchor="middle" font-size="12" fill="#1c2433">PostgreSQL</text>
+    <!-- flechas -->
+    <line x1="200" y1="150" x2="258" y2="150" stroke="#5b6678" stroke-width="2" marker-end="url(#a)"/>
+    <line x1="450" y1="150" x2="518" y2="150" stroke="#5b6678" stroke-width="2" marker-end="url(#a)"/>
+    <line x1="680" y1="150" x2="698" y2="150" stroke="#5b6678" stroke-width="2" marker-end="url(#a)"/>
+    <defs><marker id="a" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#5b6678"/></marker></defs>
+    <text x="450" y="260" text-anchor="middle" font-size="12" fill="#5b6678">HTTP → casos de uso → puertos → dominio · persistencia a PostgreSQL vía adaptador de salida</text>
+  </svg>
+</section>
+
+<section>
+  <h2>3. Catálogo funcional de endpoints (Request / Response)</h2>
+
+  <div class="ep">
+    <div><span class="method post">POST</span><span class="path">/v1/suggestions</span></div>
+    <p class="muted">Crea una sugerencia (estado inicial <code>pendiente</code>). Validación: título 5–100, descripción 10–1000.</p>
+    <div class="grid2">
+      <div><h3>Request</h3><pre>{
+  "titulo": "Nueva funcionalidad",
+  "descripcion": "Me gustaria exportar en PDF"
+}</pre></div>
+      <div><h3>Response 201</h3><pre>{
+  "id": 1,
+  "titulo": "Nueva funcionalidad",
+  "descripcion": "Me gustaria exportar en PDF",
+  "estado": "pendiente",
+  "creadoEn": "2026-11-08T12:00:00Z"
+}</pre></div>
+    </div>
+    <h3>Error 400</h3><pre>{ "code": "BAD_REQUEST", "message": "titulo: size must be between 5 and 100" }</pre>
+  </div>
+
+  <div class="ep">
+    <div><span class="method get">GET</span><span class="path">/v1/suggestions/{id}</span></div>
+    <p class="muted">Obtiene una sugerencia por id.</p>
+    <div class="grid2">
+      <div><h3>Request</h3><pre>path: id = 1</pre></div>
+      <div><h3>Response 200</h3><pre>{
+  "id": 1, "titulo": "Nueva funcionalidad",
+  "descripcion": "...", "estado": "pendiente",
+  "creadoEn": "2026-11-08T12:00:00Z"
+}</pre></div>
+    </div>
+    <h3>Error 404</h3><pre>{ "code": "RESOURCE_NOT_FOUND", "message": "Suggestion not found: 99" }</pre>
+  </div>
+
+  <div class="ep">
+    <div><span class="method get">GET</span><span class="path">/v1/suggestions?estado=&offset=&limit=</span></div>
+    <p class="muted">Lista paginada con filtro opcional por estado.</p>
+    <div class="grid2">
+      <div><h3>Request</h3><pre>query: estado=pendiente (opcional)
+       offset=0, limit=20</pre></div>
+      <div><h3>Response 200</h3><pre>{
+  "items": [ { "id":1, "estado":"pendiente", ... } ],
+  "total": 1, "offset": 0, "limit": 20
+}</pre></div>
+    </div>
+  </div>
+
+  <div class="ep">
+    <div><span class="method patch">PATCH</span><span class="path">/v1/suggestions/{id}/status</span></div>
+    <p class="muted">Cambia el estado. Valores: <code>pendiente</code>, <code>publicada</code>, <code>rechazada</code>.</p>
+    <div class="grid2">
+      <div><h3>Request</h3><pre>{ "estado": "publicada" }</pre></div>
+      <div><h3>Response 200</h3><pre>{ "id":1, "estado":"publicada", ... }</pre></div>
+    </div>
+    <h3>Error 400</h3><pre>{ "code": "BAD_REQUEST", "message": "Invalid suggestion status: foo" }</pre>
+  </div>
+
+  <div class="ep">
+    <div><span class="method post">POST</span><span class="path">/v1/users/{userId}/logbook/categories</span></div>
+    <div class="grid2">
+      <div><h3>Request</h3><pre>path: userId (uuid)
+{ "nombre": "Gramatica" }</pre></div>
+      <div><h3>Response 201</h3><pre>{
+  "id": "e3b0...", "usuarioId": "u-uuid",
+  "nombre": "Gramatica",
+  "creadoEn": "2026-11-08T12:00:00Z"
+}</pre></div>
+    </div>
+  </div>
+
+  <div class="ep">
+    <div><span class="method get">GET</span><span class="path">/v1/users/{userId}/logbook/categories</span></div>
+    <div class="grid2">
+      <div><h3>Request</h3><pre>path: userId · query: offset, limit</pre></div>
+      <div><h3>Response 200</h3><pre>{ "items":[...], "total":2, "offset":0, "limit":20 }</pre></div>
+    </div>
+  </div>
+
+  <div class="ep">
+    <div><span class="method post">POST</span><span class="path">/v1/users/{userId}/logbook/notes</span></div>
+    <p class="muted"><code>categoriaId</code> opcional; si se envía, debe pertenecer al usuario (si no, 404).</p>
+    <div class="grid2">
+      <div><h3>Request</h3><pre>{
+  "categoriaId": null,
+  "contenido": "Hoy aprendi present perfect"
+}</pre></div>
+      <div><h3>Response 201</h3><pre>{
+  "id":"a1..", "usuarioId":"u-uuid",
+  "categoriaId": null,
+  "contenido":"Hoy aprendi present perfect",
+  "creadoEn":"...", "actualizadoEn":"..."
+}</pre></div>
+    </div>
+    <h3>Error 404</h3><pre>{ "code": "RESOURCE_NOT_FOUND", "message": "Category not found: ..." }</pre>
+  </div>
+
+  <div class="ep">
+    <div><span class="method get">GET</span><span class="path">/v1/users/{userId}/logbook/notes</span></div>
+    <div class="grid2">
+      <div><h3>Request</h3><pre>path: userId · query: offset, limit</pre></div>
+      <div><h3>Response 200</h3><pre>{ "items":[...], "total":5, "offset":0, "limit":20 }</pre></div>
+    </div>
+  </div>
+
+  <div class="ep">
+    <div><span class="method post">POST</span><span class="path">/v1/users/{userId}/writing-drafts</span></div>
+    <p class="muted">Tipo obligatorio del enum. Título por defecto «Mi writing B2» si se omite.</p>
+    <div class="grid2">
+      <div><h3>Request</h3><pre>{ "tipo": "essay", "titulo": null, "contenido": "" }</pre></div>
+      <div><h3>Response 201</h3><pre>{
+  "id":"b2..", "usuarioId":"u-uuid",
+  "tipo":"essay", "titulo":"Mi writing B2",
+  "contenido":"", "creadoEn":"...", "actualizadoEn":"..."
+}</pre></div>
+    </div>
+    <h3>Error 400</h3><pre>{ "code": "BAD_REQUEST", "message": "Invalid writing type: poem" }</pre>
+  </div>
+
+  <div class="ep">
+    <div><span class="method get">GET</span><span class="path">/v1/users/{userId}/writing-drafts</span></div>
+    <div class="grid2">
+      <div><h3>Request</h3><pre>path: userId · query: offset, limit</pre></div>
+      <div><h3>Response 200</h3><pre>{ "items":[...], "total":4, "offset":0, "limit":20 }</pre></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2>4. Modelo de datos (esquema exacto)</h2>
+  <p class="muted">Fuente de verdad: <code>db/migration/V1__init.sql</code>. Flyway crea; JPA valida.</p>
+
+  <h3>sugerencias</h3>
+  <table><tr><th>Columna</th><th>Tipo</th><th>Nulo</th><th>Clave / Regla</th></tr>
+    <tr><td>id</td><td>bigint (identity)</td><td>NO</td><td>PK</td></tr>
+    <tr><td>titulo</td><td>varchar(100)</td><td>NO</td><td>5–100 (dominio)</td></tr>
+    <tr><td>descripcion</td><td>varchar(1000)</td><td>NO</td><td>10–1000 (dominio)</td></tr>
+    <tr><td>estado</td><td>varchar(16)</td><td>NO</td><td>CHECK in (pendiente, publicada, rechazada) · default pendiente</td></tr>
+    <tr><td>creado_en</td><td>timestamptz</td><td>NO</td><td>default now()</td></tr>
+  </table>
+
+  <h3>bitacora_categorias</h3>
+  <table><tr><th>Columna</th><th>Tipo</th><th>Nulo</th><th>Clave / Regla</th></tr>
+    <tr><td>id</td><td>uuid</td><td>NO</td><td>PK (generado en app)</td></tr>
+    <tr><td>usuario_id</td><td>uuid</td><td>NO</td><td></td></tr>
+    <tr><td>nombre</td><td>varchar(60)</td><td>NO</td><td>1–60 (dominio)</td></tr>
+    <tr><td>creado_en</td><td>timestamptz</td><td>NO</td><td>default now()</td></tr>
+  </table>
+
+  <h3>bitacora_anotaciones</h3>
+  <table><tr><th>Columna</th><th>Tipo</th><th>Nulo</th><th>Clave / Regla</th></tr>
+    <tr><td>id</td><td>uuid</td><td>NO</td><td>PK (generado en app)</td></tr>
+    <tr><td>usuario_id</td><td>uuid</td><td>NO</td><td></td></tr>
+    <tr><td>categoria_id</td><td>uuid</td><td>SÍ</td><td>categoría opcional del usuario</td></tr>
+    <tr><td>contenido</td><td>varchar(10000)</td><td>NO</td><td>1–10000 (dominio)</td></tr>
+    <tr><td>creado_en</td><td>timestamptz</td><td>NO</td><td>default now()</td></tr>
+    <tr><td>actualizado_en</td><td>timestamptz</td><td>NO</td><td>default now()</td></tr>
+  </table>
+
+  <h3>writing_borradores</h3>
+  <table><tr><th>Columna</th><th>Tipo</th><th>Nulo</th><th>Clave / Regla</th></tr>
+    <tr><td>id</td><td>uuid</td><td>NO</td><td>PK (generado en app)</td></tr>
+    <tr><td>usuario_id</td><td>uuid</td><td>NO</td><td></td></tr>
+    <tr><td>tipo</td><td>varchar(20)</td><td>NO</td><td>CHECK in (essay, article, review, email_informal, email_formal, report, story)</td></tr>
+    <tr><td>titulo</td><td>varchar(255)</td><td>NO</td><td>default 'Mi writing B2'</td></tr>
+    <tr><td>contenido</td><td>text</td><td>NO</td><td>default ''</td></tr>
+    <tr><td>creado_en</td><td>timestamptz</td><td>NO</td><td>default now()</td></tr>
+    <tr><td>actualizado_en</td><td>timestamptz</td><td>NO</td><td>default now()</td></tr>
+  </table>
+</section>
+
+<section>
+  <h2>5. Entornos y evidencias de calidad</h2>
+  <p>
+    <span class="pill">local · PostgreSQL (Docker)</span>
+    <span class="pill">dev · PostgreSQL (env vars)</span>
+    <span class="pill">test · H2 modo PostgreSQL + Flyway</span>
+  </p>
+  <ul>
+    <li><strong>JUnit 5 + Mockito</strong>: casos de uso y dominio (20 tests).</li>
+    <li><strong>ArchUnit</strong>: aislamiento hexagonal (dominio y aplicación sin dependencias de infraestructura).</li>
+    <li><strong>Cucumber BDD</strong>: 8 escenarios sobre HTTP real · reporte <code>target/cucumber-reports/cucumber.html</code>.</li>
+    <li><strong>JaCoCo</strong>: cobertura <strong>85%</strong> (regla ≥80% enlazada a <code>verify</code>).</li>
+    <li><strong>Checkstyle</strong>: 0 violaciones.</li>
+  </ul>
+  <p class="muted">Verificado con <code>mvn clean verify</code> → BUILD SUCCESS (30 tests).</p>
+</section>
+
+</main>
+</body>
+</html>
