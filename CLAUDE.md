@@ -60,6 +60,7 @@ Cuando el perfil `dev` apunta a Supabase, el acceso a datos sigue esta política
 - **PROHIBIDO:** usar `service_role` para peticiones originadas por el usuario (anularía la seguridad por fila), y escribir cualquier clave secreta o contraseña de base de datos en el repositorio.
 - **Credenciales por entorno:** toda contraseña/clave se inyecta por variable de entorno (p. ej. `DB_PASS_DEV`, `SUPABASE_SERVICE_ROLE_KEY`) y se mantiene fuera del control de versiones (`.gitignore` incluye `.env` y `.env.local`).
 - **La clave publicable** (`sb_publishable_…`) es pública y solo alcanza las tablas con permiso para el rol anónimo (`anon`); no sirve como credencial de backend para datos protegidos por RLS.
+- **Prueba final de datos (OBLIGATORIA):** la entrega incluye una verificación registrada en `specs/VERIFICACION-DATOS.md` que confirma, **por cada microservicio**, que la consulta de su endpoint principal **devuelve datos reales** desde Supabase (dev). Debe mantenerse coherente con esta política de acceso y con la configuración de perfiles (`dev` por defecto, credenciales por variable de entorno).
 
 ## Reporte HTML de Cucumber BDD
 - Configura el runner de Cucumber con el plugin:
@@ -97,3 +98,4 @@ Cuando el perfil `dev` apunta a Supabase, el acceso a datos sigue esta política
    - Antes de escribir código, actualiza `plans/IMPLEMENTATION_PLAN.md` y `plans/TASKS.md` marcando el progreso.
 5. **Verificación Final contra Especificaciones:**
    - Ninguna tarea se considera terminada hasta que `mvnw.cmd clean verify` pase en verde, exista el reporte HTML de Cucumber, se cumpla la **cobertura ≥ 80%** (JaCoCo), exista `backend/docs/index.html` **con el Request y Response de cada endpoint**, se haya auditado frente a `specs/crud-spec.yaml` y se haya completado el commit y push al repositorio remoto.
+   - **Prueba final de datos:** cuando el servicio se conecta a Supabase (perfil `dev`), debe existir además la verificación en `specs/VERIFICACION-DATOS.md` que demuestre que cada endpoint principal **devuelve datos reales**, coherente con la política «Acceso a datos en Supabase» de este SDD.
