@@ -112,3 +112,23 @@ Política recomendada (recogida también en el SDD raíz `CLAUDE.md`):
 | roles | — | ✅ |
 | perfiles_publicos | — | ✅ |
 
+## Prueba por microservicio (consulta del endpoint principal)
+Por cada microservicio se ejecutó la consulta equivalente a su endpoint principal
+(solo lectura). Los 9 **devuelven datos reales**:
+
+| Servicio | Endpoint | Filas | Muestra real |
+|----------|----------|------:|--------------|
+| vocabulary | `/v1/vocabulary/items` | 15 | `{en:"give up", es:"rendirse", level:"B1"}` |
+| access | `/v1/access/roles` | 4 | `{codigo:"superadmin", descripcion:"Control total…"}` |
+| battle | `/v1/battle/questions` | 120 | `{level:"A1", topic:"daily", prompt:"¿Qué significa 'reliable'?"}` |
+| study-plan | `/v1/study-plan/users/{id}` | 1 | `{fecha_examen:"2027-08-02", minutos_dia:60, prioridad:"auto"}` |
+| social | `/v1/social/profiles` | 1 | `{alias:"kiko", avatar:"🎓"}` |
+| exams | `/v1/exams` | 24 | `{codigo:"EE-2026-10-10-002", titulo:"Examen diario 002", nivel:"B1-B2"}` |
+| misc | `/v1/.../logbook/notes` | 28 | `{contenido:"Phrasal verb: Run out of…"}` |
+| content | `/v1/content/articles` | 118 | `{slug:"b2-curso-unidad-12", titulo:"Unidad 12 · Pronouns…"}` |
+| courses | `/v1/courses/activities` | 5 | `{slug:"demostracion-motor-universal", destreza:"use_of_english"}` |
+
+Nota: la comprobación es a nivel de consulta (la misma que ejecutaría cada endpoint).
+Arrancar los 9 procesos y llamarlos por HTTP requiere la credencial de Supabase según la
+política de acceso (JWT del usuario por REST, o `service_role` para backend sin usuario).
+
