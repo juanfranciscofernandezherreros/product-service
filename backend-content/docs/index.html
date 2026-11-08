@@ -1,0 +1,343 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>content-service — Documentación funcional</title>
+<style>
+:root{--bg:#f7f8fa;--card:#fff;--ink:#1c2433;--muted:#5b6678;--acc:#2f6feb;--border:#e3e7ee;--code:#eef1f6;}
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--ink);line-height:1.55}
+header{background:linear-gradient(135deg,#2f6feb,#1b3e8c);color:#fff;padding:32px 24px}
+header h1{margin:0 0 6px;font-size:28px}
+header p{margin:0;opacity:.9}
+main{max-width:1000px;margin:0 auto;padding:24px 16px 64px}
+section{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px 22px;margin:18px 0}
+h2{margin-top:0;font-size:21px;border-bottom:2px solid var(--acc);padding-bottom:6px}
+h3{font-size:16px;margin:18px 0 6px}
+code,pre{font-family:ui-monospace,SFMono-Regular,Consolas,monospace}
+pre{background:var(--code);border:1px solid var(--border);border-radius:8px;padding:12px;overflow:auto;font-size:12.5px}
+table{width:100%;border-collapse:collapse;margin:8px 0;font-size:13.5px}
+th,td{text-align:left;padding:7px 9px;border:1px solid var(--border);vertical-align:top}
+th{background:#f0f3f9}
+.method{display:inline-block;font-weight:700;font-size:11px;padding:2px 7px;border-radius:5px;color:#fff;margin-right:6px}
+.post{background:#1f9d55}.get{background:#2f6feb}.put{background:#8a5a0f}.del{background:#c0392b}
+.ep{border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin:14px 0}
+.path{font-family:ui-monospace,monospace;font-weight:600}
+.muted{color:var(--muted);font-size:13px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:740px){.grid2{grid-template-columns:1fr}}
+.pill{display:inline-block;background:var(--code);border:1px solid var(--border);border-radius:20px;padding:2px 10px;font-size:12px;margin:2px}
+</style>
+</head>
+<body>
+<header>
+  <h1>content-service</h1>
+  <p>Dominio Content &amp; Blog · Arquitectura hexagonal · Java 21 + Spring Boot 3 · Database-First (Flyway + JPA validate)</p>
+</header>
+<main>
+
+<section>
+  <h2>1. Propósito y reglas de negocio</h2>
+  <p>Gestiona todo el contenido editorial del producto:</p>
+  <ul>
+    <li><strong>Artículos</strong>: CRUD completo. <code>ruta</code> debe cumplir <code>post/&lt;slug&gt;.html</code>; <code>ruta</code> y <code>slug</code> son únicos (409 si se duplican). Origen por defecto <code>github</code>.</li>
+    <li><strong>Comentarios</strong>: anidables (<code>padreId</code>), contenido 1–2000 car.; el artículo debe existir (404 si no).</li>
+    <li><strong>Categorías</strong> (PK <code>slug</code>) y <strong>páginas</strong> (PK <code>ruta</code>): alta idempotente con conflicto 409.</li>
+    <li><strong>Colecciones de material</strong>: tipo <code>articulos</code>/<code>vocabulario</code>; <code>nombreArchivo</code> debe cumplir <code>&lt;nombre&gt;.pdf</code>; slug y archivo únicos.</li>
+    <li><strong>Recursos descargables</strong>: categoría por defecto <code>apuntes</code>; slug único; filtrables por categoría.</li>
+    <li><strong>Frases de subtítulos</strong>: <code>subtitleNumber</code> positivo y único por película (UNIQUE movie_slug+subtitle_number).</li>
+  </ul>
+  <p class="muted">Errores uniformes <code>{ code, message }</code>: <code>BAD_REQUEST</code> (400), <code>RESOURCE_NOT_FOUND</code> (404), <code>RESOURCE_ALREADY_EXISTS</code> (409), <code>INTERNAL_ERROR</code> (500).</p>
+</section>
+
+<section>
+  <h2>2. Arquitectura hexagonal</h2>
+  <svg viewBox="0 0 900 300" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Diagrama hexagonal del servicio" style="width:100%;height:auto">
+    <rect x="0" y="0" width="900" height="300" fill="#fff"/>
+    <rect x="20" y="90" width="185" height="120" rx="10" fill="#eaf1ff" stroke="#2f6feb"/>
+    <text x="112" y="128" text-anchor="middle" font-size="14" font-weight="700" fill="#1b3e8c">Adaptador IN</text>
+    <text x="112" y="150" text-anchor="middle" font-size="12" fill="#1c2433">ArticleController</text>
+    <text x="112" y="168" text-anchor="middle" font-size="12" fill="#1c2433">CatalogController</text>
+    <text x="112" y="186" text-anchor="middle" font-size="12" fill="#1c2433">DTOs (record)</text>
+    <rect x="262" y="70" width="195" height="160" rx="10" fill="#f3f7ee" stroke="#1f9d55"/>
+    <text x="359" y="106" text-anchor="middle" font-size="14" font-weight="700" fill="#1a6e3c">Aplicación</text>
+    <text x="359" y="130" text-anchor="middle" font-size="12" fill="#1c2433">ContentUseCase</text>
+    <text x="359" y="148" text-anchor="middle" font-size="12" fill="#1c2433">ContentService</text>
+    <text x="359" y="166" text-anchor="middle" font-size="12" fill="#1c2433">ContentOutPorts</text>
+    <polygon points="525,150 565,90 645,90 685,150 645,210 565,210" fill="#fff6e8" stroke="#b7791f"/>
+    <text x="605" y="145" text-anchor="middle" font-size="14" font-weight="700" fill="#8a5a0f">Dominio</text>
+    <text x="605" y="165" text-anchor="middle" font-size="11" fill="#1c2433">records puros</text>
+    <rect x="705" y="90" width="175" height="120" rx="10" fill="#eaf1ff" stroke="#2f6feb"/>
+    <text x="792" y="128" text-anchor="middle" font-size="14" font-weight="700" fill="#1b3e8c">Adaptador OUT</text>
+    <text x="792" y="150" text-anchor="middle" font-size="12" fill="#1c2433">JPA + Specification</text>
+    <text x="792" y="168" text-anchor="middle" font-size="12" fill="#1c2433">Spring Data</text>
+    <text x="792" y="186" text-anchor="middle" font-size="12" fill="#1c2433">PostgreSQL</text>
+    <line x1="205" y1="150" x2="260" y2="150" stroke="#5b6678" stroke-width="2" marker-end="url(#a)"/>
+    <line x1="457" y1="150" x2="523" y2="150" stroke="#5b6678" stroke-width="2" marker-end="url(#a)"/>
+    <line x1="685" y1="150" x2="703" y2="150" stroke="#5b6678" stroke-width="2" marker-end="url(#a)"/>
+    <defs><marker id="a" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#5b6678"/></marker></defs>
+    <text x="450" y="262" text-anchor="middle" font-size="12" fill="#5b6678">HTTP → casos de uso → puertos → dominio · persistencia a PostgreSQL vía adaptador de salida</text>
+  </svg>
+</section>
+
+<section>
+  <h2>3. Catálogo funcional de endpoints (Request / Response)</h2>
+
+  <div class="ep">
+    <div><span class="method post">POST</span><span class="path">/v1/content/articles</span></div>
+    <p class="muted">Crea un artículo. 409 si ruta o slug ya existen.</p>
+    <div class="grid2">
+      <div><h3>Request</h3><pre>{
+  "ruta": "post/mi-post.html",
+  "slug": "mi-post",
+  "titulo": "Mi post",
+  "descripcion": "resumen",
+  "html": "&lt;p&gt;cuerpo&lt;/p&gt;",
+  "urlPublica": "https://blog/mi-post",
+  "categoriaSlug": "gramatica",
+  "fechaPublicacion": "2026-11-08",
+  "nivel": "B2"
+}</pre></div>
+      <div><h3>Response 201</h3><pre>{
+  "id": 1, "ruta": "post/mi-post.html",
+  "slug": "mi-post", "titulo": "Mi post",
+  "origen": "github", "esArticuloIndice": false,
+  "actualizadoEn": "2026-11-08T12:00:00Z", ...
+}</pre></div>
+    </div>
+    <h3>Errores</h3><pre>400 { "code":"BAD_REQUEST", "message":"ruta must match post/&lt;slug&gt;.html" }
+409 { "code":"RESOURCE_ALREADY_EXISTS", "message":"Article with ruta or slug already exists" }</pre>
+  </div>
+
+  <div class="ep">
+    <div><span class="method get">GET</span><span class="path">/v1/content/articles?categoriaSlug=&nivel=&offset=&limit=</span></div>
+    <div class="grid2">
+      <div><h3>Request</h3><pre>query: categoriaSlug, nivel (opc.)
+       offset=0, limit=20</pre></div>
+      <div><h3>Response 200</h3><pre>{ "items":[ {Article} ], "total":1,
+  "offset":0, "limit":20 }</pre></div>
+    </div>
+  </div>
+
+  <div class="ep">
+    <div><span class="method get">GET</span><span class="path">/v1/content/articles/{slug}</span>
+         &nbsp;<span class="method put">PUT</span><span class="method del">DELETE</span></div>
+    <div class="grid2">
+      <div><h3>GET / PUT request</h3><pre>GET  → path slug
+PUT  → { "titulo":"...", "descripcion":"...",
+         "html":"...", "categoriaSlug":"...",
+         "nivel":"C1" }   (campos opcionales)
+DELETE → 204 sin cuerpo</pre></div>
+      <div><h3>Response</h3><pre>200 { Article }           (GET/PUT)
+204 (DELETE, sin cuerpo)
+404 { "code":"RESOURCE_NOT_FOUND",
+      "message":"Article not found: x" }</pre></div>
+    </div>
+  </div>
+
+  <div class="ep">
+    <div><span class="method get">GET</span><span class="method post">POST</span><span class="path">/v1/content/articles/{slug}/comments</span></div>
+    <div class="grid2">
+      <div><h3>Request (POST)</h3><pre>{
+  "padreId": null,
+  "autorId": null,
+  "contenido": "Gran articulo"
+}</pre></div>
+      <div><h3>Response</h3><pre>201 {
+  "id":1, "articuloSlug":"mi-post",
+  "padreId":null, "autorId":null,
+  "contenido":"Gran articulo",
+  "creadoEn":"..." }
+404 si el artículo no existe</pre></div>
+    </div>
+  </div>
+
+  <div class="ep">
+    <div><span class="method get">GET</span><span class="method post">POST</span><span class="path">/v1/content/categories</span></div>
+    <div class="grid2">
+      <div><h3>Request (POST)</h3><pre>{ "slug":"gramatica", "nombre":"Gramatica",
+  "descripcion":"...", "orden":1 }</pre></div>
+      <div><h3>Response</h3><pre>201 { "slug":"gramatica", "nombre":"Gramatica",
+      "descripcion":"...", "orden":1 }
+409 si el slug ya existe</pre></div>
+    </div>
+  </div>
+
+  <div class="ep">
+    <div><span class="method get">GET</span><span class="method post">POST</span><span class="path">/v1/content/pages</span></div>
+    <div class="grid2">
+      <div><h3>Request (POST)</h3><pre>{ "ruta":"pages/about.html", "titulo":"About",
+  "descripcion":"...", "html":"&lt;p&gt;...&lt;/p&gt;",
+  "urlPublica":"https://blog/about" }</pre></div>
+      <div><h3>Response</h3><pre>201 { "ruta":"pages/about.html", "titulo":"About",
+      "html":"...", "urlPublica":"...",
+      "actualizadoEn":"..." }
+409 si la ruta ya existe</pre></div>
+    </div>
+  </div>
+
+  <div class="ep">
+    <div><span class="method get">GET</span><span class="method post">POST</span><span class="path">/v1/content/collections</span></div>
+    <div class="grid2">
+      <div><h3>Request (POST)</h3><pre>{ "slug":"col-1", "titulo":"Coleccion 1",
+  "tipo":"articulos", "incluirTodosArticulos":false,
+  "nombreArchivo":"coleccion1.pdf",
+  "fechaPublicacion":"2026-11-08" }</pre></div>
+      <div><h3>Response</h3><pre>201 { "id":1, "slug":"col-1", "tipo":"articulos",
+      "nombreArchivo":"coleccion1.pdf",
+      "publicado":true, ... }
+400 si nombreArchivo no es .pdf · 409 slug/archivo duplicado</pre></div>
+    </div>
+  </div>
+
+  <div class="ep">
+    <div><span class="method get">GET</span><span class="method post">POST</span><span class="path">/v1/content/downloadables?categoria=</span></div>
+    <div class="grid2">
+      <div><h3>Request (POST)</h3><pre>{ "slug":"apunte-1", "titulo":"Apunte",
+  "categoria":"apuntes",
+  "urlArchivo":"https://f/apunte.pdf",
+  "urlLectura":"https://f/apunte" }</pre></div>
+      <div><h3>Response</h3><pre>201 { "id":1, "slug":"apunte-1",
+      "categoria":"apuntes", "orden":100,
+      "publicado":true, "creadoEn":"...", ... }
+409 si el slug ya existe</pre></div>
+    </div>
+  </div>
+
+  <div class="ep">
+    <div><span class="method get">GET</span><span class="method post">POST</span><span class="path">/v1/content/movie-phrases?movieSlug=</span></div>
+    <div class="grid2">
+      <div><h3>Request (POST)</h3><pre>{ "movieSlug":"matrix", "movieTitle":"The Matrix",
+  "subtitleNumber":1, "timecode":"00:01:23",
+  "phrase":"There is no spoon",
+  "tenseLabels":"present", "notes":"" }</pre></div>
+      <div><h3>Response</h3><pre>201 { "id":1, "movieSlug":"matrix",
+      "subtitleNumber":1, "phrase":"...",
+      "createdAt":"..." }
+400 si subtitleNumber &lt;= 0 · 409 número duplicado por película</pre></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2>4. Modelo de datos (esquema exacto)</h2>
+  <p class="muted">Fuente de verdad: <code>db/migration/V1__init.sql</code>. Flyway crea; JPA valida.</p>
+
+  <h3>articulos</h3>
+  <table><tr><th>Columna</th><th>Tipo</th><th>Nulo</th><th>Clave / Regla</th></tr>
+    <tr><td>id</td><td>bigint (identity)</td><td>NO</td><td>PK</td></tr>
+    <tr><td>ruta</td><td>varchar(255)</td><td>NO</td><td>UNIQUE · formato post/&lt;slug&gt;.html (dominio)</td></tr>
+    <tr><td>slug</td><td>varchar(255)</td><td>NO</td><td>UNIQUE</td></tr>
+    <tr><td>titulo</td><td>varchar(255)</td><td>NO</td><td></td></tr>
+    <tr><td>descripcion</td><td>text</td><td>SÍ</td><td></td></tr>
+    <tr><td>html</td><td>text</td><td>NO</td><td></td></tr>
+    <tr><td>url_publica</td><td>varchar(500)</td><td>NO</td><td></td></tr>
+    <tr><td>origen</td><td>varchar(50)</td><td>NO</td><td>default 'github'</td></tr>
+    <tr><td>actualizado_en</td><td>timestamptz</td><td>NO</td><td>default now()</td></tr>
+    <tr><td>categoria_slug</td><td>varchar(255)</td><td>SÍ</td><td></td></tr>
+    <tr><td>fecha_publicacion</td><td>date</td><td>SÍ</td><td></td></tr>
+    <tr><td>nivel</td><td>varchar(50)</td><td>SÍ</td><td></td></tr>
+    <tr><td>contenido_texto</td><td>text</td><td>SÍ</td><td></td></tr>
+    <tr><td>palabras</td><td>integer</td><td>SÍ</td><td></td></tr>
+    <tr><td>es_articulo_indice</td><td>boolean</td><td>NO</td><td>default false</td></tr>
+    <tr><td>usuario_id</td><td>uuid</td><td>SÍ</td><td></td></tr>
+  </table>
+
+  <h3>comentarios_articulos</h3>
+  <table><tr><th>Columna</th><th>Tipo</th><th>Nulo</th><th>Clave / Regla</th></tr>
+    <tr><td>id</td><td>bigint (identity)</td><td>NO</td><td>PK</td></tr>
+    <tr><td>articulo_slug</td><td>varchar(255)</td><td>NO</td><td></td></tr>
+    <tr><td>padre_id</td><td>bigint</td><td>SÍ</td><td>comentario padre</td></tr>
+    <tr><td>autor_id</td><td>uuid</td><td>SÍ</td><td></td></tr>
+    <tr><td>contenido</td><td>text</td><td>NO</td><td>1–2000 (dominio)</td></tr>
+    <tr><td>creado_en</td><td>timestamptz</td><td>NO</td><td>default now()</td></tr>
+    <tr><td>eliminado / oculto</td><td>boolean</td><td>NO</td><td>default false</td></tr>
+  </table>
+
+  <h3>categorias_blog</h3>
+  <table><tr><th>Columna</th><th>Tipo</th><th>Nulo</th><th>Clave</th></tr>
+    <tr><td>slug</td><td>varchar(255)</td><td>NO</td><td>PK</td></tr>
+    <tr><td>nombre</td><td>varchar(255)</td><td>NO</td><td></td></tr>
+    <tr><td>descripcion</td><td>text</td><td>SÍ</td><td></td></tr>
+    <tr><td>orden</td><td>integer</td><td>NO</td><td>default 0</td></tr>
+  </table>
+
+  <h3>paginas_blog</h3>
+  <table><tr><th>Columna</th><th>Tipo</th><th>Nulo</th><th>Clave</th></tr>
+    <tr><td>ruta</td><td>varchar(255)</td><td>NO</td><td>PK</td></tr>
+    <tr><td>titulo</td><td>varchar(255)</td><td>NO</td><td></td></tr>
+    <tr><td>descripcion</td><td>text</td><td>SÍ</td><td></td></tr>
+    <tr><td>html</td><td>text</td><td>NO</td><td></td></tr>
+    <tr><td>url_publica</td><td>varchar(500)</td><td>NO</td><td></td></tr>
+    <tr><td>actualizado_en</td><td>timestamptz</td><td>SÍ</td><td>default now()</td></tr>
+  </table>
+
+  <h3>colecciones_material</h3>
+  <table><tr><th>Columna</th><th>Tipo</th><th>Nulo</th><th>Clave / Regla</th></tr>
+    <tr><td>id</td><td>bigint (identity)</td><td>NO</td><td>PK</td></tr>
+    <tr><td>slug</td><td>varchar(255)</td><td>NO</td><td>UNIQUE</td></tr>
+    <tr><td>titulo</td><td>varchar(255)</td><td>NO</td><td></td></tr>
+    <tr><td>descripcion</td><td>text</td><td>SÍ</td><td></td></tr>
+    <tr><td>tipo</td><td>varchar(20)</td><td>NO</td><td>CHECK in (articulos, vocabulario)</td></tr>
+    <tr><td>incluir_todos_articulos</td><td>boolean</td><td>NO</td><td>default false</td></tr>
+    <tr><td>nombre_archivo</td><td>varchar(255)</td><td>NO</td><td>UNIQUE · formato &lt;nombre&gt;.pdf (dominio)</td></tr>
+    <tr><td>fecha_publicacion</td><td>date</td><td>SÍ</td><td></td></tr>
+    <tr><td>publicado</td><td>boolean</td><td>NO</td><td>default true</td></tr>
+  </table>
+
+  <h3>coleccion_articulos</h3>
+  <table><tr><th>Columna</th><th>Tipo</th><th>Nulo</th><th>Clave</th></tr>
+    <tr><td>coleccion_id</td><td>bigint</td><td>NO</td><td>PK (compuesta)</td></tr>
+    <tr><td>articulo_slug</td><td>varchar(255)</td><td>NO</td><td>PK (compuesta)</td></tr>
+    <tr><td>orden</td><td>integer</td><td>NO</td><td>default 100</td></tr>
+  </table>
+
+  <h3>recursos_descargables</h3>
+  <table><tr><th>Columna</th><th>Tipo</th><th>Nulo</th><th>Clave / Regla</th></tr>
+    <tr><td>id</td><td>bigint (identity)</td><td>NO</td><td>PK</td></tr>
+    <tr><td>slug</td><td>varchar(255)</td><td>NO</td><td>UNIQUE</td></tr>
+    <tr><td>titulo</td><td>varchar(255)</td><td>NO</td><td></td></tr>
+    <tr><td>descripcion</td><td>text</td><td>SÍ</td><td></td></tr>
+    <tr><td>categoria</td><td>varchar(100)</td><td>NO</td><td>default 'apuntes'</td></tr>
+    <tr><td>fecha_publicacion</td><td>date</td><td>SÍ</td><td></td></tr>
+    <tr><td>url_archivo</td><td>varchar(500)</td><td>NO</td><td></td></tr>
+    <tr><td>url_lectura</td><td>varchar(500)</td><td>SÍ</td><td></td></tr>
+    <tr><td>orden</td><td>integer</td><td>NO</td><td>default 100</td></tr>
+    <tr><td>publicado</td><td>boolean</td><td>NO</td><td>default true</td></tr>
+    <tr><td>creado_en</td><td>timestamptz</td><td>NO</td><td>default now()</td></tr>
+  </table>
+
+  <h3>movie_subtitle_phrases</h3>
+  <table><tr><th>Columna</th><th>Tipo</th><th>Nulo</th><th>Clave / Regla</th></tr>
+    <tr><td>id</td><td>bigint (identity)</td><td>NO</td><td>PK</td></tr>
+    <tr><td>movie_slug</td><td>varchar(255)</td><td>NO</td><td>UNIQUE(movie_slug, subtitle_number)</td></tr>
+    <tr><td>movie_title</td><td>varchar(255)</td><td>NO</td><td></td></tr>
+    <tr><td>subtitle_number</td><td>integer</td><td>NO</td><td>CHECK &gt; 0</td></tr>
+    <tr><td>timecode</td><td>varchar(50)</td><td>NO</td><td></td></tr>
+    <tr><td>phrase</td><td>text</td><td>NO</td><td></td></tr>
+    <tr><td>tense_labels / notes</td><td>text</td><td>NO</td><td>default ''</td></tr>
+    <tr><td>created_at</td><td>timestamptz</td><td>NO</td><td>default now()</td></tr>
+  </table>
+</section>
+
+<section>
+  <h2>5. Entornos y evidencias de calidad</h2>
+  <p>
+    <span class="pill">local · PostgreSQL (Docker)</span>
+    <span class="pill">dev · PostgreSQL (env vars)</span>
+    <span class="pill">test · H2 modo PostgreSQL + Flyway</span>
+  </p>
+  <ul>
+    <li><strong>JUnit 5 + Mockito</strong>: casos de uso y dominio (30 tests).</li>
+    <li><strong>ArchUnit</strong>: aislamiento hexagonal (dominio y aplicación sin infraestructura).</li>
+    <li><strong>Cucumber BDD</strong>: 12 escenarios sobre HTTP real · reporte <code>target/cucumber-reports/cucumber.html</code>.</li>
+    <li><strong>JaCoCo</strong>: cobertura <strong>89%</strong> (regla ≥80% enlazada a <code>verify</code>).</li>
+    <li><strong>Checkstyle</strong>: 0 violaciones.</li>
+  </ul>
+  <p class="muted">Verificado con <code>mvn clean verify</code> → BUILD SUCCESS (44 tests).</p>
+</section>
+
+</main>
+</body>
+</html>
