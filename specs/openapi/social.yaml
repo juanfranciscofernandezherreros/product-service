@@ -1,0 +1,147 @@
+openapi: 3.0.3
+info:
+  title: Social & Messaging API
+  description: Dominio social (perfiles públicos, seguimientos) y mensajería privada. Derivado del esquema PostgreSQL.
+  version: 1.0.0
+servers:
+  - url: https://api.tudominio.com/v1
+paths:
+  /v1/social/public-profiles:
+    post:
+      summary: Crear perfil público
+      operationId: createPublicProfile
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/PublicProfileCreate' } } } }
+      responses:
+        '201': { description: Creado, content: { application/json: { schema: { $ref: '#/components/schemas/PublicProfile' } } } }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '409': { description: Alias ya en uso (UNIQUE alias), content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+  /v1/social/public-profiles/{userId}:
+    parameters: [ { name: userId, in: path, required: true, schema: { type: string, format: uuid } } ]
+    get:
+      summary: Obtener perfil público
+      operationId: getPublicProfile
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/PublicProfile' } } } }
+        '404': { $ref: '#/components/responses/NotFound' }
+    put:
+      summary: Actualizar perfil público
+      operationId: updatePublicProfile
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/PublicProfileUpdate' } } } }
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/PublicProfile' } } } }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /v1/social/users/{userId}/following:
+    parameters: [ { name: userId, in: path, required: true, schema: { type: string, format: uuid } } ]
+    get:
+      summary: Usuarios seguidos
+      operationId: listFollowing
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { type: array, items: { type: string, format: uuid } } } } }
+    post:
+      summary: Seguir a un usuario
+      operationId: follow
+      requestBody: { required: true, content: { application/json: { schema: { type: object, required: [seguido], properties: { seguido: { type: string, format: uuid } } } } } }
+      responses:
+        '201': { description: Siguiendo }
+        '400': { $ref: '#/components/responses/BadRequest' }
+  /v1/social/users/{userId}/following/{seguido}:
+    parameters:
+      - { name: userId, in: path, required: true, schema: { type: string, format: uuid } }
+      - { name: seguido, in: path, required: true, schema: { type: string, format: uuid } }
+    delete:
+      summary: Dejar de seguir
+      operationId: unfollow
+      responses: { '204': { description: Dejó de seguir }, '404': { $ref: '#/components/responses/NotFound' } }
+  /v1/social/messages:
+    post:
+      summary: Enviar mensaje privado
+      operationId: sendMessage
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/MessageCreate' } } } }
+      responses:
+        '201': { description: Enviado, content: { application/json: { schema: { $ref: '#/components/schemas/Message' } } } }
+        '400': { $ref: '#/components/responses/BadRequest' }
+  /v1/social/message-requests:
+    post:
+      summary: Crear solicitud de mensaje
+      operationId: createMessageRequest
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/MessageRequestCreate' } } } }
+      responses:
+        '201': { description: Creada, content: { application/json: { schema: { $ref: '#/components/schemas/MessageRequest' } } } }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '409': { description: Ya existe solicitud (UNIQUE remitente+destinatario), content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+  /v1/social/message-requests/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: integer, format: int64 } } ]
+    put:
+      summary: Responder solicitud (aceptar/rechazar)
+      operationId: respondMessageRequest
+      requestBody: { required: true, content: { application/json: { schema: { type: object, required: [estado], properties: { estado: { type: string, enum: [aceptada, rechazada] } } } } } }
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/MessageRequest' } } } }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '404': { $ref: '#/components/responses/NotFound' }
+components:
+  schemas:
+    PublicProfile:
+      type: object
+      required: [usuarioId, alias, creadoEn, biografia, avatarEmoji]
+      properties:
+        usuarioId: { type: string, format: uuid }
+        alias: { type: string, pattern: '^[a-z0-9_]{3,24}$' }
+        creadoEn: { type: string, format: date-time }
+        biografia: { type: string, maxLength: 180 }
+        avatarEmoji: { type: string, enum: ['📘','🎓','⭐','🧠','🌍','🚀','📚'] }
+    PublicProfileCreate:
+      type: object
+      required: [usuarioId, alias]
+      properties:
+        usuarioId: { type: string, format: uuid }
+        alias: { type: string, pattern: '^[a-z0-9_]{3,24}$' }
+        biografia: { type: string, maxLength: 180 }
+        avatarEmoji: { type: string, enum: ['📘','🎓','⭐','🧠','🌍','🚀','📚'] }
+    PublicProfileUpdate:
+      type: object
+      properties:
+        biografia: { type: string, maxLength: 180 }
+        avatarEmoji: { type: string, enum: ['📘','🎓','⭐','🧠','🌍','🚀','📚'] }
+    Message:
+      type: object
+      required: [id, remitente, destinatario, contenido, creadoEn]
+      properties:
+        id: { type: integer, format: int64 }
+        remitente: { type: string, format: uuid }
+        destinatario: { type: string, format: uuid }
+        contenido: { type: string, minLength: 1, maxLength: 2000 }
+        creadoEn: { type: string, format: date-time }
+    MessageCreate:
+      type: object
+      required: [remitente, destinatario, contenido]
+      properties:
+        remitente: { type: string, format: uuid }
+        destinatario: { type: string, format: uuid }
+        contenido: { type: string, minLength: 1, maxLength: 2000 }
+    MessageRequest:
+      type: object
+      required: [id, remitente, destinatario, mensajeInicial, estado, creadoEn]
+      properties:
+        id: { type: integer, format: int64 }
+        remitente: { type: string, format: uuid }
+        destinatario: { type: string, format: uuid }
+        mensajeInicial: { type: string, minLength: 1, maxLength: 2000 }
+        estado: { type: string, enum: [pendiente, aceptada, rechazada] }
+        creadoEn: { type: string, format: date-time }
+        respondidoEn: { type: string, format: date-time, nullable: true }
+    MessageRequestCreate:
+      type: object
+      required: [remitente, destinatario, mensajeInicial]
+      properties:
+        remitente: { type: string, format: uuid }
+        destinatario: { type: string, format: uuid }
+        mensajeInicial: { type: string, minLength: 1, maxLength: 2000 }
+    Error:
+      type: object
+      required: [code, message]
+      properties: { code: { type: string }, message: { type: string } }
+  responses:
+    BadRequest: { description: Parámetros inválidos, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+    NotFound: { description: Recurso no encontrado, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }

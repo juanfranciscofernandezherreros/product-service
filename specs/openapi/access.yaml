@@ -1,0 +1,102 @@
+openapi: 3.0.3
+info:
+  title: Access (Roles & Permissions) API
+  description: Dominio de roles, permisos y asignaciones. Derivado del esquema PostgreSQL.
+  version: 1.0.0
+servers:
+  - url: https://api.tudominio.com/v1
+paths:
+  /v1/access/roles:
+    get:
+      summary: Listar roles
+      operationId: listRoles
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/Role' } } } } }
+    post:
+      summary: Crear rol
+      operationId: createRole
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/Role' } } } }
+      responses:
+        '201': { description: Creado, content: { application/json: { schema: { $ref: '#/components/schemas/Role' } } } }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '409': { description: Rol ya existe (PK codigo), content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+  /v1/access/roles/{codigo}:
+    parameters: [ { name: codigo, in: path, required: true, schema: { type: string } } ]
+    get:
+      summary: Obtener rol
+      operationId: getRole
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/Role' } } } }
+        '404': { $ref: '#/components/responses/NotFound' }
+    delete:
+      summary: Eliminar rol
+      operationId: deleteRole
+      responses: { '204': { description: Eliminado }, '404': { $ref: '#/components/responses/NotFound' } }
+  /v1/access/roles/{codigo}/permissions:
+    parameters: [ { name: codigo, in: path, required: true, schema: { type: string } } ]
+    get:
+      summary: Permisos del rol
+      operationId: listRolePermissions
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { type: array, items: { type: string } } } } }
+    post:
+      summary: Asignar permiso al rol
+      operationId: addRolePermission
+      requestBody: { required: true, content: { application/json: { schema: { type: object, required: [permiso], properties: { permiso: { type: string } } } } } }
+      responses:
+        '201': { description: Asignado }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /v1/access/permissions:
+    get:
+      summary: Listar permisos
+      operationId: listPermissions
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/Permission' } } } } }
+    post:
+      summary: Crear permiso
+      operationId: createPermission
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/Permission' } } } }
+      responses:
+        '201': { description: Creado, content: { application/json: { schema: { $ref: '#/components/schemas/Permission' } } } }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '409': { description: Permiso ya existe (PK codigo), content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+  /v1/access/users/{userId}/roles:
+    parameters: [ { name: userId, in: path, required: true, schema: { type: string, format: uuid } } ]
+    get:
+      summary: Roles de un usuario
+      operationId: listUserRoles
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/UserRole' } } } } }
+    post:
+      summary: Asignar rol a un usuario
+      operationId: assignUserRole
+      requestBody: { required: true, content: { application/json: { schema: { type: object, required: [rol], properties: { rol: { type: string }, asignadoPor: { type: string, format: uuid } } } } } }
+      responses:
+        '201': { description: Asignado, content: { application/json: { schema: { $ref: '#/components/schemas/UserRole' } } } }
+        '400': { $ref: '#/components/responses/BadRequest' }
+components:
+  schemas:
+    Role:
+      type: object
+      required: [codigo, descripcion]
+      properties: { codigo: { type: string }, descripcion: { type: string } }
+    Permission:
+      type: object
+      required: [codigo, descripcion]
+      properties: { codigo: { type: string }, descripcion: { type: string } }
+    UserRole:
+      type: object
+      required: [usuarioId, rol, creadoEn]
+      properties:
+        usuarioId: { type: string, format: uuid }
+        rol: { type: string }
+        asignadoPor: { type: string, format: uuid, nullable: true }
+        creadoEn: { type: string, format: date-time }
+    Error:
+      type: object
+      required: [code, message]
+      properties: { code: { type: string }, message: { type: string } }
+  responses:
+    BadRequest: { description: Parámetros inválidos, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+    NotFound: { description: Recurso no encontrado, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }

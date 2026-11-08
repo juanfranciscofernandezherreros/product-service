@@ -1,0 +1,178 @@
+openapi: 3.0.3
+info:
+  title: Vocabulary API
+  description: >-
+    API REST del dominio de vocabulario, derivada del esquema PostgreSQL
+    (tablas vocabulario_items y vocabulario_progreso). Database-First: el
+    esquema es la fuente de verdad; este contrato se genera a partir del DDL.
+  version: 1.0.0
+servers:
+  - url: https://api.tudominio.com/v1
+    description: Producción
+paths:
+  /v1/vocabulary/items:
+    get:
+      summary: Listar ítems de vocabulario (paginado + filtro por nivel)
+      operationId: listVocabularyItems
+      parameters:
+        - { name: level, in: query, schema: { type: string, enum: [A1, A2, B1, B2, C1] } }
+        - { name: limit, in: query, schema: { type: integer, default: 20, minimum: 1, maximum: 100 } }
+        - { name: offset, in: query, schema: { type: integer, default: 0, minimum: 0 } }
+      responses:
+        '200':
+          description: Lista obtenida
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total: { type: integer }
+                  items:
+                    type: array
+                    items: { $ref: '#/components/schemas/VocabularyItem' }
+    post:
+      summary: Crear un ítem de vocabulario
+      operationId: createVocabularyItem
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/VocabularyItemCreate' }
+      responses:
+        '201':
+          description: Creado
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/VocabularyItem' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '409':
+          description: Ya existe un ítem con el mismo término en inglés (UNIQUE en)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+  /v1/vocabulary/items/{id}:
+    parameters:
+      - { name: id, in: path, required: true, schema: { type: integer, format: int64 } }
+    get:
+      summary: Obtener un ítem por id
+      operationId: getVocabularyItem
+      responses:
+        '200':
+          description: Encontrado
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/VocabularyItem' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    put:
+      summary: Actualizar un ítem
+      operationId: updateVocabularyItem
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/VocabularyItemUpdate' }
+      responses:
+        '200':
+          description: Actualizado
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/VocabularyItem' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    delete:
+      summary: Eliminar un ítem
+      operationId: deleteVocabularyItem
+      responses:
+        '204': { description: Eliminado }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /v1/vocabulary/users/{userId}/progress:
+    parameters:
+      - { name: userId, in: path, required: true, schema: { type: string, format: uuid } }
+    get:
+      summary: Progreso de vocabulario de un usuario
+      operationId: listVocabularyProgress
+      responses:
+        '200':
+          description: Progreso del usuario
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/VocabularyProgress' }
+    put:
+      summary: Registrar/actualizar el progreso de un ítem para el usuario (upsert)
+      operationId: upsertVocabularyProgress
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/VocabularyProgressUpsert' }
+      responses:
+        '200':
+          description: Progreso actualizado
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/VocabularyProgress' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+components:
+  schemas:
+    # Derivado de vocabulario_items (id, en UNIQUE, es, example, level CHECK A1..C1)
+    VocabularyItem:
+      type: object
+      required: [id, en, es, level]
+      properties:
+        id: { type: integer, format: int64 }
+        en: { type: string }
+        es: { type: string }
+        example: { type: string, nullable: true }
+        level: { type: string, enum: [A1, A2, B1, B2, C1] }
+    VocabularyItemCreate:
+      type: object
+      required: [en, es, level]
+      properties:
+        en: { type: string }
+        es: { type: string }
+        example: { type: string }
+        level: { type: string, enum: [A1, A2, B1, B2, C1] }
+    VocabularyItemUpdate:
+      type: object
+      properties:
+        es: { type: string }
+        example: { type: string }
+        level: { type: string, enum: [A1, A2, B1, B2, C1] }
+    # Derivado de vocabulario_progreso (user_id, item_id PK; streak>=0; last_grade 0..2)
+    VocabularyProgress:
+      type: object
+      required: [userId, itemId, streak, lastGrade, nextReviewAt, firstSeenDay]
+      properties:
+        userId: { type: string, format: uuid }
+        itemId: { type: integer, format: int64 }
+        streak: { type: integer, minimum: 0 }
+        lastGrade: { type: integer, minimum: 0, maximum: 2 }
+        nextReviewAt: { type: string, format: date-time }
+        firstSeenDay: { type: string, format: date }
+    VocabularyProgressUpsert:
+      type: object
+      required: [itemId, lastGrade]
+      properties:
+        itemId: { type: integer, format: int64 }
+        streak: { type: integer, minimum: 0 }
+        lastGrade: { type: integer, minimum: 0, maximum: 2 }
+        nextReviewAt: { type: string, format: date-time }
+    Error:
+      type: object
+      required: [code, message]
+      properties:
+        code: { type: string, example: RESOURCE_ALREADY_EXISTS }
+        message: { type: string }
+  responses:
+    BadRequest:
+      description: Parámetros inválidos
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    NotFound:
+      description: Recurso no encontrado
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }

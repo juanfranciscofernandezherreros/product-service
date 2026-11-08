@@ -1,0 +1,154 @@
+openapi: 3.0.3
+info:
+  title: Study Plan (B2) API
+  description: Dominio de planificación de estudio B2 (planes, sesiones, objetivos y seguimiento). Recursos por usuario. Derivado del esquema PostgreSQL.
+  version: 1.0.0
+servers:
+  - url: https://api.tudominio.com/v1
+paths:
+  /v1/study-plan/users/{userId}/plan:
+    parameters: [ { name: userId, in: path, required: true, schema: { type: string, format: uuid } } ]
+    get:
+      summary: Obtener plan de estudio del usuario
+      operationId: getStudyPlan
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/StudyPlan' } } } }
+        '404': { $ref: '#/components/responses/NotFound' }
+    put:
+      summary: Crear/actualizar plan (upsert)
+      operationId: upsertStudyPlan
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/StudyPlanUpsert' } } } }
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/StudyPlan' } } } }
+        '400': { $ref: '#/components/responses/BadRequest' }
+  /v1/study-plan/users/{userId}/ai-plan:
+    parameters: [ { name: userId, in: path, required: true, schema: { type: string, format: uuid } } ]
+    get:
+      summary: Obtener plan IA del usuario
+      operationId: getAiPlan
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/AiPlan' } } } }
+        '404': { $ref: '#/components/responses/NotFound' }
+    put:
+      summary: Crear/actualizar plan IA (upsert)
+      operationId: upsertAiPlan
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/AiPlanUpsert' } } } }
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/AiPlan' } } } }
+        '400': { $ref: '#/components/responses/BadRequest' }
+  /v1/study-plan/users/{userId}/goal:
+    parameters: [ { name: userId, in: path, required: true, schema: { type: string, format: uuid } } ]
+    get:
+      summary: Objetivo semanal del usuario
+      operationId: getWeeklyGoal
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/WeeklyGoal' } } } }
+        '404': { $ref: '#/components/responses/NotFound' }
+    put:
+      summary: Crear/actualizar objetivo (upsert)
+      operationId: upsertWeeklyGoal
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/WeeklyGoalUpsert' } } } }
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/WeeklyGoal' } } } }
+        '400': { $ref: '#/components/responses/BadRequest' }
+  /v1/study-plan/users/{userId}/sessions:
+    parameters: [ { name: userId, in: path, required: true, schema: { type: string, format: uuid } } ]
+    get:
+      summary: Sesiones de estudio del usuario
+      operationId: listStudySessions
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/StudySession' } } } } }
+    post:
+      summary: Registrar una sesión completada
+      operationId: createStudySession
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/StudySessionCreate' } } } }
+      responses:
+        '201': { description: Creada, content: { application/json: { schema: { $ref: '#/components/schemas/StudySession' } } } }
+        '400': { $ref: '#/components/responses/BadRequest' }
+  /v1/study-plan/users/{userId}/weekly-reports:
+    parameters: [ { name: userId, in: path, required: true, schema: { type: string, format: uuid } } ]
+    get:
+      summary: Informes semanales del usuario
+      operationId: listWeeklyReports
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/WeeklyReport' } } } } }
+components:
+  schemas:
+    StudyPlan:
+      type: object
+      properties:
+        userId: { type: string, format: uuid }
+        fechaExamen: { type: string, format: date, nullable: true }
+        minutosDia: { type: integer, minimum: 10, maximum: 180 }
+        diasSemana: { type: array, items: { type: integer, minimum: 0, maximum: 6 }, minItems: 1, maxItems: 7 }
+        prioridad: { type: string, enum: [auto, grammar, vocabulary, reading, writing, listening, speaking] }
+        horaRecordatorio: { type: string, nullable: true }
+        recordatorioActivo: { type: boolean }
+        actualizadoEn: { type: string, format: date-time }
+    StudyPlanUpsert:
+      type: object
+      properties:
+        fechaExamen: { type: string, format: date }
+        minutosDia: { type: integer, minimum: 10, maximum: 180 }
+        diasSemana: { type: array, items: { type: integer, minimum: 0, maximum: 6 }, minItems: 1, maxItems: 7 }
+        prioridad: { type: string, enum: [auto, grammar, vocabulary, reading, writing, listening, speaking] }
+        horaRecordatorio: { type: string }
+        recordatorioActivo: { type: boolean }
+    AiPlan:
+      type: object
+      required: [userId, semanas, plan, actualizadoEn]
+      properties:
+        userId: { type: string, format: uuid }
+        semanas: { type: integer, enum: [4, 8, 12, 16, 24] }
+        plan: { type: object, additionalProperties: true }
+        actualizadoEn: { type: string, format: date-time }
+    AiPlanUpsert:
+      type: object
+      required: [semanas, plan]
+      properties:
+        semanas: { type: integer, enum: [4, 8, 12, 16, 24] }
+        plan: { type: object, additionalProperties: true }
+    WeeklyGoal:
+      type: object
+      required: [userId, tipo, cantidad, actualizadoEn]
+      properties:
+        userId: { type: string, format: uuid }
+        tipo: { type: string, enum: [unidades, examenes, actividades] }
+        cantidad: { type: integer, minimum: 1, maximum: 20 }
+        actualizadoEn: { type: string, format: date-time }
+    WeeklyGoalUpsert:
+      type: object
+      required: [tipo, cantidad]
+      properties:
+        tipo: { type: string, enum: [unidades, examenes, actividades] }
+        cantidad: { type: integer, minimum: 1, maximum: 20 }
+    StudySession:
+      type: object
+      required: [userId, dia, tarea, completadaEn]
+      properties:
+        userId: { type: string, format: uuid }
+        dia: { type: string, format: date }
+        tarea: { type: string, enum: [unidad, repaso, vocabulario, reading, writing, listening, speaking] }
+        completadaEn: { type: string, format: date-time }
+    StudySessionCreate:
+      type: object
+      required: [tarea]
+      properties:
+        dia: { type: string, format: date }
+        tarea: { type: string, enum: [unidad, repaso, vocabulario, reading, writing, listening, speaking] }
+    WeeklyReport:
+      type: object
+      required: [userId, semanaInicio, semanaFin, informe, generadoEn]
+      properties:
+        userId: { type: string, format: uuid }
+        semanaInicio: { type: string, format: date }
+        semanaFin: { type: string, format: date }
+        informe: { type: object, additionalProperties: true }
+        generadoEn: { type: string, format: date-time }
+    Error:
+      type: object
+      required: [code, message]
+      properties: { code: { type: string }, message: { type: string } }
+  responses:
+    BadRequest: { description: Parámetros inválidos, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+    NotFound: { description: Recurso no encontrado, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }

@@ -1,0 +1,301 @@
+openapi: 3.0.3
+info:
+  title: Content & Blog API
+  description: Dominio de contenidos — artículos, categorías, comentarios, páginas, colecciones, recursos descargables y frases de subtítulos. Derivado del esquema PostgreSQL.
+  version: 1.0.0
+servers:
+  - url: https://api.tudominio.com/v1
+paths:
+  /v1/content/articles:
+    get:
+      summary: Listar artículos (paginado, filtro por categoría/nivel)
+      operationId: listArticles
+      parameters:
+        - { name: categoriaSlug, in: query, schema: { type: string } }
+        - { name: nivel, in: query, schema: { type: string } }
+        - { name: limit, in: query, schema: { type: integer, default: 20, minimum: 1, maximum: 100 } }
+        - { name: offset, in: query, schema: { type: integer, default: 0, minimum: 0 } }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total: { type: integer }
+                  items: { type: array, items: { $ref: '#/components/schemas/Article' } }
+    post:
+      summary: Crear artículo
+      operationId: createArticle
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/ArticleCreate' } } } }
+      responses:
+        '201': { description: Creado, content: { application/json: { schema: { $ref: '#/components/schemas/Article' } } } }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '409': { description: Ruta o slug duplicados (UNIQUE ruta/slug), content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+  /v1/content/articles/{slug}:
+    parameters: [ { name: slug, in: path, required: true, schema: { type: string } } ]
+    get:
+      summary: Obtener artículo por slug
+      operationId: getArticle
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/Article' } } } }
+        '404': { $ref: '#/components/responses/NotFound' }
+    put:
+      summary: Actualizar artículo
+      operationId: updateArticle
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/ArticleUpdate' } } } }
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/Article' } } } }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    delete:
+      summary: Eliminar artículo
+      operationId: deleteArticle
+      responses: { '204': { description: Eliminado }, '404': { $ref: '#/components/responses/NotFound' } }
+  /v1/content/articles/{slug}/comments:
+    parameters: [ { name: slug, in: path, required: true, schema: { type: string } } ]
+    get:
+      summary: Comentarios de un artículo
+      operationId: listComments
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/Comment' } } } } }
+    post:
+      summary: Crear comentario
+      operationId: createComment
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/CommentCreate' } } } }
+      responses:
+        '201': { description: Creado, content: { application/json: { schema: { $ref: '#/components/schemas/Comment' } } } }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /v1/content/categories:
+    get:
+      summary: Listar categorías de blog
+      operationId: listCategories
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/Category' } } } } }
+    post:
+      summary: Crear categoría
+      operationId: createCategory
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/Category' } } } }
+      responses:
+        '201': { description: Creada, content: { application/json: { schema: { $ref: '#/components/schemas/Category' } } } }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '409': { description: Categoría ya existe (PK slug), content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+  /v1/content/pages:
+    get:
+      summary: Listar páginas de blog
+      operationId: listPages
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/Page' } } } } }
+    post:
+      summary: Crear página
+      operationId: createPage
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/Page' } } } }
+      responses:
+        '201': { description: Creada, content: { application/json: { schema: { $ref: '#/components/schemas/Page' } } } }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '409': { description: Página ya existe (PK ruta), content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+  /v1/content/collections:
+    get:
+      summary: Listar colecciones de material
+      operationId: listCollections
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/Collection' } } } } }
+    post:
+      summary: Crear colección
+      operationId: createCollection
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/CollectionCreate' } } } }
+      responses:
+        '201': { description: Creada, content: { application/json: { schema: { $ref: '#/components/schemas/Collection' } } } }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '409': { description: Slug o nombre de archivo duplicados, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+  /v1/content/downloadables:
+    get:
+      summary: Listar recursos descargables (filtro por categoría)
+      operationId: listDownloadables
+      parameters:
+        - { name: categoria, in: query, schema: { type: string } }
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/Downloadable' } } } } }
+    post:
+      summary: Crear recurso descargable
+      operationId: createDownloadable
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/DownloadableCreate' } } } }
+      responses:
+        '201': { description: Creado, content: { application/json: { schema: { $ref: '#/components/schemas/Downloadable' } } } }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '409': { description: Slug duplicado, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+  /v1/content/movie-phrases:
+    get:
+      summary: Listar frases de subtítulos (filtro por película)
+      operationId: listMoviePhrases
+      parameters:
+        - { name: movieSlug, in: query, schema: { type: string } }
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/MoviePhrase' } } } } }
+    post:
+      summary: Crear frase de subtítulo
+      operationId: createMoviePhrase
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/MoviePhraseCreate' } } } }
+      responses:
+        '201': { description: Creada, content: { application/json: { schema: { $ref: '#/components/schemas/MoviePhrase' } } } }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '409': { description: Número de subtítulo duplicado para la película (UNIQUE movie_slug+subtitle_number), content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+components:
+  schemas:
+    Article:
+      type: object
+      required: [id, ruta, slug, titulo, html, urlPublica, origen, actualizadoEn]
+      properties:
+        id: { type: integer, format: int64 }
+        ruta: { type: string, pattern: '^post/[a-z0-9-]+[.]html$' }
+        slug: { type: string }
+        titulo: { type: string }
+        descripcion: { type: string, nullable: true }
+        html: { type: string }
+        urlPublica: { type: string }
+        origen: { type: string }
+        categoriaSlug: { type: string, nullable: true }
+        fechaPublicacion: { type: string, format: date, nullable: true }
+        nivel: { type: string, nullable: true }
+        palabras: { type: integer, nullable: true }
+        esArticuloIndice: { type: boolean }
+        actualizadoEn: { type: string, format: date-time }
+    ArticleCreate:
+      type: object
+      required: [ruta, slug, titulo, html, urlPublica]
+      properties:
+        ruta: { type: string, pattern: '^post/[a-z0-9-]+[.]html$' }
+        slug: { type: string }
+        titulo: { type: string }
+        descripcion: { type: string }
+        html: { type: string }
+        urlPublica: { type: string }
+        categoriaSlug: { type: string }
+        fechaPublicacion: { type: string, format: date }
+        nivel: { type: string }
+    ArticleUpdate:
+      type: object
+      properties:
+        titulo: { type: string }
+        descripcion: { type: string }
+        html: { type: string }
+        categoriaSlug: { type: string }
+        nivel: { type: string }
+    Comment:
+      type: object
+      required: [id, articuloSlug, contenido, creadoEn]
+      properties:
+        id: { type: integer, format: int64 }
+        articuloSlug: { type: string }
+        padreId: { type: integer, format: int64, nullable: true }
+        autorId: { type: string, format: uuid, nullable: true }
+        contenido: { type: string, minLength: 1, maxLength: 2000 }
+        creadoEn: { type: string, format: date-time }
+    CommentCreate:
+      type: object
+      required: [contenido]
+      properties:
+        padreId: { type: integer, format: int64 }
+        autorId: { type: string, format: uuid }
+        contenido: { type: string, minLength: 1, maxLength: 2000 }
+    Category:
+      type: object
+      required: [slug, nombre]
+      properties:
+        slug: { type: string }
+        nombre: { type: string }
+        descripcion: { type: string, nullable: true }
+        orden: { type: integer }
+    Page:
+      type: object
+      required: [ruta, titulo, html, urlPublica]
+      properties:
+        ruta: { type: string }
+        titulo: { type: string }
+        descripcion: { type: string, nullable: true }
+        html: { type: string }
+        urlPublica: { type: string }
+        actualizadoEn: { type: string, format: date-time, nullable: true }
+    Collection:
+      type: object
+      required: [id, slug, titulo, tipo, nombreArchivo, publicado]
+      properties:
+        id: { type: integer, format: int64 }
+        slug: { type: string }
+        titulo: { type: string }
+        descripcion: { type: string, nullable: true }
+        tipo: { type: string, enum: [articulos, vocabulario] }
+        incluirTodosArticulos: { type: boolean }
+        nombreArchivo: { type: string, pattern: '^[a-zA-Z0-9_-]+[.]pdf$' }
+        fechaPublicacion: { type: string, format: date, nullable: true }
+        publicado: { type: boolean }
+    CollectionCreate:
+      type: object
+      required: [slug, titulo, tipo, nombreArchivo]
+      properties:
+        slug: { type: string }
+        titulo: { type: string }
+        descripcion: { type: string }
+        tipo: { type: string, enum: [articulos, vocabulario] }
+        incluirTodosArticulos: { type: boolean }
+        nombreArchivo: { type: string, pattern: '^[a-zA-Z0-9_-]+[.]pdf$' }
+        fechaPublicacion: { type: string, format: date }
+    Downloadable:
+      type: object
+      required: [id, slug, titulo, categoria, urlArchivo, publicado, creadoEn]
+      properties:
+        id: { type: integer, format: int64 }
+        slug: { type: string }
+        titulo: { type: string }
+        descripcion: { type: string, nullable: true }
+        categoria: { type: string }
+        fechaPublicacion: { type: string, format: date, nullable: true }
+        urlArchivo: { type: string }
+        urlLectura: { type: string, nullable: true }
+        orden: { type: integer }
+        publicado: { type: boolean }
+        creadoEn: { type: string, format: date-time }
+    DownloadableCreate:
+      type: object
+      required: [slug, titulo, urlArchivo]
+      properties:
+        slug: { type: string }
+        titulo: { type: string }
+        descripcion: { type: string }
+        categoria: { type: string }
+        fechaPublicacion: { type: string, format: date }
+        urlArchivo: { type: string }
+        urlLectura: { type: string }
+    MoviePhrase:
+      type: object
+      required: [id, movieSlug, movieTitle, subtitleNumber, timecode, phrase, createdAt]
+      properties:
+        id: { type: integer, format: int64 }
+        movieSlug: { type: string }
+        movieTitle: { type: string }
+        subtitleNumber: { type: integer, minimum: 1 }
+        timecode: { type: string }
+        phrase: { type: string }
+        tenseLabels: { type: string }
+        notes: { type: string }
+        createdAt: { type: string, format: date-time }
+    MoviePhraseCreate:
+      type: object
+      required: [movieSlug, movieTitle, subtitleNumber, timecode, phrase]
+      properties:
+        movieSlug: { type: string }
+        movieTitle: { type: string }
+        subtitleNumber: { type: integer, minimum: 1 }
+        timecode: { type: string }
+        phrase: { type: string }
+        tenseLabels: { type: string }
+        notes: { type: string }
+    Error:
+      type: object
+      required: [code, message]
+      properties: { code: { type: string }, message: { type: string } }
+  responses:
+    BadRequest: { description: Parámetros inválidos, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+    NotFound: { description: Recurso no encontrado, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }

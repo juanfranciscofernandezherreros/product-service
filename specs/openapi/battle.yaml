@@ -1,0 +1,159 @@
+openapi: 3.0.3
+info:
+  title: Battle API
+  description: Dominio de battles (salas, jugadores, preguntas y respuestas). Derivado del esquema PostgreSQL.
+  version: 1.0.0
+servers:
+  - url: https://api.tudominio.com/v1
+paths:
+  /v1/battle/questions:
+    get:
+      summary: Listar preguntas (filtro por level/topic)
+      operationId: listBattleQuestions
+      parameters:
+        - { name: level, in: query, schema: { type: string, enum: [A1, A2, B1, B2] } }
+        - { name: topic, in: query, schema: { type: string, enum: [daily, travel, work] } }
+        - { name: limit, in: query, schema: { type: integer, default: 20, minimum: 1, maximum: 100 } }
+        - { name: offset, in: query, schema: { type: integer, default: 0, minimum: 0 } }
+      responses:
+        '200':
+          description: Lista
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total: { type: integer }
+                  items: { type: array, items: { $ref: '#/components/schemas/BattleQuestion' } }
+    post:
+      summary: Crear pregunta
+      operationId: createBattleQuestion
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/BattleQuestionCreate' } } } }
+      responses:
+        '201': { description: Creada, content: { application/json: { schema: { $ref: '#/components/schemas/BattleQuestion' } } } }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '409': { description: Duplicada (UNIQUE level+topic+prompt), content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+  /v1/battle/questions/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: integer, format: int64 } } ]
+    get:
+      summary: Obtener pregunta
+      operationId: getBattleQuestion
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/BattleQuestion' } } } }
+        '404': { $ref: '#/components/responses/NotFound' }
+    put:
+      summary: Actualizar pregunta
+      operationId: updateBattleQuestion
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/BattleQuestionCreate' } } } }
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/BattleQuestion' } } } }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    delete:
+      summary: Eliminar pregunta
+      operationId: deleteBattleQuestion
+      responses: { '204': { description: Eliminada }, '404': { $ref: '#/components/responses/NotFound' } }
+  /v1/battle/rooms:
+    post:
+      summary: Crear sala
+      operationId: createBattleRoom
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/BattleRoomCreate' } } } }
+      responses:
+        '201': { description: Creada, content: { application/json: { schema: { $ref: '#/components/schemas/BattleRoom' } } } }
+        '400': { $ref: '#/components/responses/BadRequest' }
+    get:
+      summary: Listar salas (filtro por status)
+      operationId: listBattleRooms
+      parameters:
+        - { name: status, in: query, schema: { type: string, enum: [waiting, playing, finished, cancelled] } }
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/BattleRoom' } } } } }
+  /v1/battle/rooms/{roomId}:
+    parameters: [ { name: roomId, in: path, required: true, schema: { type: string, format: uuid } } ]
+    get:
+      summary: Obtener sala
+      operationId: getBattleRoom
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/BattleRoom' } } } }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /v1/battle/rooms/{roomId}/players:
+    parameters: [ { name: roomId, in: path, required: true, schema: { type: string, format: uuid } } ]
+    get:
+      summary: Listar jugadores de la sala
+      operationId: listBattlePlayers
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/BattlePlayer' } } } } }
+    post:
+      summary: Unirse a la sala
+      operationId: joinBattleRoom
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/BattleJoin' } } } }
+      responses:
+        '201': { description: Unido, content: { application/json: { schema: { $ref: '#/components/schemas/BattlePlayer' } } } }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '404': { $ref: '#/components/responses/NotFound' }
+components:
+  schemas:
+    BattleQuestion:
+      type: object
+      required: [id, level, topic, prompt, options, correctIndex, explanation]
+      properties:
+        id: { type: integer, format: int64 }
+        level: { type: string, enum: [A1, A2, B1, B2] }
+        topic: { type: string, enum: [daily, travel, work] }
+        prompt: { type: string }
+        options: { type: array, items: { type: string }, minItems: 4, maxItems: 4 }
+        correctIndex: { type: integer, minimum: 0, maximum: 3 }
+        explanation: { type: string }
+    BattleQuestionCreate:
+      type: object
+      required: [level, topic, prompt, options, correctIndex, explanation]
+      properties:
+        level: { type: string, enum: [A1, A2, B1, B2] }
+        topic: { type: string, enum: [daily, travel, work] }
+        prompt: { type: string }
+        options: { type: array, items: { type: string }, minItems: 4, maxItems: 4 }
+        correctIndex: { type: integer, minimum: 0, maximum: 3 }
+        explanation: { type: string }
+    BattleRoom:
+      type: object
+      required: [id, code, hostId, level, topic, durationSeconds, capacity, status, createdAt]
+      properties:
+        id: { type: string, format: uuid }
+        code: { type: string }
+        hostId: { type: string, format: uuid }
+        level: { type: string, enum: [A1, A2, B1, B2] }
+        topic: { type: string, enum: [mixed, daily, travel, work] }
+        durationSeconds: { type: integer, enum: [120, 180, 300] }
+        capacity: { type: integer, minimum: 2, maximum: 12 }
+        status: { type: string, enum: [waiting, playing, finished, cancelled] }
+        createdAt: { type: string, format: date-time }
+    BattleRoomCreate:
+      type: object
+      required: [level, topic, durationSeconds, capacity]
+      properties:
+        level: { type: string, enum: [A1, A2, B1, B2] }
+        topic: { type: string, enum: [mixed, daily, travel, work] }
+        durationSeconds: { type: integer, enum: [120, 180, 300] }
+        capacity: { type: integer, minimum: 2, maximum: 12 }
+    BattlePlayer:
+      type: object
+      required: [roomId, userId, alias, status, joinedAt]
+      properties:
+        roomId: { type: string, format: uuid }
+        userId: { type: string, format: uuid }
+        alias: { type: string, minLength: 2, maxLength: 30 }
+        status: { type: string, enum: [pending, accepted, rejected] }
+        joinedAt: { type: string, format: date-time }
+    BattleJoin:
+      type: object
+      required: [userId, alias]
+      properties:
+        userId: { type: string, format: uuid }
+        alias: { type: string, minLength: 2, maxLength: 30 }
+    Error:
+      type: object
+      required: [code, message]
+      properties: { code: { type: string }, message: { type: string } }
+  responses:
+    BadRequest: { description: Parámetros inválidos, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+    NotFound: { description: Recurso no encontrado, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
