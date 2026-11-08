@@ -1,0 +1,435 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pruebas cURL CRUD por endpoint — AI CRUD (9 microservicios)</title>
+<style>
+:root{
+  --bg:#f4f6f8; --surface:#fff; --ink:#1a2230; --muted:#5a6675; --line:#e2e7ee;
+  --acc:#1f6feb; --acc-soft:#e7f0ff; --code:#1e2430; --codeink:#e6edf3;
+  --ok:#1f9d55; --ok-soft:#e5f5ec; --warn:#b4791a; --warn-soft:#fbf1dd;
+  --post:#1f9d55; --get:#1f6feb; --put:#b4791a; --del:#c0392b; --patch:#8257e5;
+  --serif:"Iowan Old Style",Palatino,Georgia,serif;
+  --sans:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --mono:ui-monospace,SFMono-Regular,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root{
+  --bg:#12161c; --surface:#1a1f27; --ink:#e8ecf1; --muted:#9aa4b0; --line:#2a313b;
+  --acc:#5a9bff; --acc-soft:#17243a; --code:#0f1420; --codeink:#d7e0ea;
+  --ok:#5ec98a; --ok-soft:#14271c; --warn:#d9a441; --warn-soft:#2a2113;
+  color-scheme:dark;
+}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.6}
+.wrap{max-width:1000px;margin:0 auto;padding:0 16px 64px}
+header{background:linear-gradient(135deg,#1f6feb,#153a86);color:#fff;border-radius:0 0 16px 16px;padding:32px 24px;margin-bottom:8px}
+header h1{margin:0 0 6px;font-family:var(--serif);font-size:clamp(22px,4.2vw,32px);line-height:1.12}
+header p{margin:0;opacity:.92;font-size:14.5px}
+.meta{display:flex;flex-wrap:wrap;gap:6px 24px;margin-top:14px;font-size:13px;opacity:.95}
+section{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:18px 20px;margin:14px 0}
+h2{margin:0 0 2px;font-size:19px;font-family:var(--serif)}
+h2 .port{font-family:var(--mono);font-size:12px;color:var(--muted);font-weight:400}
+.lead{color:var(--muted);margin:2px 0 12px;font-size:13.5px}
+.ep{margin:12px 0}
+.ep .hd{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px}
+.m{display:inline-block;font-weight:700;font-size:11px;padding:2px 8px;border-radius:5px;color:#fff;font-family:var(--mono)}
+.m.post{background:var(--post)}.m.get{background:var(--get)}.m.put{background:var(--put)}.m.del{background:var(--del)}.m.patch{background:var(--patch)}
+.path{font-family:var(--mono);font-size:13px;font-weight:600}
+.tag{font-size:11px;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:1px 8px}
+pre{background:var(--code);color:var(--codeink);border-radius:8px;padding:11px 13px;overflow-x:auto;font-size:12px;font-family:var(--mono);margin:0;line-height:1.5}
+.verdict{display:flex;align-items:center;gap:14px;background:var(--ok-soft);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+.seal{width:46px;height:46px;border-radius:50%;border:2px solid var(--ok);display:grid;place-items:center;color:var(--ok);font-size:20px;font-weight:800;flex:0 0 auto}
+.verdict h3{margin:0;font-size:16px}.verdict p{margin:2px 0 0;color:var(--muted);font-size:13px}
+code{font-family:var(--mono);font-size:.9em;background:var(--acc-soft);padding:1px 5px;border-radius:5px}
+.note{background:var(--warn-soft);border:1px solid var(--warn);border-radius:10px;padding:12px 14px;font-size:13px}
+.toc{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
+.toc a{font-size:12.5px;text-decoration:none;color:var(--acc);border:1px solid var(--line);border-radius:999px;padding:3px 10px}
+.id{font-family:var(--mono);font-weight:700;color:var(--acc)}
+.foot{color:var(--muted);font-size:12px;margin-top:18px;border-top:1px solid var(--line);padding-top:12px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>Pruebas cURL CRUD por endpoint</h1>
+  <p>Criterio de aceptación <b>CA-11</b> · 9 microservicios · prueba CRUD completa, endpoint por endpoint</p>
+  <div class="meta">
+    <span><b>Fecha:</b> 8 de noviembre de 2026</span>
+    <span><b>Base:</b> http://localhost:&lt;puerto&gt;</span>
+    <span><b>Formato:</b> JSON</span>
+  </div>
+</header>
+
+<section>
+  <div class="verdict">
+    <div class="seal">✓</div>
+    <div>
+      <h3>CA-11 — Prueba CRUD completa por endpoint (cURL)</h3>
+      <p><b>Dado</b> cada microservicio arrancado · <b>Cuando</b> se ejecuta la secuencia cURL de su recurso · <b>Entonces</b> cada endpoint responde con el código y el cuerpo esperados (201/200/204/4xx).</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2>Cómo ejecutar</h2>
+  <p class="lead">Prerrequisito: arrancar el servicio con la credencial de Supabase en el entorno (según la política de acceso). El esquema ya existe en Supabase (perfil <code>dev</code>: <code>ddl-auto: none</code>, Flyway off).</p>
+  <pre># 1) Credencial fuera del repo (ver .env.local / variable de entorno)
+export DB_PASS_DEV='********'
+
+# 2) Arrancar el microservicio (en su carpeta)
+cd backend-content &amp;&amp; mvn spring-boot:run      # puerto 8090
+
+# 3) Ejecutar los cURL de su sección (otra terminal)</pre>
+  <div class="note"><b>Lecturas protegidas por RLS:</b> si el endpoint lee tablas que exigen usuario autenticado, añade la cabecera del usuario: <code>-H "Authorization: Bearer &lt;jwt_del_usuario&gt;"</code> (política REST + JWT). La <code>service_role</code> solo para backend sin usuario, como secreto por variable de entorno.</div>
+  <div class="toc">
+    <a href="#vocabulary">vocabulary</a><a href="#access">access</a><a href="#battle">battle</a>
+    <a href="#study-plan">study-plan</a><a href="#social">social</a><a href="#exams">exams</a>
+    <a href="#misc">misc</a><a href="#content">content</a><a href="#courses">courses</a>
+  </div>
+</section>
+
+<!-- VOCABULARY -->
+<section id="vocabulary">
+  <h2>vocabulary <span class="port">· http://localhost:8083</span></h2>
+  <p class="lead">CRUD de ítems de vocabulario + progreso por usuario.</p>
+  <div class="ep"><div class="hd"><span class="m post">POST</span><span class="path">/v1/vocabulary/items</span><span class="tag">crear</span></div>
+<pre>curl -i -s -X POST http://localhost:8083/v1/vocabulary/items \
+  -H "Content-Type: application/json" \
+  -d '{"en":"give up","es":"rendirse","example":"Don'\''t give up","level":"B1"}'</pre></div>
+  <div class="ep"><div class="hd"><span class="m get">GET</span><span class="path">/v1/vocabulary/items?level=B1&amp;offset=0&amp;limit=20</span><span class="tag">listar</span></div>
+<pre>curl -i -s "http://localhost:8083/v1/vocabulary/items?offset=0&amp;limit=20"</pre></div>
+  <div class="ep"><div class="hd"><span class="m get">GET</span><span class="path">/v1/vocabulary/items/{id}</span><span class="tag">obtener</span></div>
+<pre>curl -i -s http://localhost:8083/v1/vocabulary/items/1</pre></div>
+  <div class="ep"><div class="hd"><span class="m put">PUT</span><span class="path">/v1/vocabulary/items/{id}</span><span class="tag">actualizar</span></div>
+<pre>curl -i -s -X PUT http://localhost:8083/v1/vocabulary/items/1 \
+  -H "Content-Type: application/json" \
+  -d '{"es":"abandonar","example":"They gave up","level":"B2"}'</pre></div>
+  <div class="ep"><div class="hd"><span class="m del">DELETE</span><span class="path">/v1/vocabulary/items/{id}</span><span class="tag">borrar</span></div>
+<pre>curl -i -s -X DELETE http://localhost:8083/v1/vocabulary/items/1</pre></div>
+  <div class="ep"><div class="hd"><span class="m get">GET</span><span class="path">/v1/vocabulary/users/{userId}/progress</span><span class="tag">progreso</span></div>
+<pre>curl -i -s http://localhost:8083/v1/vocabulary/users/6c21271a-420e-4ad0-9f64-909418ae0851/progress</pre></div>
+  <div class="ep"><div class="hd"><span class="m put">PUT</span><span class="path">/v1/vocabulary/users/{userId}/progress</span><span class="tag">upsert</span></div>
+<pre>curl -i -s -X PUT http://localhost:8083/v1/vocabulary/users/6c21271a-420e-4ad0-9f64-909418ae0851/progress \
+  -H "Content-Type: application/json" \
+  -d '{"itemId":1,"streak":3,"lastGrade":2}'</pre></div>
+</section>
+
+<!-- ACCESS -->
+<section id="access">
+  <h2>access <span class="port">· http://localhost:8084</span></h2>
+  <p class="lead">Roles, permisos y asignación de roles a usuarios.</p>
+  <div class="ep"><div class="hd"><span class="m post">POST</span><span class="path">/v1/access/roles</span><span class="tag">crear</span></div>
+<pre>curl -i -s -X POST http://localhost:8084/v1/access/roles \
+  -H "Content-Type: application/json" \
+  -d '{"codigo":"profesor","descripcion":"Gestiona cursos y alumnos"}'</pre></div>
+  <div class="ep"><div class="hd"><span class="m get">GET</span><span class="path">/v1/access/roles</span><span class="tag">listar</span></div>
+<pre>curl -i -s http://localhost:8084/v1/access/roles</pre></div>
+  <div class="ep"><div class="hd"><span class="m get">GET</span><span class="path">/v1/access/roles/{codigo}</span><span class="tag">obtener</span></div>
+<pre>curl -i -s http://localhost:8084/v1/access/roles/profesor</pre></div>
+  <div class="ep"><div class="hd"><span class="m del">DELETE</span><span class="path">/v1/access/roles/{codigo}</span><span class="tag">borrar</span></div>
+<pre>curl -i -s -X DELETE http://localhost:8084/v1/access/roles/profesor</pre></div>
+  <div class="ep"><div class="hd"><span class="m get">GET</span><span class="path">/v1/access/roles/{codigo}/permissions</span><span class="tag">permisos del rol</span></div>
+<pre>curl -i -s http://localhost:8084/v1/access/roles/profesor/permissions</pre></div>
+  <div class="ep"><div class="hd"><span class="m post">POST</span><span class="path">/v1/access/roles/{codigo}/permissions</span><span class="tag">añadir permiso</span></div>
+<pre>curl -i -s -X POST http://localhost:8084/v1/access/roles/profesor/permissions \
+  -H "Content-Type: application/json" \
+  -d '{"permiso":"cursos.editar"}'</pre></div>
+  <div class="ep"><div class="hd"><span class="m get">GET</span><span class="path">/v1/access/permissions</span><span class="tag">listar</span></div>
+<pre>curl -i -s http://localhost:8084/v1/access/permissions</pre></div>
+  <div class="ep"><div class="hd"><span class="m post">POST</span><span class="path">/v1/access/permissions</span><span class="tag">crear</span></div>
+<pre>curl -i -s -X POST http://localhost:8084/v1/access/permissions \
+  -H "Content-Type: application/json" \
+  -d '{"codigo":"cursos.editar","descripcion":"Editar cursos"}'</pre></div>
+  <div class="ep"><div class="hd"><span class="m get">GET</span><span class="path">/v1/access/users/{userId}/roles</span><span class="tag">roles de usuario</span></div>
+<pre>curl -i -s http://localhost:8084/v1/access/users/6c21271a-420e-4ad0-9f64-909418ae0851/roles</pre></div>
+  <div class="ep"><div class="hd"><span class="m post">POST</span><span class="path">/v1/access/users/{userId}/roles</span><span class="tag">asignar rol</span></div>
+<pre>curl -i -s -X POST http://localhost:8084/v1/access/users/6c21271a-420e-4ad0-9f64-909418ae0851/roles \
+  -H "Content-Type: application/json" \
+  -d '{"rol":"profesor","asignadoPor":"00000000-0000-0000-0000-000000000000"}'</pre></div>
+</section>
+
+<!-- BATTLE -->
+<section id="battle">
+  <h2>battle <span class="port">· http://localhost:8085</span></h2>
+  <p class="lead">Preguntas de duelo (CRUD) y salas con jugadores.</p>
+  <div class="ep"><div class="hd"><span class="m post">POST</span><span class="path">/v1/battle/questions</span><span class="tag">crear</span></div>
+<pre>curl -i -s -X POST http://localhost:8085/v1/battle/questions \
+  -H "Content-Type: application/json" \
+  -d '{"level":"B1","topic":"daily","prompt":"What does '\''reliable'\'' mean?","options":["trustworthy","lazy","random","loud"],"correctIndex":0,"explanation":"reliable = de fiar"}'</pre></div>
+  <div class="ep"><div class="hd"><span class="m get">GET</span><span class="path">/v1/battle/questions</span><span class="tag">listar</span></div>
+<pre>curl -i -s "http://localhost:8085/v1/battle/questions?offset=0&amp;limit=20"</pre></div>
+  <div class="ep"><div class="hd"><span class="m get">GET</span><span class="path">/v1/battle/questions/{id}</span><span class="tag">obtener</span></div>
+<pre>curl -i -s http://localhost:8085/v1/battle/questions/1</pre></div>
+  <div class="ep"><div class="hd"><span class="m put">PUT</span><span class="path">/v1/battle/questions/{id}</span><span class="tag">actualizar</span></div>
+<pre>curl -i -s -X PUT http://localhost:8085/v1/battle/questions/1 \
+  -H "Content-Type: application/json" \
+  -d '{"level":"B2","topic":"daily","prompt":"...","options":["a","b","c","d"],"correctIndex":1,"explanation":"..."}'</pre></div>
+  <div class="ep"><div class="hd"><span class="m del">DELETE</span><span class="path">/v1/battle/questions/{id}</span><span class="tag">borrar</span></div>
+<pre>curl -i -s -X DELETE http://localhost:8085/v1/battle/questions/1</pre></div>
+  <div class="ep"><div class="hd"><span class="m post">POST</span><span class="path">/v1/battle/rooms</span><span class="tag">crear sala</span></div>
+<pre>curl -i -s -X POST http://localhost:8085/v1/battle/rooms \
+  -H "Content-Type: application/json" \
+  -d '{"hostId":"6c21271a-420e-4ad0-9f64-909418ae0851","level":"B1","topic":"mixed"}'</pre></div>
+  <div class="ep"><div class="hd"><span class="m get">GET</span><span class="path">/v1/battle/rooms</span><span class="tag">listar</span></div>
+<pre>curl -i -s http://localhost:8085/v1/battle/rooms</pre></div>
+  <div class="ep"><div class="hd"><span class="m get">GET</span><span class="path">/v1/battle/rooms/{roomId}</span><span class="tag">obtener</span></div>
+<pre>curl -i -s http://localhost:8085/v1/battle/rooms/1</pre></div>
+  <div class="ep"><div class="hd"><span class="m get">GET</span><span class="path">/v1/battle/rooms/{roomId}/players</span><span class="tag">jugadores</span></div>
+<pre>curl -i -s http://localhost:8085/v1/battle/rooms/1/players</pre></div>
+  <div class="ep"><div class="hd"><span class="m post">POST</span><span class="path">/v1/battle/rooms/{roomId}/players</span><span class="tag">unirse</span></div>
+<pre>curl -i -s -X POST http://localhost:8085/v1/battle/rooms/1/players \
+  -H "Content-Type: application/json" \
+  -d '{"userId":"6c21271a-420e-4ad0-9f64-909418ae0851","alias":"kiko"}'</pre></div>
+</section>
+
+<!-- STUDY-PLAN -->
+<section id="study-plan">
+  <h2>study-plan <span class="port">· http://localhost:8086</span></h2>
+  <p class="lead">Plan, plan IA, objetivo semanal, sesiones e informes (por usuario).</p>
+  <div class="ep"><div class="hd"><span class="m get">GET</span><span class="path">/v1/study-plan/users/{userId}/plan</span></div>
+<pre>curl -i -s http://localhost:8086/v1/study-plan/users/6c21271a-420e-4ad0-9f64-909418ae0851/plan</pre></div>
+  <div class="ep"><div class="hd"><span class="m put">PUT</span><span class="path">/v1/study-plan/users/{userId}/plan</span></div>
+<pre>curl -i -s -X PUT http://localhost:8086/v1/study-plan/users/6c21271a-420e-4ad0-9f64-909418ae0851/plan \
+  -H "Content-Type: application/json" \
+  -d '{"fechaExamen":"2027-08-02","minutosDia":60,"diasSemana":[1,2,3,4,5],"prioridad":"auto","horaRecordatorio":"19:00","recordatorioActivo":true}'</pre></div>
+  <div class="ep"><div class="hd"><span class="m get">GET</span><span class="path">/v1/study-plan/users/{userId}/ai-plan</span></div>
+<pre>curl -i -s http://localhost:8086/v1/study-plan/users/6c21271a-420e-4ad0-9f64-909418ae0851/ai-plan</pre></div>
+  <div class="ep"><div class="hd"><span class="m put">PUT</span><span class="path">/v1/study-plan/users/{userId}/ai-plan</span></div>
+<pre>curl -i -s -X PUT http://localhost:8086/v1/study-plan/users/6c21271a-420e-4ad0-9f64-909418ae0851/ai-plan \
+  -H "Content-Type: application/json" \
+  -d '{"semanas":8,"plan":{"semana1":["reading","writing"]}}'</pre></div>
+  <div class="ep"><div class="hd"><span class="m get">GET</span><span class="path">/v1/study-plan/users/{userId}/goal</span></div>
+<pre>curl -i -s http://localhost:8086/v1/study-plan/users/6c21271a-420e-4ad0-9f64-909418ae0851/goal</pre></div>
+  <div class="ep"><div class="hd"><span class="m put">PUT</span><span class="path">/v1/study-plan/users/{userId}/goal</span></div>
+<pre>curl -i -s -X PUT http://localhost:8086/v1/study-plan/users/6c21271a-420e-4ad0-9f64-909418ae0851/goal \
+  -H "Content-Type: application/json" \
+  -d '{"tipo":"vocabulario","cantidad":10}'</pre></div>
+  <div class="ep"><div class="hd"><span class="m get">GET</span><span class="path">/v1/study-plan/users/{userId}/sessions</span></div>
+<pre>curl -i -s http://localhost:8086/v1/study-plan/users/6c21271a-420e-4ad0-9f64-909418ae0851/sessions</pre></div>
+  <div class="ep"><div class="hd"><span class="m post">POST</span><span class="path">/v1/study-plan/users/{userId}/sessions</span></div>
+<pre>curl -i -s -X POST http://localhost:8086/v1/study-plan/users/6c21271a-420e-4ad0-9f64-909418ae0851/sessions \
+  -H "Content-Type: application/json" \
+  -d '{"dia":"2026-11-10","tarea":"reading"}'</pre></div>
+  <div class="ep"><div class="hd"><span class="m get">GET</span><span class="path">/v1/study-plan/users/{userId}/weekly-reports</span></div>
+<pre>curl -i -s http://localhost:8086/v1/study-plan/users/6c21271a-420e-4ad0-9f64-909418ae0851/weekly-reports</pre></div>
+</section>
+
+<!-- SOCIAL -->
+<section id="social">
+  <h2>social <span class="port">· http://localhost:8087</span></h2>
+  <p class="lead">Perfiles públicos, mensajes, solicitudes y seguimientos.</p>
+  <div class="ep"><div class="hd"><span class="m post">POST</span><span class="path">/v1/social/public-profiles</span><span class="tag">crear perfil</span></div>
+<pre>curl -i -s -X POST http://localhost:8087/v1/social/public-profiles \
+  -H "Content-Type: application/json" \
+  -d '{"userId":"6c21271a-420e-4ad0-9f64-909418ae0851","alias":"kiko","biografia":"Estudiando B2","avatarEmoji":"GRADUADO"}'</pre></div>
+  <div class="ep"><div class="hd"><span class="m get">GET</span><span class="path">/v1/social/public-profiles/{userId}</span><span class="tag">obtener</span></div>
+<pre>curl -i -s http://localhost:8087/v1/social/public-profiles/6c21271a-420e-4ad0-9f64-909418ae0851</pre></div>
+  <div class="ep"><div class="hd"><span class="m put">PUT</span><span class="path">/v1/social/public-profiles/{userId}</span><span class="tag">actualizar</span></div>
+<pre>curl -i -s -X PUT http://localhost:8087/v1/social/public-profiles/6c21271a-420e-4ad0-9f64-909418ae0851 \
+  -H "Content-Type: application/json" \
+  -d '{"biografia":"Objetivo: First","avatarEmoji":"LIBRO"}'</pre></div>
+  <div class="ep"><div class="hd"><span class="m post">POST</span><span class="path">/v1/social/messages</span><span class="tag">enviar mensaje</span></div>
+<pre>curl -i -s -X POST http://localhost:8087/v1/social/messages \
+  -H "Content-Type: application/json" \
+  -d '{"remitente":"6c21271a-420e-4ad0-9f64-909418ae0851","destinatario":"11111111-1111-1111-1111-111111111111","contenido":"Hola!"}'</pre></div>
+  <div class="ep"><div class="hd"><span class="m post">POST</span><span class="path">/v1/social/message-requests</span><span class="tag">solicitud</span></div>
+<pre>curl -i -s -X POST http://localhost:8087/v1/social/message-requests \
+  -H "Content-Type: application/json" \
+  -d '{"remitente":"6c21271a-420e-4ad0-9f64-909418ae0851","destinatario":"11111111-1111-1111-1111-111111111111","mensajeInicial":"¿Practicamos speaking?"}'</pre></div>
+  <div class="ep"><div class="hd"><span class="m put">PUT</span><span class="path">/v1/social/message-requests/{id}</span><span class="tag">responder</span></div>
+<pre>curl -i -s -X PUT http://localhost:8087/v1/social/message-requests/1 \
+  -H "Content-Type: application/json" \
+  -d '{"estado":"ACEPTADA"}'</pre></div>
+  <div class="ep"><div class="hd"><span class="m get">GET</span><span class="path">/v1/social/users/{userId}/following</span><span class="tag">siguiendo</span></div>
+<pre>curl -i -s http://localhost:8087/v1/social/users/6c21271a-420e-4ad0-9f64-909418ae0851/following</pre></div>
+  <div class="ep"><div class="hd"><span class="m post">POST</span><span class="path">/v1/social/users/{userId}/following</span><span class="tag">seguir</span></div>
+<pre>curl -i -s -X POST http://localhost:8087/v1/social/users/6c21271a-420e-4ad0-9f64-909418ae0851/following \
+  -H "Content-Type: application/json" \
+  -d '{"seguido":"11111111-1111-1111-1111-111111111111"}'</pre></div>
+  <div class="ep"><div class="hd"><span class="m del">DELETE</span><span class="path">/v1/social/users/{userId}/following/{seguido}</span><span class="tag">dejar de seguir</span></div>
+<pre>curl -i -s -X DELETE http://localhost:8087/v1/social/users/6c21271a-420e-4ad0-9f64-909418ae0851/following/11111111-1111-1111-1111-111111111111</pre></div>
+</section>
+
+<!-- EXAMS -->
+<section id="exams">
+  <h2>exams <span class="port">· http://localhost:8088</span></h2>
+  <p class="lead">Exámenes (CRUD), preguntas, resultados, diagnósticos y simulacros.</p>
+  <div class="ep"><div class="hd"><span class="m post">POST</span><span class="path">/v1/exams</span><span class="tag">crear</span></div>
+<pre>curl -i -s -X POST http://localhost:8088/v1/exams \
+  -H "Content-Type: application/json" \
+  -d '{"codigo":"EE-2026-11-08-001","titulo":"Examen diario 001","fecha":"2026-11-08","nivel":"B2","descripcion":"Daily","publicado":true}'</pre></div>
+  <div class="ep"><div class="hd"><span class="m get">GET</span><span class="path">/v1/exams</span><span class="tag">listar</span></div>
+<pre>curl -i -s http://localhost:8088/v1/exams</pre></div>
+  <div class="ep"><div class="hd"><span class="m get">GET</span><span class="path">/v1/exams/{id}</span><span class="tag">obtener</span></div>
+<pre>curl -i -s http://localhost:8088/v1/exams/1</pre></div>
+  <div class="ep"><div class="hd"><span class="m put">PUT</span><span class="path">/v1/exams/{id}</span><span class="tag">actualizar</span></div>
+<pre>curl -i -s -X PUT http://localhost:8088/v1/exams/1 \
+  -H "Content-Type: application/json" \
+  -d '{"titulo":"Examen revisado","publicado":false}'</pre></div>
+  <div class="ep"><div class="hd"><span class="m del">DELETE</span><span class="path">/v1/exams/{id}</span><span class="tag">borrar</span></div>
+<pre>curl -i -s -X DELETE http://localhost:8088/v1/exams/1</pre></div>
+  <div class="ep"><div class="hd"><span class="m get">GET</span><span class="path">/v1/exams/{id}/questions</span><span class="tag">preguntas</span></div>
+<pre>curl -i -s http://localhost:8088/v1/exams/1/questions</pre></div>
+  <div class="ep"><div class="hd"><span class="m post">POST</span><span class="path">/v1/exams/{id}/questions</span><span class="tag">añadir pregunta</span></div>
+<pre>curl -i -s -X POST http://localhost:8088/v1/exams/1/questions \
+  -H "Content-Type: application/json" \
+  -d '{"orden":1,"enunciado":"Choose the correct option","opciones":["have been","has been","had"],"fuenteUrl":null}'</pre></div>
+  <div class="ep"><div class="hd"><span class="m post">POST</span><span class="path">/v1/exams/results</span><span class="tag">registrar resultado</span></div>
+<pre>curl -i -s -X POST http://localhost:8088/v1/exams/results \
+  -H "Content-Type: application/json" \
+  -d '{"usuarioId":"6c21271a-420e-4ad0-9f64-909418ae0851","examenId":1,"respuestas":{"1":"a"},"aciertos":8,"total":10,"nota":8.0}'</pre></div>
+  <div class="ep"><div class="hd"><span class="m get">GET</span><span class="path">/v1/exams/results/users/{userId}</span><span class="tag">resultados usuario</span></div>
+<pre>curl -i -s http://localhost:8088/v1/exams/results/users/6c21271a-420e-4ad0-9f64-909418ae0851</pre></div>
+  <div class="ep"><div class="hd"><span class="m post">POST</span><span class="path">/v1/exams/diagnostics</span><span class="tag">diagnóstico</span></div>
+<pre>curl -i -s -X POST http://localhost:8088/v1/exams/diagnostics \
+  -H "Content-Type: application/json" \
+  -d '{"usuarioId":"6c21271a-420e-4ad0-9f64-909418ae0851","aciertos":20,"total":30,"desglose":{"reading":10,"use":10}}'</pre></div>
+  <div class="ep"><div class="hd"><span class="m post">POST</span><span class="path">/v1/exams/simulations</span><span class="tag">simulacro</span></div>
+<pre>curl -i -s -X POST http://localhost:8088/v1/exams/simulations \
+  -H "Content-Type: application/json" \
+  -d '{"usuarioId":"6c21271a-420e-4ad0-9f64-909418ae0851","modalidad":"COMPLETO","aciertos":40,"total":52,"respuestas":{},"duracionSegundos":3600}'</pre></div>
+</section>
+
+<!-- MISC -->
+<section id="misc">
+  <h2>misc <span class="port">· http://localhost:8089</span></h2>
+  <p class="lead">Sugerencias, bitácora (categorías/notas) y borradores de writing.</p>
+  <div class="ep"><div class="hd"><span class="m post">POST</span><span class="path">/v1/suggestions</span><span class="tag">crear</span></div>
+<pre>curl -i -s -X POST http://localhost:8089/v1/suggestions \
+  -H "Content-Type: application/json" \
+  -d '{"titulo":"Exportar en PDF","descripcion":"Me gustaria poder exportar los apuntes en PDF"}'</pre></div>
+  <div class="ep"><div class="hd"><span class="m get">GET</span><span class="path">/v1/suggestions?estado=pendiente</span><span class="tag">listar</span></div>
+<pre>curl -i -s "http://localhost:8089/v1/suggestions?offset=0&amp;limit=20"</pre></div>
+  <div class="ep"><div class="hd"><span class="m get">GET</span><span class="path">/v1/suggestions/{id}</span><span class="tag">obtener</span></div>
+<pre>curl -i -s http://localhost:8089/v1/suggestions/1</pre></div>
+  <div class="ep"><div class="hd"><span class="m patch">PATCH</span><span class="path">/v1/suggestions/{id}/status</span><span class="tag">cambiar estado</span></div>
+<pre>curl -i -s -X PATCH http://localhost:8089/v1/suggestions/1/status \
+  -H "Content-Type: application/json" \
+  -d '{"estado":"publicada"}'</pre></div>
+  <div class="ep"><div class="hd"><span class="m post">POST</span><span class="path">/v1/users/{userId}/logbook/categories</span><span class="tag">crear categoría</span></div>
+<pre>curl -i -s -X POST http://localhost:8089/v1/users/6c21271a-420e-4ad0-9f64-909418ae0851/logbook/categories \
+  -H "Content-Type: application/json" \
+  -d '{"nombre":"Gramatica"}'</pre></div>
+  <div class="ep"><div class="hd"><span class="m get">GET</span><span class="path">/v1/users/{userId}/logbook/categories</span><span class="tag">listar</span></div>
+<pre>curl -i -s http://localhost:8089/v1/users/6c21271a-420e-4ad0-9f64-909418ae0851/logbook/categories</pre></div>
+  <div class="ep"><div class="hd"><span class="m post">POST</span><span class="path">/v1/users/{userId}/logbook/notes</span><span class="tag">crear nota</span></div>
+<pre>curl -i -s -X POST http://localhost:8089/v1/users/6c21271a-420e-4ad0-9f64-909418ae0851/logbook/notes \
+  -H "Content-Type: application/json" \
+  -d '{"categoriaId":null,"contenido":"Hoy aprendi el present perfect"}'</pre></div>
+  <div class="ep"><div class="hd"><span class="m get">GET</span><span class="path">/v1/users/{userId}/logbook/notes</span><span class="tag">listar</span></div>
+<pre>curl -i -s http://localhost:8089/v1/users/6c21271a-420e-4ad0-9f64-909418ae0851/logbook/notes</pre></div>
+  <div class="ep"><div class="hd"><span class="m post">POST</span><span class="path">/v1/users/{userId}/writing-drafts</span><span class="tag">crear borrador</span></div>
+<pre>curl -i -s -X POST http://localhost:8089/v1/users/6c21271a-420e-4ad0-9f64-909418ae0851/writing-drafts \
+  -H "Content-Type: application/json" \
+  -d '{"tipo":"essay","titulo":"Mi essay","contenido":""}'</pre></div>
+  <div class="ep"><div class="hd"><span class="m get">GET</span><span class="path">/v1/users/{userId}/writing-drafts</span><span class="tag">listar</span></div>
+<pre>curl -i -s http://localhost:8089/v1/users/6c21271a-420e-4ad0-9f64-909418ae0851/writing-drafts</pre></div>
+</section>
+
+<!-- CONTENT -->
+<section id="content">
+  <h2>content <span class="port">· http://localhost:8090</span></h2>
+  <p class="lead">Artículos (CRUD) + comentarios, categorías, páginas, colecciones, descargables y frases.</p>
+  <div class="ep"><div class="hd"><span class="m post">POST</span><span class="path">/v1/content/articles</span><span class="tag">crear</span></div>
+<pre>curl -i -s -X POST http://localhost:8090/v1/content/articles \
+  -H "Content-Type: application/json" \
+  -d '{"ruta":"post/mi-post.html","slug":"mi-post","titulo":"Mi post","descripcion":"resumen","html":"&lt;p&gt;hola&lt;/p&gt;","urlPublica":"https://blog/mi-post","categoriaSlug":"gramatica","fechaPublicacion":"2026-11-08","nivel":"B2"}'</pre></div>
+  <div class="ep"><div class="hd"><span class="m get">GET</span><span class="path">/v1/content/articles?categoriaSlug=&amp;nivel=B2</span><span class="tag">listar</span></div>
+<pre>curl -i -s "http://localhost:8090/v1/content/articles?offset=0&amp;limit=20"</pre></div>
+  <div class="ep"><div class="hd"><span class="m get">GET</span><span class="path">/v1/content/articles/{slug}</span><span class="tag">obtener</span></div>
+<pre>curl -i -s http://localhost:8090/v1/content/articles/mi-post</pre></div>
+  <div class="ep"><div class="hd"><span class="m put">PUT</span><span class="path">/v1/content/articles/{slug}</span><span class="tag">actualizar</span></div>
+<pre>curl -i -s -X PUT http://localhost:8090/v1/content/articles/mi-post \
+  -H "Content-Type: application/json" \
+  -d '{"titulo":"Mi post (rev)","nivel":"C1"}'</pre></div>
+  <div class="ep"><div class="hd"><span class="m del">DELETE</span><span class="path">/v1/content/articles/{slug}</span><span class="tag">borrar</span></div>
+<pre>curl -i -s -X DELETE http://localhost:8090/v1/content/articles/mi-post</pre></div>
+  <div class="ep"><div class="hd"><span class="m get">GET</span><span class="path">/v1/content/articles/{slug}/comments</span><span class="tag">comentarios</span></div>
+<pre>curl -i -s http://localhost:8090/v1/content/articles/mi-post/comments</pre></div>
+  <div class="ep"><div class="hd"><span class="m post">POST</span><span class="path">/v1/content/articles/{slug}/comments</span><span class="tag">comentar</span></div>
+<pre>curl -i -s -X POST http://localhost:8090/v1/content/articles/mi-post/comments \
+  -H "Content-Type: application/json" \
+  -d '{"contenido":"Gran articulo"}'</pre></div>
+  <div class="ep"><div class="hd"><span class="m get">GET</span><span class="path">/v1/content/categories</span></div>
+<pre>curl -i -s http://localhost:8090/v1/content/categories</pre></div>
+  <div class="ep"><div class="hd"><span class="m post">POST</span><span class="path">/v1/content/categories</span></div>
+<pre>curl -i -s -X POST http://localhost:8090/v1/content/categories \
+  -H "Content-Type: application/json" -d '{"slug":"gramatica","nombre":"Gramatica","orden":1}'</pre></div>
+  <div class="ep"><div class="hd"><span class="m get">GET</span><span class="path">/v1/content/pages</span></div>
+<pre>curl -i -s http://localhost:8090/v1/content/pages</pre></div>
+  <div class="ep"><div class="hd"><span class="m post">POST</span><span class="path">/v1/content/pages</span></div>
+<pre>curl -i -s -X POST http://localhost:8090/v1/content/pages \
+  -H "Content-Type: application/json" \
+  -d '{"ruta":"pages/about.html","titulo":"About","html":"&lt;p&gt;...&lt;/p&gt;","urlPublica":"https://blog/about"}'</pre></div>
+  <div class="ep"><div class="hd"><span class="m get">GET</span><span class="path">/v1/content/collections</span></div>
+<pre>curl -i -s http://localhost:8090/v1/content/collections</pre></div>
+  <div class="ep"><div class="hd"><span class="m post">POST</span><span class="path">/v1/content/collections</span></div>
+<pre>curl -i -s -X POST http://localhost:8090/v1/content/collections \
+  -H "Content-Type: application/json" \
+  -d '{"slug":"col-1","titulo":"Coleccion 1","tipo":"articulos","nombreArchivo":"coleccion1.pdf"}'</pre></div>
+  <div class="ep"><div class="hd"><span class="m get">GET</span><span class="path">/v1/content/downloadables?categoria=apuntes</span></div>
+<pre>curl -i -s "http://localhost:8090/v1/content/downloadables"</pre></div>
+  <div class="ep"><div class="hd"><span class="m post">POST</span><span class="path">/v1/content/downloadables</span></div>
+<pre>curl -i -s -X POST http://localhost:8090/v1/content/downloadables \
+  -H "Content-Type: application/json" \
+  -d '{"slug":"apunte-1","titulo":"Apunte 1","urlArchivo":"https://f/apunte.pdf"}'</pre></div>
+  <div class="ep"><div class="hd"><span class="m get">GET</span><span class="path">/v1/content/movie-phrases?movieSlug=matrix</span></div>
+<pre>curl -i -s "http://localhost:8090/v1/content/movie-phrases?movieSlug=matrix"</pre></div>
+  <div class="ep"><div class="hd"><span class="m post">POST</span><span class="path">/v1/content/movie-phrases</span></div>
+<pre>curl -i -s -X POST http://localhost:8090/v1/content/movie-phrases \
+  -H "Content-Type: application/json" \
+  -d '{"movieSlug":"matrix","movieTitle":"The Matrix","subtitleNumber":1,"timecode":"00:01:23","phrase":"There is no spoon"}'</pre></div>
+</section>
+
+<!-- COURSES -->
+<section id="courses">
+  <h2>courses <span class="port">· http://localhost:8091</span></h2>
+  <p class="lead">Cursos (CRUD), unidades, actividades, preguntas e intentos.</p>
+  <div class="ep"><div class="hd"><span class="m post">POST</span><span class="path">/v1/courses</span><span class="tag">crear</span></div>
+<pre>curl -i -s -X POST http://localhost:8091/v1/courses \
+  -H "Content-Type: application/json" -d '{"nombre":"Curso B2 First","descripcion":"Preparacion B2","activo":true}'</pre></div>
+  <div class="ep"><div class="hd"><span class="m get">GET</span><span class="path">/v1/courses?activo=true</span><span class="tag">listar</span></div>
+<pre>curl -i -s "http://localhost:8091/v1/courses?activo=true"</pre></div>
+  <div class="ep"><div class="hd"><span class="m get">GET</span><span class="path">/v1/courses/{id}</span><span class="tag">obtener</span></div>
+<pre>curl -i -s http://localhost:8091/v1/courses/1</pre></div>
+  <div class="ep"><div class="hd"><span class="m put">PUT</span><span class="path">/v1/courses/{id}</span><span class="tag">actualizar</span></div>
+<pre>curl -i -s -X PUT http://localhost:8091/v1/courses/1 \
+  -H "Content-Type: application/json" -d '{"nombre":"Curso B2 First (rev)","activo":false}'</pre></div>
+  <div class="ep"><div class="hd"><span class="m del">DELETE</span><span class="path">/v1/courses/{id}</span><span class="tag">borrar</span></div>
+<pre>curl -i -s -X DELETE http://localhost:8091/v1/courses/1</pre></div>
+  <div class="ep"><div class="hd"><span class="m post">POST</span><span class="path">/v1/courses/units</span><span class="tag">crear unidad</span></div>
+<pre>curl -i -s -X POST http://localhost:8091/v1/courses/units \
+  -H "Content-Type: application/json" \
+  -d '{"slug":"unidad-1","titulo":"Unidad 1","nivel":"B2","orden":10,"publicado":true}'</pre></div>
+  <div class="ep"><div class="hd"><span class="m get">GET</span><span class="path">/v1/courses/units?nivel=B2&amp;publicado=true</span><span class="tag">listar</span></div>
+<pre>curl -i -s "http://localhost:8091/v1/courses/units"</pre></div>
+  <div class="ep"><div class="hd"><span class="m get">GET</span><span class="path">/v1/courses/units/{id}</span><span class="tag">obtener</span></div>
+<pre>curl -i -s http://localhost:8091/v1/courses/units/1</pre></div>
+  <div class="ep"><div class="hd"><span class="m post">POST</span><span class="path">/v1/courses/activities</span><span class="tag">crear actividad</span></div>
+<pre>curl -i -s -X POST http://localhost:8091/v1/courses/activities \
+  -H "Content-Type: application/json" \
+  -d '{"slug":"act-reading-1","titulo":"Reading 1","destreza":"reading","orden":1,"publicado":true}'</pre></div>
+  <div class="ep"><div class="hd"><span class="m get">GET</span><span class="path">/v1/courses/activities?destreza=reading&amp;publicado=true</span><span class="tag">listar</span></div>
+<pre>curl -i -s "http://localhost:8091/v1/courses/activities?offset=0&amp;limit=20"</pre></div>
+  <div class="ep"><div class="hd"><span class="m get">GET</span><span class="path">/v1/courses/activities/{id}</span><span class="tag">obtener</span></div>
+<pre>curl -i -s http://localhost:8091/v1/courses/activities/1</pre></div>
+  <div class="ep"><div class="hd"><span class="m get">GET</span><span class="path">/v1/courses/activities/{id}/questions</span><span class="tag">preguntas</span></div>
+<pre>curl -i -s http://localhost:8091/v1/courses/activities/1/questions</pre></div>
+  <div class="ep"><div class="hd"><span class="m post">POST</span><span class="path">/v1/courses/activities/{id}/questions</span><span class="tag">añadir pregunta</span></div>
+<pre>curl -i -s -X POST http://localhost:8091/v1/courses/activities/1/questions \
+  -H "Content-Type: application/json" \
+  -d '{"orden":1,"tipo":"seleccion","enunciado":"Elige la correcta","configuracion":{"opciones":["a","b"]}}'</pre></div>
+  <div class="ep"><div class="hd"><span class="m post">POST</span><span class="path">/v1/courses/activities/{id}/attempts</span><span class="tag">registrar intento</span></div>
+<pre>curl -i -s -X POST http://localhost:8091/v1/courses/activities/1/attempts \
+  -H "Content-Type: application/json" \
+  -d '{"usuarioId":"6c21271a-420e-4ad0-9f64-909418ae0851","respuestas":{"1":"a"},"detalle":{"1":true},"aciertos":1,"evaluables":1,"pendientesRevision":0}'</pre></div>
+</section>
+
+<section>
+  <p class="foot">Criterio de aceptación <b>CA-11</b>. Cada <code>curl</code> corresponde a un endpoint real de su controlador (verificado en el código). Los cuerpos JSON derivan de los DTOs de petición de cada servicio; los UUID y fechas son de ejemplo. Prerrequisito de ejecución: credencial de Supabase en el entorno y servicio arrancado. Referencias: <code>specs/CRITERIOS-ACEPTACION.html</code>, <code>specs/VERIFICACION-DATOS.md</code>, <code>backend-&lt;servicio&gt;/docs/index.html</code>.</p>
+</section>
+
+</div>
+</body>
+</html>
