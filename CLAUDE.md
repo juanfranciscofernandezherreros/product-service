@@ -47,6 +47,7 @@ Si se solicita ejecutar o continuar el flujo de generación del CRUD, **DEBES se
     - **Request:** parámetros (path/query) y, cuando aplique, el cuerpo JSON de ejemplo y su esquema (campos, tipos, obligatoriedad y validaciones).
     - **Response:** el cuerpo JSON de ejemplo de la respuesta de éxito por su código HTTP y, al menos, un ejemplo del cuerpo de error (`{ code, message }` o la estructura de error del servicio).
   - Modelo de datos y flujos principales.
+  - **Diagrama (OBLIGATORIO):** al menos un diagrama embebido como **SVG inline** (sin imágenes externas) que represente la arquitectura hexagonal del servicio (adaptadores de entrada/web → aplicación/puertos y casos de uso → dominio, y adaptador de salida → PostgreSQL) o el flujo principal de una petición.
   - Resumen de entornos (`local` con Docker PostgreSQL y `dev`) y evidencias de calidad (tests JUnit 5, ArchUnit y Cucumber BDD).
 
 ## Git y Repositorio Remoto

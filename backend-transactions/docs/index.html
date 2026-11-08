@@ -40,6 +40,7 @@
   <a href="#proposito">Propósito</a>
   <a href="#reglas">Reglas</a>
   <a href="#modelo">Modelo</a>
+  <a href="#arquitectura">Arquitectura</a>
   <a href="#endpoints">Endpoints</a>
   <a href="#entornos">Entornos</a>
   <a href="#calidad">Calidad</a>
@@ -80,8 +81,70 @@
     </table>
   </section>
 
+  <section id="arquitectura">
+    <h2>4. Arquitectura (hexagonal)</h2>
+    <p>Flujo de una petición: el adaptador web traduce el DTO a un comando/consulta, el caso de uso
+    orquesta el dominio puro, y el adaptador de persistencia mapea el dominio a PostgreSQL.</p>
+    <svg viewBox="0 0 820 340" role="img" aria-label="Diagrama de arquitectura hexagonal de transaction-service"
+         xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;border:1px solid var(--border);border-radius:8px;background:var(--code-bg)">
+      <defs>
+        <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+          <path d="M0,0 L8,3 L0,6 Z" fill="#52606d"/>
+        </marker>
+      </defs>
+      <style>
+        .box{fill:#fff;stroke:#2563eb;stroke-width:1.5;}
+        .dom{fill:#ecfdf5;stroke:#0f766e;stroke-width:1.5;}
+        .app{fill:#eff6ff;stroke:#2563eb;stroke-width:1.5;}
+        .ext{fill:#fef3c7;stroke:#b45309;stroke-width:1.5;}
+        .t{font:600 13px system-ui,sans-serif;fill:#1f2933;}
+        .s{font:11px system-ui,sans-serif;fill:#52606d;}
+        .lk{stroke:#52606d;stroke-width:1.5;fill:none;}
+      </style>
+
+      <!-- Inbound / Web -->
+      <rect class="box" x="20" y="120" width="150" height="90" rx="8"/>
+      <text class="t" x="95" y="150" text-anchor="middle">REST Adapter</text>
+      <text class="s" x="95" y="170" text-anchor="middle">TransactionController</text>
+      <text class="s" x="95" y="186" text-anchor="middle">DTOs · validación</text>
+
+      <!-- Application -->
+      <rect class="app" x="230" y="90" width="200" height="150" rx="8"/>
+      <text class="t" x="330" y="116" text-anchor="middle">Application</text>
+      <text class="s" x="330" y="136" text-anchor="middle">ports.in / ports.out</text>
+      <text class="s" x="330" y="152" text-anchor="middle">TransactionService</text>
+      <!-- Domain inside -->
+      <rect class="dom" x="258" y="162" width="144" height="62" rx="8"/>
+      <text class="t" x="330" y="186" text-anchor="middle">Domain</text>
+      <text class="s" x="330" y="204" text-anchor="middle">Transaction · enums</text>
+
+      <!-- Outbound / Persistence -->
+      <rect class="box" x="490" y="120" width="160" height="90" rx="8"/>
+      <text class="t" x="570" y="150" text-anchor="middle">JPA Adapter</text>
+      <text class="s" x="570" y="170" text-anchor="middle">PersistenceAdapter</text>
+      <text class="s" x="570" y="186" text-anchor="middle">entity · mapper</text>
+
+      <!-- DB -->
+      <rect class="ext" x="700" y="128" width="100" height="74" rx="8"/>
+      <text class="t" x="750" y="160" text-anchor="middle">PostgreSQL</text>
+      <text class="s" x="750" y="178" text-anchor="middle">transaction_db</text>
+
+      <!-- links -->
+      <line class="lk" x1="170" y1="165" x2="228" y2="165" marker-end="url(#arrow)"/>
+      <line class="lk" x1="430" y1="165" x2="488" y2="165" marker-end="url(#arrow)"/>
+      <line class="lk" x1="650" y1="165" x2="698" y2="165" marker-end="url(#arrow)"/>
+
+      <text class="s" x="199" y="155" text-anchor="middle">cmd/query</text>
+      <text class="s" x="459" y="155" text-anchor="middle">port.out</text>
+      <text class="s" x="674" y="155" text-anchor="middle">SQL</text>
+
+      <text class="s" x="95" y="235" text-anchor="middle">HTTP /v1/transactions</text>
+      <text class="s" x="330" y="258" text-anchor="middle">Java puro · sin Spring/JPA</text>
+    </svg>
+  </section>
+
   <section id="endpoints">
-    <h2>4. Catálogo de endpoints</h2>
+    <h2>5. Catálogo de endpoints</h2>
     <p>Base: <code>/v1/transactions</code></p>
     <table>
       <thead><tr><th>Método</th><th>Ruta</th><th>Descripción</th><th>Códigos</th></tr></thead>
@@ -177,7 +240,7 @@
   </section>
 
   <section id="entornos">
-    <h2>5. Entornos</h2>
+    <h2>6. Entornos</h2>
     <table>
       <thead><tr><th>Perfil</th><th>Base de datos</th><th>ddl-auto</th></tr></thead>
       <tbody>
@@ -192,7 +255,7 @@ docker compose up -d
   </section>
 
   <section id="calidad">
-    <h2>6. Evidencias de calidad</h2>
+    <h2>7. Evidencias de calidad</h2>
     <ul>
       <li><strong>JUnit 5 + Mockito:</strong> dominio, servicio y controlador (<code>@WebMvcTest</code>).</li>
       <li><strong>ArchUnit:</strong> aislamiento del dominio.</li>
