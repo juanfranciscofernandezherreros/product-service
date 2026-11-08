@@ -23,7 +23,23 @@ Si se solicita ejecutar o continuar el flujo de generación del CRUD, **DEBES se
 2. `02-domain.md` -> Implementar capa de dominio puro en **Java 21**.
 3. `03-application.md` -> Implementar puertos, casos de uso y tests JUnit 5.
 4. `04-adapters-and-tests.md` -> Implementar microservicio en `backend/` (Java 21, REST/JPA PostgreSQL, `docker-compose.yml` para local, perfiles `local`/`dev`/`test`, JUnit 5, Cucumber BDD con reporte HTML, ArchUnit, `backend/README.md` y `backend/CLAUDE.md`).
-5. `05-e2e-verification.md` -> Ejecutar `mvnw.cmd clean verify`, verificar reporte HTML de Cucumber, generar la **Documentación Funcional Oficial en HTML** (`backend/docs/index.html`), hacer commit y push al repositorio Git remoto indicado.
+5. `05-e2e-verification.md` -> Ejecutar `mvnw.cmd clean verify`, verificar reporte HTML de Cucumber, generar la **Documentación Funcional Oficial en HTML** (`backend/docs/index.html`), generar/actualizar los entregables de aceptación (`specs/VERIFICACION-DATOS.md`, `specs/PRUEBAS-CURL-CRUD.html` [CA-11], `specs/CRITERIOS-ACEPTACION.html`), aplicar la política de acceso a Supabase, y hacer commit y push al repositorio Git remoto indicado.
+
+## Flujo para un ESQUEMA NUEVO (Database-First): de DDL a CRUD completo
+Cuando añadas un esquema nuevo (un `.sql` con el DDL), el resultado DEBE ser un microservicio completo que cumpla **todas** las especificaciones de este SDD. Pasos:
+1. Añade el esquema como `specs/<servicio>.sql` y una línea en `.ai/services.txt` con `SPEC_FILE` **vacío** (eso activa Database-First; el OpenAPI se derivará del DDL).
+2. **Fase 0** (`.ai/prompts/00-db-to-openapi.md`): genera `specs/crud-spec.yaml` con el **CRUD COMPLETO** (crear → listar → obtener → actualizar → borrar) por entidad raíz, **subrecursos REST** para las tablas hijas, y `specs/acceptance-criteria.md`. Ninguna tabla operable queda sin endpoints.
+3. **Fases 1→5**: dominio puro (Java 21) → puertos/casos de uso + JUnit 5 → adaptadores web/JPA + Cucumber + ArchUnit → verificación `mvnw.cmd clean verify`.
+4. **Entregables obligatorios** (criterios de aceptación): cobertura JaCoCo ≥ 80%, reporte Cucumber HTML, `backend/docs/index.html` (diagrama SVG + request/response por endpoint + esquema exacto), `README.md`/`CLAUDE.md`, perfil `dev`→Supabase con la política de acceso, `specs/VERIFICACION-DATOS.md`, `specs/PRUEBAS-CURL-CRUD.html` (CA-11) y `specs/CRITERIOS-ACEPTACION.html`.
+5. **Git**: cada servicio en su carpeta y su propio repositorio remoto; commit y push solo con petición explícita.
+
+## Índice de especificaciones y entregables
+- **SDD / reglas:** este `CLAUDE.md` (fuente de verdad del proceso) + `backend-<servicio>/CLAUDE.md`.
+- **Contrato y esquema:** `specs/crud-spec.yaml` (OpenAPI) y `specs/<servicio>.sql` (DDL, fuente de verdad del modelo).
+- **Prompts del pipeline:** `.ai/prompts/00..05`.
+- **Documentación funcional:** `backend-<servicio>/docs/index.html` (uno por servicio).
+- **Aceptación y evidencia:** `specs/CRITERIOS-ACEPTACION.html` (CA-01..CA-11), `specs/PRUEBAS-CURL-CRUD.html` (CA-11, `curl` por endpoint), `specs/VERIFICACION-DATOS.md` (datos reales por servicio), `ACTA-CONFORMIDAD.html`.
+- **Índice navegable:** `specs/INDICE.md`.
 
 ## Stack Tecnológico Obligatorio
 - **Lenguaje:** **Java 21** (`<java.version>21</java.version>` en `pom.xml`). Aprovecha `record` para DTOs y Value Objects, `switch` pattern matching donde aplique y APIs modernas de Java 21.

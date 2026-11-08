@@ -13,6 +13,7 @@ A partir de las tablas del DDL, GENERA `specs/crud-spec.yaml` (OpenAPI 3.0.3) y 
 3. Deriva los **schemas** del OpenAPI directamente de las columnas: tipo (mapea `numeric`→number, `varchar`→string, `integer`→integer, `uuid`→string/uuid, `date`→string/date, `timestamptz`→string/date-time, `boolean`→boolean), obligatoriedad (NOT NULL → required), longitudes (`varchar(n)`→maxLength), y rangos de los `CHECK` como `minimum`/`maximum`.
 4. Define un schema de error `{ code, message }` y las respuestas comunes (BadRequest, NotFound, Conflict).
 5. Escribe `specs/acceptance-criteria.md` con escenarios BDD por endpoint (happy path + errores 400/404/409/422 cuando apliquen).
+6. **CRUD COMPLETO y subrecursos (OBLIGATORIO):** el contrato debe cubrir, por cada entidad raíz, el ciclo completo **crear → listar → obtener → actualizar → borrar**. Cada tabla hija relevante (FK) se expone como **subrecurso REST** con al menos `GET`/`POST` bajo su entidad padre (p. ej. `/v1/<recurso>/{id}/<hijos>`). Ninguna tabla operable puede quedar sin endpoints. Estos endpoints son los que después alimentan, uno a uno, la prueba cURL CRUD (`specs/PRUEBAS-CURL-CRUD.html`, criterio **CA-11**) y los criterios de aceptación (`specs/CRITERIOS-ACEPTACION.html`).
 
-El OpenAPI y los criterios generados deben ser coherentes 1:1 con el DDL. No inventes columnas ni tablas que no estén en `specs/database-spec.sql`.
+El OpenAPI y los criterios generados deben ser coherentes 1:1 con el DDL y **completos** (ninguna tabla operable sin endpoints). No inventes columnas ni tablas que no estén en `specs/database-spec.sql`.
 Tras generar, continúa con la Fase 1 (`01-plan-and-tasks.md`) usando ya ese `specs/crud-spec.yaml`.
