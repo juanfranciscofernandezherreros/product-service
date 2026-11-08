@@ -70,9 +70,12 @@ set "SPEC_FILE=%~4"
 set "DB_SPEC=%~5"
 if "%DB_SPEC%"=="" set "DB_SPEC=specs\database-spec.sql"
 
+:: Modo: si no se da OpenAPI (SPEC_FILE vacio) -> DATABASE-FIRST (se derivara del DDL).
+if "%SPEC_FILE%"=="" ( set "GENERATION_MODE=db-first" ) else ( set "GENERATION_MODE=api-first" )
+
 echo.
 echo ########################################################
-echo #  Microservicio: %SERVICE_NAME%
+echo #  Microservicio: %SERVICE_NAME%  [%GENERATION_MODE%]
 echo #  Carpeta : %TARGET_DIR%
 echo #  Remoto  : %REMOTE_URL%
 echo #  OpenAPI : %SPEC_FILE%
@@ -81,8 +84,8 @@ echo ########################################################
 
 if "%TARGET_DIR%"=="" ( echo [ERROR] TARGET_DIR vacio para %SERVICE_NAME%. & exit /b 1 )
 if "%REMOTE_URL%"=="" ( echo [ERROR] REMOTE_URL vacio para %SERVICE_NAME%. & exit /b 1 )
-if not exist "%ROOT%%SPEC_FILE%" ( echo [ERROR] No existe el contrato %SPEC_FILE%. & exit /b 1 )
 if not exist "%ROOT%%DB_SPEC%" ( echo [ERROR] No existe el esquema de BD %DB_SPEC%. & exit /b 1 )
+if "%GENERATION_MODE%"=="api-first" if not exist "%ROOT%%SPEC_FILE%" ( echo [ERROR] No existe el contrato %SPEC_FILE%. & exit /b 1 )
 
 if not exist "%TARGET_DIR%" mkdir "%TARGET_DIR%"
 
@@ -93,18 +96,25 @@ copy /Y "%ROOT%.editorconfig" "%TARGET_DIR%\" >nul
 xcopy /E /I /Y "%ROOT%plans" "%TARGET_DIR%\plans" >nul
 xcopy /E /I /Y "%ROOT%.ai" "%TARGET_DIR%\.ai" >nul
 if not exist "%TARGET_DIR%\specs" mkdir "%TARGET_DIR%\specs"
-copy /Y "%ROOT%%SPEC_FILE%" "%TARGET_DIR%\specs\crud-spec.yaml" >nul
 copy /Y "%ROOT%%DB_SPEC%" "%TARGET_DIR%\specs\database-spec.sql" >nul
+if "%GENERATION_MODE%"=="api-first" copy /Y "%ROOT%%SPEC_FILE%" "%TARGET_DIR%\specs\crud-spec.yaml" >nul
 if exist "%ROOT%specs\acceptance-criteria.md" copy /Y "%ROOT%specs\acceptance-criteria.md" "%TARGET_DIR%\specs\" >nul
 
 (
     echo SERVICE_NAME=%SERVICE_NAME%
     echo REMOTE_URL=%REMOTE_URL%
     echo TARGET_DIR=%TARGET_DIR%
+    echo GENERATION_MODE=%GENERATION_MODE%
 ) > "%TARGET_DIR%\.ai\project-context.txt"
 
 pushd "%TARGET_DIR%"
 echo Directorio de trabajo: %CD%
+
+if "%GENERATION_MODE%"=="db-first" (
+    echo [FASE 0/5] Database-First: derivando OpenAPI desde el esquema...
+    claude --model %MODEL% -p "$(type .ai\prompts\00-db-to-openapi.md)"
+    if errorlevel 1 ( echo [ERROR] Fase 0 fallo en %SERVICE_NAME%. & popd & exit /b 1 )
+)
 
 echo [FASE 1/5] Plan y tareas...
 claude --model %MODEL% -p "$(type .ai\prompts\01-plan-and-tasks.md)"

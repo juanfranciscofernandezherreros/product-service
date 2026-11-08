@@ -7,8 +7,13 @@
 #   TARGET_DIR   : carpeta destino DONDE se genera el proyecto (su propio repo git).
 #   REMOTE_URL   : repositorio Git remoto propio del servicio (push -u origin main).
 #   SPEC_FILE    : ruta (relativa a la raiz) del contrato OpenAPI del servicio.
+#                  API-First: indica el OpenAPI. DATABASE-FIRST: dejalo VACIO
+#                  (el OpenAPI se derivara del esquema en la Fase 0).
 #   DB_SPEC      : ruta (relativa a la raiz) del esquema PostgreSQL (DDL) del servicio.
 #                  Opcional: si se omite, se usa specs/database-spec.sql.
+#
+# Ejemplo DATABASE-FIRST (SPEC_FILE vacio -> se genera el OpenAPI desde el .sql):
+# catalog-service;C:\Develop\repos\catalog-service;https://github.com/tu-usuario/catalog-service.git;;specs/catalog-service.sql
 #
 # Las lineas que empiezan por # y las vacias se ignoran.
 # Cada servicio se genera en SU carpeta y se sube a SU remoto: NUNCA se combinan en el mismo repo.

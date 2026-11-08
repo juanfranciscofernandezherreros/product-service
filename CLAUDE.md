@@ -11,8 +11,14 @@ Antes de ejecutar cualquier fase, lee el archivo `.ai/project-context.txt` (crea
 - **Nombre del Microservicio (`SERVICE_NAME`):** Úsalo en `pom.xml` (`<artifactId>` y `<name>`), en `application.yml` (`spring.application.name`), en `README.md` y en `docs/index.html`.
 - **Repositorio Remoto (`REMOTE_URL`):** Úsalo para configurar `git remote add origin <REMOTE_URL>` y hacer `git push -u origin main`.
 
+## Modos de generación: API-First y Database-First
+El flujo admite dos puntos de partida; ambos acaban en el mismo pipeline (dominio → aplicación → adaptadores → verificación → docs → push):
+- **API-First (por defecto):** la especificación de entrada es el OpenAPI (`specs/crud-spec.yaml`) y, opcionalmente, el esquema (`specs/database-spec.sql`). Se ejecutan las Fases 1→5.
+- **Database-First:** la especificación de entrada es **solo el esquema** (`specs/database-spec.sql`). Se ejecuta primero la **Fase 0** (`.ai/prompts/00-db-to-openapi.md`), que **genera** `specs/crud-spec.yaml` y `specs/acceptance-criteria.md` a partir de las tablas del DDL; después continúan las Fases 1→5 con ese contrato derivado. El esquema SQL sigue siendo la fuente de verdad (SDD): Flyway crea las tablas y JPA valida.
+- Se selecciona con la variable `GENERATION_MODE` (`api-first` | `db-first`) en `.ai/project-context.txt`; en el manifiesto, una línea con `SPEC_FILE` vacío implica `db-first` (el OpenAPI se derivará del `DB_SPEC`).
+
 ## Ejecución Secuencial Obligatoria (.bat y Fases)
-Si se solicita ejecutar o continuar el flujo de generación del CRUD, **DEBES seguir estrictamente este orden** (automatizado en `run-ai-crud.bat`):
+Si se solicita ejecutar o continuar el flujo de generación del CRUD, **DEBES seguir estrictamente este orden** (automatizado en `run-ai-crud.bat`). En modo Database-First se antepone la Fase 0 (`00-db-to-openapi.md`):
 1. `01-plan-and-tasks.md` -> Analizar specs y actualizar `plans/IMPLEMENTATION_PLAN.md` y `plans/TASKS.md`.
 2. `02-domain.md` -> Implementar capa de dominio puro en **Java 21**.
 3. `03-application.md` -> Implementar puertos, casos de uso y tests JUnit 5.
