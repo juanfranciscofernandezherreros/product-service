@@ -3,10 +3,12 @@
 > Este archivo debe ser completado por la IA en la Fase 1 antes de generar código.
 
 ## 1. Resumen de la Especificación
-- Nombre del Microservicio: (ver `.ai/project-context.txt`)
+- Nombre del Microservicio: **product-service** (ver `.ai/project-context.txt`)
 - Versión de Java: **Java 21**
-- Entidad principal:
-- Endpoints a implementar:
+- Entidad principal: **Product** (id: UUID, sku: String [min 3], name: String [min 2], price: BigDecimal [>= 0.01]).
+- Endpoints a implementar (base `/api/v1/products`): `POST` (201/400), `GET` lista (200), `GET /{id}` (200/404), `PUT /{id}` (200/400/404), `DELETE /{id}` (204/404).
+
+> Estado: implementado y verificado. `docker-compose.yml` (PostgreSQL `product_db`), perfiles `local`/`dev`/`test`, reporte HTML Cucumber, `backend/docs/index.html` y docs generados. `mvn clean verify` en verde. Pendiente opcional: `git push` al remoto (REMOTE_URL no provisto).
 
 ## 2. Diseño por Capas (Hexagonal)
 - **Domain:** Entidades, Value Objects (`record`), Excepciones de dominio.

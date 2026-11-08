@@ -26,20 +26,23 @@ com.example.productcrud
 
 | Perfil  | Base de datos                         | ddl-auto     | Uso                         |
 |---------|---------------------------------------|--------------|-----------------------------|
-| `local` | PostgreSQL `localhost:5432/productdb` | `update`     | Desarrollo local (por defecto) |
-| `dev`   | PostgreSQL (vía env vars)             | `validate`   | Entorno de desarrollo compartido |
-| `test`  | H2 en memoria (modo PostgreSQL)       | `create-drop`| Tests automatizados         |
+| `local` | PostgreSQL `localhost:5432/product_db` | `update`     | Desarrollo local (por defecto) |
+| `dev`   | PostgreSQL (vía env vars)              | `validate`   | Entorno de desarrollo compartido |
+| `test`  | H2 en memoria (modo PostgreSQL)        | `create-drop`| Tests automatizados         |
 
-Variables de entorno soportadas: `SPRING_PROFILES_ACTIVE`, `DB_URL`, `DB_USERNAME`, `DB_PASSWORD`.
+Variables de entorno soportadas: `SPRING_PROFILES_ACTIVE`, `DB_USERNAME`, `DB_PASSWORD` (perfil `local`) y
+`DB_HOST_DEV`, `DB_NAME_DEV`, `DB_USER_DEV`, `DB_PASS_DEV` (perfil `dev`).
 
 ## Arranque
 
-### 1. Levantar PostgreSQL (ejemplo con Docker)
+### 1. Levantar PostgreSQL con Docker Compose
 
 ```bash
-docker run --name productdb -e POSTGRES_DB=productdb -e POSTGRES_USER=postgres \
-  -e POSTGRES_PASSWORD=postgres -p 5432:5432 -d postgres:16
+cd backend
+docker compose up -d
 ```
+
+Esto arranca PostgreSQL 16 (`product_db`, usuario/clave `postgres`) en `localhost:5432`.
 
 ### 2. Ejecutar la aplicación (perfil `local` por defecto)
 
@@ -92,3 +95,9 @@ backend/target/cucumber-reports/cucumber.html
 ```
 
 Ábrelo en el navegador para ver el resultado de cada escenario (happy path y errores).
+
+## Documentación funcional
+
+La documentación funcional oficial (autocontenida, publicable en GitHub/GitLab Pages) está en
+[`docs/index.html`](docs/index.html): propósito, reglas de negocio, catálogo de endpoints con
+ejemplos, modelo de datos, entornos y evidencias de calidad.

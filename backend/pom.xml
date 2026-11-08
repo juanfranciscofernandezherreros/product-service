@@ -12,9 +12,9 @@
     </parent>
 
     <groupId>com.example</groupId>
-    <artifactId>product-crud</artifactId>
+    <artifactId>product-service</artifactId>
     <version>1.0.0</version>
-    <name>product-crud</name>
+    <name>product-service</name>
     <description>Product CRUD API - Hexagonal Architecture</description>
 
     <properties>

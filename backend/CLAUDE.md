@@ -12,11 +12,13 @@ Guía para arrancar, probar y extender este microservicio.
 - Arrancar (perfil `local`, PostgreSQL): `mvnw.cmd spring-boot:run`
 - Arrancar con otro perfil: `mvnw.cmd spring-boot:run -Dspring-boot.run.profiles=dev`
 - Análisis estático: `mvnw.cmd checkstyle:check`
+- Levantar PostgreSQL local: `docker compose up -d`
 - Reporte Cucumber (tras `verify`): `backend/target/cucumber-reports/cucumber.html`
+- Documentación funcional: `backend/docs/index.html`
 
 ## Perfiles
-- `local` (por defecto): PostgreSQL en `localhost:5432/productdb`, `ddl-auto=update`.
-- `dev`: PostgreSQL por variables de entorno (`DB_URL`, `DB_USERNAME`, `DB_PASSWORD`), `ddl-auto=validate`.
+- `local` (por defecto): PostgreSQL en `localhost:5432/product_db` (vía `docker compose up -d`), `ddl-auto=update`.
+- `dev`: PostgreSQL por variables de entorno (`DB_HOST_DEV`, `DB_NAME_DEV`, `DB_USER_DEV`, `DB_PASS_DEV`), `ddl-auto=validate`.
 - `test`: H2 en memoria (modo PostgreSQL), `ddl-auto=create-drop`. Lo usan los tests.
 
 ## Reglas de arquitectura

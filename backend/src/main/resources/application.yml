@@ -1,6 +1,6 @@
 spring:
   application:
-    name: product-crud
+    name: product-service
   profiles:
     active: ${SPRING_PROFILES_ACTIVE:local}
   jpa:

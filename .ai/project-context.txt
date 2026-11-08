@@ -1,0 +1,3 @@
+SERVICE_NAME=product-service
+REMOTE_URL=
+TARGET_DIR=C:\Develop\ai_crud
