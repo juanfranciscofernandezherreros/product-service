@@ -1,0 +1,17 @@
+# Manifiesto de microservicios — un servicio = un repositorio.
+#
+# Una linea por microservicio, con 4 campos separados por punto y coma (;):
+#   SERVICE_NAME;TARGET_DIR;REMOTE_URL;SPEC_FILE
+#
+#   SERVICE_NAME : nombre del microservicio (artifactId, spring.application.name, docs).
+#   TARGET_DIR   : carpeta destino DONDE se genera el proyecto (su propio repo git).
+#   REMOTE_URL   : repositorio Git remoto propio del servicio (push -u origin main).
+#   SPEC_FILE    : ruta (relativa a la raiz de este workspace) del contrato OpenAPI del servicio.
+#
+# Las lineas que empiezan por # y las vacias se ignoran.
+# Cada servicio se genera en SU carpeta y se sube a SU remoto: NUNCA se combinan en el mismo repo.
+#
+# Ejemplos (descomenta y ajusta):
+# product-service;C:\Develop\repos\product-service;https://github.com/tu-usuario/product-service.git;specs/product-service.yaml
+# transaction-service;C:\Develop\repos\transaction-service;https://github.com/tu-usuario/transaction-service.git;specs/transaction-service.yaml
+# fund-service;C:\Develop\repos\fund-service;https://github.com/tu-usuario/fund-service.git;specs/fund-service.yaml

@@ -1,5 +1,11 @@
 # CLAUDE.md - Orquestador AI CRUD (Java 21 + Spring Boot 3 + Hexagonal + Docker PGSQL)
 
+## Modelo multi-microservicio: un servicio = un repositorio
+**REGLA OBLIGATORIA:** cada microservicio se genera en **su propia carpeta** y se publica en **su propio repositorio Git**. **NUNCA** se combinan varios servicios en el mismo repositorio ni en el mismo checkout.
+- La lista de servicios a generar vive en `.ai/services.txt` (manifiesto), una línea por servicio con 4 campos `;`-separados: `SERVICE_NAME;TARGET_DIR;REMOTE_URL;SPEC_FILE`.
+- `run-ai-crud.bat` recorre ese manifiesto y, por cada servicio: prepara su carpeta `TARGET_DIR`, copia su contrato (`SPEC_FILE` → `specs/crud-spec.yaml`), escribe su `.ai/project-context.txt` propio, ejecuta las 5 fases **en esa carpeta** y hace `git init` + `git remote add origin <REMOTE_URL>` + `git push -u origin main` **a su remoto**.
+- Un contrato OpenAPI distinto ⇒ un microservicio distinto ⇒ un repositorio distinto. Si llega un contrato nuevo, se genera un servicio nuevo en su propio repo, no se añade a uno existente.
+
 ## Contexto del Proyecto (Generado por `run-ai-crud.bat`)
 Antes de ejecutar cualquier fase, lee el archivo `.ai/project-context.txt` (creado automáticamente por `run-ai-crud.bat`) para conocer:
 - **Nombre del Microservicio (`SERVICE_NAME`):** Úsalo en `pom.xml` (`<artifactId>` y `<name>`), en `application.yml` (`spring.application.name`), en `README.md` y en `docs/index.html`.
