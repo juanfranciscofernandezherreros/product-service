@@ -1,3 +1,0 @@
-SERVICE_NAME=product-service
-REMOTE_URL=https://github.com/juanfranciscofernandezherreros/product-service.git
-TARGET_DIR=C:\Develop\ai_crud

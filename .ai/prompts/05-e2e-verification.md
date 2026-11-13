@@ -12,7 +12,7 @@ Comprueba obligatoriamente:
 9. **Especificaciones de aceptación y acceso a datos (OBLIGATORIO antes del commit/push):**
    - Configura el perfil `dev` hacia **Supabase** (`ddl-auto: none`, `flyway.enabled: false`; el esquema lo gestiona Supabase) y aplica la política «Acceso a datos en Supabase» del SDD (lecturas de usuario por **REST + JWT**; `service_role` solo para backend sin usuario; **secretos solo por variable de entorno**, nunca en el repo).
    - Genera o actualiza `specs/VERIFICACION-DATOS.md`: prueba de que **cada endpoint principal devuelve datos reales** de Supabase (consulta de solo lectura equivalente).
-   - Genera o actualiza `specs/PRUEBAS-CURL-CRUD.html` (**criterio CA-11**): un `curl` por **CADA** endpoint de **CADA** servicio, en secuencia CRUD + subrecursos, con método, ruta, puerto y cuerpo JSON derivado de los **DTOs reales**.
+   - Genera o actualiza `specs/PRUEBAS-CURL-CRUD.html` (**criterio CA-11**): un `curl` por **CADA** endpoint del servicio, en secuencia CRUD + subrecursos, con método, ruta, puerto y cuerpo JSON derivado de los **DTOs reales**.
    - Genera o actualiza `specs/CRITERIOS-ACEPTACION.html`: criterios **CA-01..CA-11** con su evidencia (build en verde, cobertura ≥ 80%, datos reales).
 10. Inicializa Git en el proyecto (`git init`), añade el repositorio remoto `REMOTE_URL` (`git remote add origin <REMOTE_URL>`), realiza `git add .`, `git commit -m "feat: complete java 21 hexagonal crud microservice <SERVICE_NAME>"` y `git push -u origin main`.
 Si falta algo o hay algún fallo, corrígelo y vuelve a ejecutar hasta que todo pase en verde y el push sea exitoso.
