@@ -5,7 +5,9 @@ description: Genera o actualiza la Documentación Funcional Oficial en HTML de u
 
 # Documentación Funcional Oficial en HTML (`backend/docs/index.html`)
 
-Al finalizar la verificación en la Fase 5, es **OBLIGATORIO** generar un documento HTML autocontenido (CSS embebido, limpio, navegable y listo para publicar en GitHub/GitLab Pages) en `backend/docs/index.html` que explique **de forma funcional** todo lo desarrollado.
+En el modo por defecto este documento lo escribe el generador (`generator/docs.py`) desde el DDL: para cambiarlo, cambia esa plantilla y regenera; no edites el HTML del servicio. Esta skill describe el contenido que debe tener, y es el procedimiento a seguir a mano solo en `--mode ai` o al documentar reglas de negocio añadidas.
+
+Es **OBLIGATORIO** generar un documento HTML autocontenido (CSS embebido, limpio, navegable y listo para publicar en GitHub/GitLab Pages) en `backend/docs/index.html` que explique **de forma funcional** todo lo desarrollado.
 
 ## Fuentes
 - `.ai/project-context.txt` → `SERVICE_NAME`.

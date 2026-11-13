@@ -1,4 +1,4 @@
-name: Validar especificaciones
+name: Validar generador
 
 on:
   push:
@@ -9,7 +9,8 @@ permissions:
   contents: read
 
 jobs:
-  validate:
+  specs:
+    name: Especificaciones
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -19,6 +20,14 @@ jobs:
       - run: pip install pyyaml openapi-spec-validator
       - name: Manifiesto y contratos OpenAPI
         run: python scripts/validate_specs.py
+      - name: Dominios al dia con el reparto de tablas
+        run: python scripts/split_domains.py --check
+      - name: Dominios iguales que el export de Supabase
+        run: python scripts/check_domains.py
+      - name: Contratos OpenAPI al dia con el DDL
+        run: |
+          python scripts/generate.py --openapi
+          git diff --exit-code -- specs/openapi
       - name: Sintaxis de run-ai-crud.sh
         run: bash -n run-ai-crud.sh
       - name: No hay servicios generados en el generador
@@ -26,4 +35,46 @@ jobs:
           if ls -d backend* 2>/dev/null; then
             echo "Este repositorio es solo el generador: los servicios van en su propio repositorio."
             exit 1
+          fi
+
+  services:
+    name: Generar y compilar ${{ matrix.service }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        service:
+          - access-service
+          - battle-service
+          - content-service
+          - courses-service
+          - exams-service
+          - misc-service
+          - social-service
+          - study-plan-service
+          - vocabulary-service
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+      - uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: m2-${{ hashFiles('generator/resources.py') }}
+      - name: Generar el servicio (sin IA)
+        run: python scripts/generate.py -s ${{ matrix.service }} --force
+      - name: mvnw clean verify
+        working-directory: ../${{ matrix.service }}/backend
+        run: ./mvnw -B -ntp clean verify
+      - name: Cobertura
+        if: always()
+        working-directory: ../${{ matrix.service }}/backend
+        run: |
+          if [ -f target/site/jacoco/jacoco.csv ]; then
+            awk -F, 'NR>1 {m+=$8; c+=$9} END {printf "Cobertura de lineas: %.1f%% (%d de %d)\n", 100*c/(m+c), c, m+c}' target/site/jacoco/jacoco.csv
           fi

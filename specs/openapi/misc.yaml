@@ -1,147 +1,1062 @@
-openapi: 3.0.3
+# Generado desde el DDL por el generador de servicios. No editar a mano.
+openapi: "3.0.3"
 info:
-  title: Misc API (sugerencias, bitácora, writing)
-  description: Dominios auxiliares — sugerencias, bitácora (categorías y anotaciones por usuario) y borradores de writing. Derivado del esquema PostgreSQL.
-  version: 1.0.0
+  title: "misc-service API"
+  version: "1.0.0"
+  description: "CRUD de las tablas de misc-service, derivado del esquema de base de datos."
 servers:
-  - url: https://api.tudominio.com/v1
+  - url: "http://localhost:8086"
+    description: "Local"
+tags:
+  - name: "sugerencias"
+  - name: "bitacora_categorias"
+  - name: "bitacora_anotaciones"
+  - name: "writing_borradores"
 paths:
-  /v1/suggestions:
+  "/v1/sugerencias":
+    post:
+      tags:
+        - "sugerencias"
+      operationId: "createSugerencias"
+      summary: "Crea un registro de sugerencias"
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/SugerenciasRequest"
+      responses:
+        "201":
+          description: "Creado"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Sugerencias"
+        "400":
+          description: "Peticion no valida"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "409":
+          description: "Ya existe o incumple una restriccion"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
     get:
-      summary: Listar sugerencias (filtro por estado)
-      operationId: listSuggestions
+      tags:
+        - "sugerencias"
+      operationId: "listSugerencias"
+      summary: "Lista sugerencias (paginado)"
       parameters:
-        - { name: estado, in: query, schema: { type: string, enum: [pendiente, publicada, rechazada] } }
+        - name: "page"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            default: 0
+        - name: "size"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            default: 20
+            maximum: 100
       responses:
-        '200': { description: OK, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/Suggestion' } } } } }
-    post:
-      summary: Crear sugerencia
-      operationId: createSuggestion
-      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/SuggestionCreate' } } } }
-      responses:
-        '201': { description: Creada, content: { application/json: { schema: { $ref: '#/components/schemas/Suggestion' } } } }
-        '400': { $ref: '#/components/responses/BadRequest' }
-  /v1/suggestions/{id}:
-    parameters: [ { name: id, in: path, required: true, schema: { type: integer, format: int64 } } ]
+        "200":
+          description: "Pagina de resultados"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                properties:
+                  items:
+                    type: "array"
+                    items:
+                      "$ref": "#/components/schemas/Sugerencias"
+                  total:
+                    type: "integer"
+                    format: "int64"
+                  page:
+                    type: "integer"
+                  size:
+                    type: "integer"
+        "400":
+          description: "Parametro no valido"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+  "/v1/sugerencias/{id}":
     get:
-      summary: Obtener sugerencia
-      operationId: getSuggestion
+      tags:
+        - "sugerencias"
+      operationId: "getSugerencias"
+      summary: "Obtiene un registro de sugerencias"
+      parameters:
+        - name: "id"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+          example: 1
       responses:
-        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/Suggestion' } } } }
-        '404': { $ref: '#/components/responses/NotFound' }
+        "200":
+          description: "Encontrado"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Sugerencias"
+        "404":
+          description: "No existe"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
     put:
-      summary: Cambiar estado de la sugerencia
-      operationId: updateSuggestion
-      requestBody: { required: true, content: { application/json: { schema: { type: object, required: [estado], properties: { estado: { type: string, enum: [pendiente, publicada, rechazada] } } } } } }
+      tags:
+        - "sugerencias"
+      operationId: "updateSugerencias"
+      summary: "Modifica un registro de sugerencias"
+      parameters:
+        - name: "id"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+          example: 1
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/SugerenciasUpdateRequest"
       responses:
-        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/Suggestion' } } } }
-        '400': { $ref: '#/components/responses/BadRequest' }
-        '404': { $ref: '#/components/responses/NotFound' }
-  /v1/users/{userId}/logbook/categories:
-    parameters: [ { name: userId, in: path, required: true, schema: { type: string, format: uuid } } ]
-    get:
-      summary: Categorías de bitácora del usuario
-      operationId: listLogbookCategories
+        "200":
+          description: "Modificado"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Sugerencias"
+        "400":
+          description: "Peticion no valida"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "404":
+          description: "No existe"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "409":
+          description: "Incumple una restriccion"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+    delete:
+      tags:
+        - "sugerencias"
+      operationId: "deleteSugerencias"
+      summary: "Borra un registro de sugerencias"
+      parameters:
+        - name: "id"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+          example: 1
       responses:
-        '200': { description: OK, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/LogbookCategory' } } } } }
+        "204":
+          description: "Borrado"
+        "404":
+          description: "No existe"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "409":
+          description: "Lo impide una restriccion"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+  "/v1/bitacora-categorias":
     post:
-      summary: Crear categoría de bitácora
-      operationId: createLogbookCategory
-      requestBody: { required: true, content: { application/json: { schema: { type: object, required: [nombre], properties: { nombre: { type: string, minLength: 1, maxLength: 60 } } } } } }
+      tags:
+        - "bitacora_categorias"
+      operationId: "createBitacoraCategorias"
+      summary: "Crea un registro de bitacora_categorias"
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/BitacoraCategoriasRequest"
       responses:
-        '201': { description: Creada, content: { application/json: { schema: { $ref: '#/components/schemas/LogbookCategory' } } } }
-        '400': { $ref: '#/components/responses/BadRequest' }
-  /v1/users/{userId}/logbook/notes:
-    parameters: [ { name: userId, in: path, required: true, schema: { type: string, format: uuid } } ]
+        "201":
+          description: "Creado"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/BitacoraCategorias"
+        "400":
+          description: "Peticion no valida"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "409":
+          description: "Ya existe o incumple una restriccion"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
     get:
-      summary: Anotaciones de bitácora del usuario
-      operationId: listLogbookNotes
+      tags:
+        - "bitacora_categorias"
+      operationId: "listBitacoraCategorias"
+      summary: "Lista bitacora_categorias (paginado)"
+      parameters:
+        - name: "usuarioId"
+          in: "query"
+          required: false
+          schema:
+            type: "string"
+            format: "uuid"
+          example: "ccba4dce-1298-5f2f-9bd7-6d685aa5301b"
+        - name: "page"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            default: 0
+        - name: "size"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            default: 20
+            maximum: 100
       responses:
-        '200': { description: OK, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/LogbookNote' } } } } }
-    post:
-      summary: Crear anotación de bitácora
-      operationId: createLogbookNote
-      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/LogbookNoteCreate' } } } }
-      responses:
-        '201': { description: Creada, content: { application/json: { schema: { $ref: '#/components/schemas/LogbookNote' } } } }
-        '400': { $ref: '#/components/responses/BadRequest' }
-  /v1/users/{userId}/writing-drafts:
-    parameters: [ { name: userId, in: path, required: true, schema: { type: string, format: uuid } } ]
+        "200":
+          description: "Pagina de resultados"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                properties:
+                  items:
+                    type: "array"
+                    items:
+                      "$ref": "#/components/schemas/BitacoraCategorias"
+                  total:
+                    type: "integer"
+                    format: "int64"
+                  page:
+                    type: "integer"
+                  size:
+                    type: "integer"
+        "400":
+          description: "Parametro no valido"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+  "/v1/bitacora-categorias/{id}":
     get:
-      summary: Borradores de writing del usuario
-      operationId: listWritingDrafts
+      tags:
+        - "bitacora_categorias"
+      operationId: "getBitacoraCategorias"
+      summary: "Obtiene un registro de bitacora_categorias"
+      parameters:
+        - name: "id"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+            format: "uuid"
+          example: "b537a600-5d35-5caf-98cd-fc246a4dd54c"
       responses:
-        '200': { description: OK, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/WritingDraft' } } } } }
+        "200":
+          description: "Encontrado"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/BitacoraCategorias"
+        "404":
+          description: "No existe"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+    put:
+      tags:
+        - "bitacora_categorias"
+      operationId: "updateBitacoraCategorias"
+      summary: "Modifica un registro de bitacora_categorias"
+      parameters:
+        - name: "id"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+            format: "uuid"
+          example: "b537a600-5d35-5caf-98cd-fc246a4dd54c"
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/BitacoraCategoriasUpdateRequest"
+      responses:
+        "200":
+          description: "Modificado"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/BitacoraCategorias"
+        "400":
+          description: "Peticion no valida"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "404":
+          description: "No existe"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "409":
+          description: "Incumple una restriccion"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+    delete:
+      tags:
+        - "bitacora_categorias"
+      operationId: "deleteBitacoraCategorias"
+      summary: "Borra un registro de bitacora_categorias"
+      parameters:
+        - name: "id"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+            format: "uuid"
+          example: "b537a600-5d35-5caf-98cd-fc246a4dd54c"
+      responses:
+        "204":
+          description: "Borrado"
+        "404":
+          description: "No existe"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "409":
+          description: "Lo impide una restriccion"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+  "/v1/bitacora-anotaciones":
     post:
-      summary: Crear borrador de writing
-      operationId: createWritingDraft
-      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/WritingDraftCreate' } } } }
+      tags:
+        - "bitacora_anotaciones"
+      operationId: "createBitacoraAnotaciones"
+      summary: "Crea un registro de bitacora_anotaciones"
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/BitacoraAnotacionesRequest"
       responses:
-        '201': { description: Creado, content: { application/json: { schema: { $ref: '#/components/schemas/WritingDraft' } } } }
-        '400': { $ref: '#/components/responses/BadRequest' }
+        "201":
+          description: "Creado"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/BitacoraAnotaciones"
+        "400":
+          description: "Peticion no valida"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "409":
+          description: "Ya existe o incumple una restriccion"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+    get:
+      tags:
+        - "bitacora_anotaciones"
+      operationId: "listBitacoraAnotaciones"
+      summary: "Lista bitacora_anotaciones (paginado)"
+      parameters:
+        - name: "usuarioId"
+          in: "query"
+          required: false
+          schema:
+            type: "string"
+            format: "uuid"
+          example: "aeb226f1-8c54-55b3-935d-db92d0abf4ae"
+        - name: "categoriaId"
+          in: "query"
+          required: false
+          schema:
+            type: "string"
+            format: "uuid"
+          example: "757e9eba-cc1f-58b4-a0c4-5054edb542d1"
+        - name: "page"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            default: 0
+        - name: "size"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            default: 20
+            maximum: 100
+      responses:
+        "200":
+          description: "Pagina de resultados"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                properties:
+                  items:
+                    type: "array"
+                    items:
+                      "$ref": "#/components/schemas/BitacoraAnotaciones"
+                  total:
+                    type: "integer"
+                    format: "int64"
+                  page:
+                    type: "integer"
+                  size:
+                    type: "integer"
+        "400":
+          description: "Parametro no valido"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+  "/v1/bitacora-anotaciones/{id}":
+    get:
+      tags:
+        - "bitacora_anotaciones"
+      operationId: "getBitacoraAnotaciones"
+      summary: "Obtiene un registro de bitacora_anotaciones"
+      parameters:
+        - name: "id"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+            format: "uuid"
+          example: "4f6af91a-f71a-5788-b2ed-2597f84f8ec1"
+      responses:
+        "200":
+          description: "Encontrado"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/BitacoraAnotaciones"
+        "404":
+          description: "No existe"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+    put:
+      tags:
+        - "bitacora_anotaciones"
+      operationId: "updateBitacoraAnotaciones"
+      summary: "Modifica un registro de bitacora_anotaciones"
+      parameters:
+        - name: "id"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+            format: "uuid"
+          example: "4f6af91a-f71a-5788-b2ed-2597f84f8ec1"
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/BitacoraAnotacionesUpdateRequest"
+      responses:
+        "200":
+          description: "Modificado"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/BitacoraAnotaciones"
+        "400":
+          description: "Peticion no valida"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "404":
+          description: "No existe"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "409":
+          description: "Incumple una restriccion"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+    delete:
+      tags:
+        - "bitacora_anotaciones"
+      operationId: "deleteBitacoraAnotaciones"
+      summary: "Borra un registro de bitacora_anotaciones"
+      parameters:
+        - name: "id"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+            format: "uuid"
+          example: "4f6af91a-f71a-5788-b2ed-2597f84f8ec1"
+      responses:
+        "204":
+          description: "Borrado"
+        "404":
+          description: "No existe"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "409":
+          description: "Lo impide una restriccion"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+  "/v1/writing-borradores":
+    post:
+      tags:
+        - "writing_borradores"
+      operationId: "createWritingBorradores"
+      summary: "Crea un registro de writing_borradores"
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/WritingBorradoresRequest"
+      responses:
+        "201":
+          description: "Creado"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/WritingBorradores"
+        "400":
+          description: "Peticion no valida"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "409":
+          description: "Ya existe o incumple una restriccion"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+    get:
+      tags:
+        - "writing_borradores"
+      operationId: "listWritingBorradores"
+      summary: "Lista writing_borradores (paginado)"
+      parameters:
+        - name: "usuarioId"
+          in: "query"
+          required: false
+          schema:
+            type: "string"
+            format: "uuid"
+          example: "7219dde9-211c-5195-9967-b41be194b65e"
+        - name: "page"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            default: 0
+        - name: "size"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            default: 20
+            maximum: 100
+      responses:
+        "200":
+          description: "Pagina de resultados"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                properties:
+                  items:
+                    type: "array"
+                    items:
+                      "$ref": "#/components/schemas/WritingBorradores"
+                  total:
+                    type: "integer"
+                    format: "int64"
+                  page:
+                    type: "integer"
+                  size:
+                    type: "integer"
+        "400":
+          description: "Parametro no valido"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+  "/v1/writing-borradores/{id}":
+    get:
+      tags:
+        - "writing_borradores"
+      operationId: "getWritingBorradores"
+      summary: "Obtiene un registro de writing_borradores"
+      parameters:
+        - name: "id"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+            format: "uuid"
+          example: "d9e52bbf-98f0-5c54-8d88-8c96b73cc1c6"
+      responses:
+        "200":
+          description: "Encontrado"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/WritingBorradores"
+        "404":
+          description: "No existe"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+    put:
+      tags:
+        - "writing_borradores"
+      operationId: "updateWritingBorradores"
+      summary: "Modifica un registro de writing_borradores"
+      parameters:
+        - name: "id"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+            format: "uuid"
+          example: "d9e52bbf-98f0-5c54-8d88-8c96b73cc1c6"
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/WritingBorradoresUpdateRequest"
+      responses:
+        "200":
+          description: "Modificado"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/WritingBorradores"
+        "400":
+          description: "Peticion no valida"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "404":
+          description: "No existe"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "409":
+          description: "Incumple una restriccion"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+    delete:
+      tags:
+        - "writing_borradores"
+      operationId: "deleteWritingBorradores"
+      summary: "Borra un registro de writing_borradores"
+      parameters:
+        - name: "id"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+            format: "uuid"
+          example: "d9e52bbf-98f0-5c54-8d88-8c96b73cc1c6"
+      responses:
+        "204":
+          description: "Borrado"
+        "404":
+          description: "No existe"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "409":
+          description: "Lo impide una restriccion"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
 components:
   schemas:
-    Suggestion:
-      type: object
-      required: [id, titulo, descripcion, estado, creadoEn]
-      properties:
-        id: { type: integer, format: int64 }
-        titulo: { type: string, minLength: 5, maxLength: 100 }
-        descripcion: { type: string, minLength: 10, maxLength: 1000 }
-        estado: { type: string, enum: [pendiente, publicada, rechazada] }
-        creadoEn: { type: string, format: date-time }
-    SuggestionCreate:
-      type: object
-      required: [titulo, descripcion]
-      properties:
-        titulo: { type: string, minLength: 5, maxLength: 100 }
-        descripcion: { type: string, minLength: 10, maxLength: 1000 }
-    LogbookCategory:
-      type: object
-      required: [id, usuarioId, nombre, creadoEn]
-      properties:
-        id: { type: string, format: uuid }
-        usuarioId: { type: string, format: uuid }
-        nombre: { type: string, minLength: 1, maxLength: 60 }
-        creadoEn: { type: string, format: date-time }
-    LogbookNote:
-      type: object
-      required: [id, usuarioId, contenido, creadoEn, actualizadoEn]
-      properties:
-        id: { type: string, format: uuid }
-        usuarioId: { type: string, format: uuid }
-        categoriaId: { type: string, format: uuid, nullable: true }
-        contenido: { type: string, minLength: 1, maxLength: 10000 }
-        creadoEn: { type: string, format: date-time }
-        actualizadoEn: { type: string, format: date-time }
-    LogbookNoteCreate:
-      type: object
-      required: [contenido]
-      properties:
-        categoriaId: { type: string, format: uuid }
-        contenido: { type: string, minLength: 1, maxLength: 10000 }
-    WritingDraft:
-      type: object
-      required: [id, usuarioId, tipo, titulo, contenido, creadoEn, actualizadoEn]
-      properties:
-        id: { type: string, format: uuid }
-        usuarioId: { type: string, format: uuid }
-        tipo: { type: string, enum: [essay, article, review, email_informal, email_formal, report, story] }
-        titulo: { type: string }
-        contenido: { type: string }
-        creadoEn: { type: string, format: date-time }
-        actualizadoEn: { type: string, format: date-time }
-    WritingDraftCreate:
-      type: object
-      required: [tipo]
-      properties:
-        tipo: { type: string, enum: [essay, article, review, email_informal, email_formal, report, story] }
-        titulo: { type: string }
-        contenido: { type: string }
     Error:
-      type: object
-      required: [code, message]
-      properties: { code: { type: string }, message: { type: string } }
-  responses:
-    BadRequest: { description: Parámetros inválidos, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
-    NotFound: { description: Recurso no encontrado, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+      type: "object"
+      required:
+        - "code"
+        - "message"
+      properties:
+        code:
+          type: "string"
+        message:
+          type: "string"
+      example:
+        code: "RESOURCE_NOT_FOUND"
+        message: "recurso no encontrado"
+    Sugerencias:
+      type: "object"
+      properties:
+        id:
+          type: "integer"
+          format: "int64"
+        titulo:
+          type: "string"
+        descripcion:
+          type: "string"
+        estado:
+          type: "string"
+        creadoEn:
+          type: "string"
+          format: "date-time"
+      required:
+        - "id"
+        - "titulo"
+        - "descripcion"
+        - "estado"
+        - "creadoEn"
+      example:
+        id: 1
+        titulo: "titulo-a"
+        descripcion: "descripcion-a"
+        estado: "estado-a"
+        creadoEn: "2026-01-01T10:00:00Z"
+    SugerenciasRequest:
+      type: "object"
+      properties:
+        titulo:
+          type: "string"
+        descripcion:
+          type: "string"
+        estado:
+          type: "string"
+        creadoEn:
+          type: "string"
+          format: "date-time"
+      required:
+        - "titulo"
+        - "descripcion"
+      example:
+        titulo: "titulo-a"
+        descripcion: "descripcion-a"
+        estado: "estado-a"
+        creadoEn: "2026-01-01T10:00:00Z"
+    SugerenciasUpdateRequest:
+      type: "object"
+      properties:
+        titulo:
+          type: "string"
+        descripcion:
+          type: "string"
+        estado:
+          type: "string"
+        creadoEn:
+          type: "string"
+          format: "date-time"
+      required:
+        - "titulo"
+        - "descripcion"
+      example:
+        titulo: "titulo-b"
+        descripcion: "descripcion-b"
+        estado: "estado-b"
+        creadoEn: "2026-02-01T10:00:00Z"
+    BitacoraCategorias:
+      type: "object"
+      properties:
+        id:
+          type: "string"
+          format: "uuid"
+        usuarioId:
+          type: "string"
+          format: "uuid"
+        nombre:
+          type: "string"
+        creadoEn:
+          type: "string"
+          format: "date-time"
+      required:
+        - "id"
+        - "usuarioId"
+        - "nombre"
+        - "creadoEn"
+      example:
+        id: "b537a600-5d35-5caf-98cd-fc246a4dd54c"
+        usuarioId: "ccba4dce-1298-5f2f-9bd7-6d685aa5301b"
+        nombre: "nombre-a"
+        creadoEn: "2026-01-01T10:00:00Z"
+    BitacoraCategoriasRequest:
+      type: "object"
+      properties:
+        usuarioId:
+          type: "string"
+          format: "uuid"
+        nombre:
+          type: "string"
+        creadoEn:
+          type: "string"
+          format: "date-time"
+      required:
+        - "usuarioId"
+        - "nombre"
+      example:
+        usuarioId: "ccba4dce-1298-5f2f-9bd7-6d685aa5301b"
+        nombre: "nombre-a"
+        creadoEn: "2026-01-01T10:00:00Z"
+    BitacoraCategoriasUpdateRequest:
+      type: "object"
+      properties:
+        usuarioId:
+          type: "string"
+          format: "uuid"
+        nombre:
+          type: "string"
+        creadoEn:
+          type: "string"
+          format: "date-time"
+      required:
+        - "usuarioId"
+        - "nombre"
+      example:
+        usuarioId: "99dc976f-3086-5f6e-b0ca-f5d118ebc81b"
+        nombre: "nombre-b"
+        creadoEn: "2026-02-01T10:00:00Z"
+    BitacoraAnotaciones:
+      type: "object"
+      properties:
+        id:
+          type: "string"
+          format: "uuid"
+        usuarioId:
+          type: "string"
+          format: "uuid"
+        categoriaId:
+          type: "string"
+          format: "uuid"
+          nullable: true
+        contenido:
+          type: "string"
+        creadoEn:
+          type: "string"
+          format: "date-time"
+        actualizadoEn:
+          type: "string"
+          format: "date-time"
+      required:
+        - "id"
+        - "usuarioId"
+        - "contenido"
+        - "creadoEn"
+        - "actualizadoEn"
+      example:
+        id: "4f6af91a-f71a-5788-b2ed-2597f84f8ec1"
+        usuarioId: "aeb226f1-8c54-55b3-935d-db92d0abf4ae"
+        categoriaId: "757e9eba-cc1f-58b4-a0c4-5054edb542d1"
+        contenido: "contenido-a"
+        creadoEn: "2026-01-01T10:00:00Z"
+        actualizadoEn: "2026-01-01T10:00:00Z"
+    BitacoraAnotacionesRequest:
+      type: "object"
+      properties:
+        usuarioId:
+          type: "string"
+          format: "uuid"
+        categoriaId:
+          type: "string"
+          format: "uuid"
+          nullable: true
+        contenido:
+          type: "string"
+        creadoEn:
+          type: "string"
+          format: "date-time"
+        actualizadoEn:
+          type: "string"
+          format: "date-time"
+      required:
+        - "usuarioId"
+        - "contenido"
+      example:
+        usuarioId: "aeb226f1-8c54-55b3-935d-db92d0abf4ae"
+        categoriaId: "757e9eba-cc1f-58b4-a0c4-5054edb542d1"
+        contenido: "contenido-a"
+        creadoEn: "2026-01-01T10:00:00Z"
+        actualizadoEn: "2026-01-01T10:00:00Z"
+    BitacoraAnotacionesUpdateRequest:
+      type: "object"
+      properties:
+        usuarioId:
+          type: "string"
+          format: "uuid"
+        categoriaId:
+          type: "string"
+          format: "uuid"
+          nullable: true
+        contenido:
+          type: "string"
+        creadoEn:
+          type: "string"
+          format: "date-time"
+        actualizadoEn:
+          type: "string"
+          format: "date-time"
+      required:
+        - "usuarioId"
+        - "contenido"
+      example:
+        usuarioId: "26b1b10d-4209-5974-9ee0-7af626d0a8b1"
+        categoriaId: "03dfc95a-a831-5879-8e75-aceed524f293"
+        contenido: "contenido-b"
+        creadoEn: "2026-02-01T10:00:00Z"
+        actualizadoEn: "2026-02-01T10:00:00Z"
+    WritingBorradores:
+      type: "object"
+      properties:
+        id:
+          type: "string"
+          format: "uuid"
+        usuarioId:
+          type: "string"
+          format: "uuid"
+        tipo:
+          type: "string"
+        titulo:
+          type: "string"
+        contenido:
+          type: "string"
+        creadoEn:
+          type: "string"
+          format: "date-time"
+        actualizadoEn:
+          type: "string"
+          format: "date-time"
+      required:
+        - "id"
+        - "usuarioId"
+        - "tipo"
+        - "titulo"
+        - "contenido"
+        - "creadoEn"
+        - "actualizadoEn"
+      example:
+        id: "d9e52bbf-98f0-5c54-8d88-8c96b73cc1c6"
+        usuarioId: "7219dde9-211c-5195-9967-b41be194b65e"
+        tipo: "tipo-a"
+        titulo: "titulo-a"
+        contenido: "contenido-a"
+        creadoEn: "2026-01-01T10:00:00Z"
+        actualizadoEn: "2026-01-01T10:00:00Z"
+    WritingBorradoresRequest:
+      type: "object"
+      properties:
+        usuarioId:
+          type: "string"
+          format: "uuid"
+        tipo:
+          type: "string"
+        titulo:
+          type: "string"
+        contenido:
+          type: "string"
+        creadoEn:
+          type: "string"
+          format: "date-time"
+        actualizadoEn:
+          type: "string"
+          format: "date-time"
+      required:
+        - "usuarioId"
+        - "tipo"
+      example:
+        usuarioId: "7219dde9-211c-5195-9967-b41be194b65e"
+        tipo: "tipo-a"
+        titulo: "titulo-a"
+        contenido: "contenido-a"
+        creadoEn: "2026-01-01T10:00:00Z"
+        actualizadoEn: "2026-01-01T10:00:00Z"
+    WritingBorradoresUpdateRequest:
+      type: "object"
+      properties:
+        usuarioId:
+          type: "string"
+          format: "uuid"
+        tipo:
+          type: "string"
+        titulo:
+          type: "string"
+        contenido:
+          type: "string"
+        creadoEn:
+          type: "string"
+          format: "date-time"
+        actualizadoEn:
+          type: "string"
+          format: "date-time"
+      required:
+        - "usuarioId"
+        - "tipo"
+      example:
+        usuarioId: "83ea20ab-8144-5e62-8d2a-30a87c91c362"
+        tipo: "tipo-b"
+        titulo: "titulo-b"
+        contenido: "contenido-b"
+        creadoEn: "2026-02-01T10:00:00Z"
+        actualizadoEn: "2026-02-01T10:00:00Z"

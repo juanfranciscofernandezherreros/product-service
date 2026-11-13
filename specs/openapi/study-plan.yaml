@@ -1,154 +1,1646 @@
-openapi: 3.0.3
+# Generado desde el DDL por el generador de servicios. No editar a mano.
+openapi: "3.0.3"
 info:
-  title: Study Plan (B2) API
-  description: Dominio de planificación de estudio B2 (planes, sesiones, objetivos y seguimiento). Recursos por usuario. Derivado del esquema PostgreSQL.
-  version: 1.0.0
+  title: "study-plan-service API"
+  version: "1.0.0"
+  description: "CRUD de las tablas de study-plan-service, derivado del esquema de base de datos."
 servers:
-  - url: https://api.tudominio.com/v1
+  - url: "http://localhost:8088"
+    description: "Local"
+tags:
+  - name: "planes_estudio_b2"
+  - name: "planes_ia_b2"
+  - name: "objetivos_semanales"
+  - name: "sesiones_estudio_b2"
+  - name: "seguimiento_semanal"
+  - name: "actividad_diaria"
 paths:
-  /v1/study-plan/users/{userId}/plan:
-    parameters: [ { name: userId, in: path, required: true, schema: { type: string, format: uuid } } ]
-    get:
-      summary: Obtener plan de estudio del usuario
-      operationId: getStudyPlan
-      responses:
-        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/StudyPlan' } } } }
-        '404': { $ref: '#/components/responses/NotFound' }
-    put:
-      summary: Crear/actualizar plan (upsert)
-      operationId: upsertStudyPlan
-      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/StudyPlanUpsert' } } } }
-      responses:
-        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/StudyPlan' } } } }
-        '400': { $ref: '#/components/responses/BadRequest' }
-  /v1/study-plan/users/{userId}/ai-plan:
-    parameters: [ { name: userId, in: path, required: true, schema: { type: string, format: uuid } } ]
-    get:
-      summary: Obtener plan IA del usuario
-      operationId: getAiPlan
-      responses:
-        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/AiPlan' } } } }
-        '404': { $ref: '#/components/responses/NotFound' }
-    put:
-      summary: Crear/actualizar plan IA (upsert)
-      operationId: upsertAiPlan
-      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/AiPlanUpsert' } } } }
-      responses:
-        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/AiPlan' } } } }
-        '400': { $ref: '#/components/responses/BadRequest' }
-  /v1/study-plan/users/{userId}/goal:
-    parameters: [ { name: userId, in: path, required: true, schema: { type: string, format: uuid } } ]
-    get:
-      summary: Objetivo semanal del usuario
-      operationId: getWeeklyGoal
-      responses:
-        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/WeeklyGoal' } } } }
-        '404': { $ref: '#/components/responses/NotFound' }
-    put:
-      summary: Crear/actualizar objetivo (upsert)
-      operationId: upsertWeeklyGoal
-      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/WeeklyGoalUpsert' } } } }
-      responses:
-        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/WeeklyGoal' } } } }
-        '400': { $ref: '#/components/responses/BadRequest' }
-  /v1/study-plan/users/{userId}/sessions:
-    parameters: [ { name: userId, in: path, required: true, schema: { type: string, format: uuid } } ]
-    get:
-      summary: Sesiones de estudio del usuario
-      operationId: listStudySessions
-      responses:
-        '200': { description: OK, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/StudySession' } } } } }
+  "/v1/planes-estudio-b2":
     post:
-      summary: Registrar una sesión completada
-      operationId: createStudySession
-      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/StudySessionCreate' } } } }
+      tags:
+        - "planes_estudio_b2"
+      operationId: "createPlanesEstudioB2"
+      summary: "Crea un registro de planes_estudio_b2"
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/PlanesEstudioB2Request"
       responses:
-        '201': { description: Creada, content: { application/json: { schema: { $ref: '#/components/schemas/StudySession' } } } }
-        '400': { $ref: '#/components/responses/BadRequest' }
-  /v1/study-plan/users/{userId}/weekly-reports:
-    parameters: [ { name: userId, in: path, required: true, schema: { type: string, format: uuid } } ]
+        "201":
+          description: "Creado"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/PlanesEstudioB2"
+        "400":
+          description: "Peticion no valida"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "409":
+          description: "Ya existe o incumple una restriccion"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
     get:
-      summary: Informes semanales del usuario
-      operationId: listWeeklyReports
+      tags:
+        - "planes_estudio_b2"
+      operationId: "listPlanesEstudioB2"
+      summary: "Lista planes_estudio_b2 (paginado)"
+      parameters:
+        - name: "page"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            default: 0
+        - name: "size"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            default: 20
+            maximum: 100
       responses:
-        '200': { description: OK, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/WeeklyReport' } } } } }
+        "200":
+          description: "Pagina de resultados"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                properties:
+                  items:
+                    type: "array"
+                    items:
+                      "$ref": "#/components/schemas/PlanesEstudioB2"
+                  total:
+                    type: "integer"
+                    format: "int64"
+                  page:
+                    type: "integer"
+                  size:
+                    type: "integer"
+        "400":
+          description: "Parametro no valido"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+  "/v1/planes-estudio-b2/{usuarioId}":
+    get:
+      tags:
+        - "planes_estudio_b2"
+      operationId: "getPlanesEstudioB2"
+      summary: "Obtiene un registro de planes_estudio_b2"
+      parameters:
+        - name: "usuarioId"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+            format: "uuid"
+          example: "d5684211-dc2a-5e60-895a-784df7711544"
+      responses:
+        "200":
+          description: "Encontrado"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/PlanesEstudioB2"
+        "404":
+          description: "No existe"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+    put:
+      tags:
+        - "planes_estudio_b2"
+      operationId: "updatePlanesEstudioB2"
+      summary: "Modifica un registro de planes_estudio_b2"
+      parameters:
+        - name: "usuarioId"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+            format: "uuid"
+          example: "d5684211-dc2a-5e60-895a-784df7711544"
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/PlanesEstudioB2UpdateRequest"
+      responses:
+        "200":
+          description: "Modificado"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/PlanesEstudioB2"
+        "400":
+          description: "Peticion no valida"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "404":
+          description: "No existe"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "409":
+          description: "Incumple una restriccion"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+    delete:
+      tags:
+        - "planes_estudio_b2"
+      operationId: "deletePlanesEstudioB2"
+      summary: "Borra un registro de planes_estudio_b2"
+      parameters:
+        - name: "usuarioId"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+            format: "uuid"
+          example: "d5684211-dc2a-5e60-895a-784df7711544"
+      responses:
+        "204":
+          description: "Borrado"
+        "404":
+          description: "No existe"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "409":
+          description: "Lo impide una restriccion"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+  "/v1/planes-ia-b2":
+    post:
+      tags:
+        - "planes_ia_b2"
+      operationId: "createPlanesIaB2"
+      summary: "Crea un registro de planes_ia_b2"
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/PlanesIaB2Request"
+      responses:
+        "201":
+          description: "Creado"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/PlanesIaB2"
+        "400":
+          description: "Peticion no valida"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "409":
+          description: "Ya existe o incumple una restriccion"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+    get:
+      tags:
+        - "planes_ia_b2"
+      operationId: "listPlanesIaB2"
+      summary: "Lista planes_ia_b2 (paginado)"
+      parameters:
+        - name: "page"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            default: 0
+        - name: "size"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            default: 20
+            maximum: 100
+      responses:
+        "200":
+          description: "Pagina de resultados"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                properties:
+                  items:
+                    type: "array"
+                    items:
+                      "$ref": "#/components/schemas/PlanesIaB2"
+                  total:
+                    type: "integer"
+                    format: "int64"
+                  page:
+                    type: "integer"
+                  size:
+                    type: "integer"
+        "400":
+          description: "Parametro no valido"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+  "/v1/planes-ia-b2/{usuarioId}":
+    get:
+      tags:
+        - "planes_ia_b2"
+      operationId: "getPlanesIaB2"
+      summary: "Obtiene un registro de planes_ia_b2"
+      parameters:
+        - name: "usuarioId"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+            format: "uuid"
+          example: "72588a16-d030-569a-b8c8-e5b941e76ad8"
+      responses:
+        "200":
+          description: "Encontrado"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/PlanesIaB2"
+        "404":
+          description: "No existe"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+    put:
+      tags:
+        - "planes_ia_b2"
+      operationId: "updatePlanesIaB2"
+      summary: "Modifica un registro de planes_ia_b2"
+      parameters:
+        - name: "usuarioId"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+            format: "uuid"
+          example: "72588a16-d030-569a-b8c8-e5b941e76ad8"
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/PlanesIaB2UpdateRequest"
+      responses:
+        "200":
+          description: "Modificado"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/PlanesIaB2"
+        "400":
+          description: "Peticion no valida"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "404":
+          description: "No existe"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "409":
+          description: "Incumple una restriccion"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+    delete:
+      tags:
+        - "planes_ia_b2"
+      operationId: "deletePlanesIaB2"
+      summary: "Borra un registro de planes_ia_b2"
+      parameters:
+        - name: "usuarioId"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+            format: "uuid"
+          example: "72588a16-d030-569a-b8c8-e5b941e76ad8"
+      responses:
+        "204":
+          description: "Borrado"
+        "404":
+          description: "No existe"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "409":
+          description: "Lo impide una restriccion"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+  "/v1/objetivos-semanales":
+    post:
+      tags:
+        - "objetivos_semanales"
+      operationId: "createObjetivosSemanales"
+      summary: "Crea un registro de objetivos_semanales"
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/ObjetivosSemanalesRequest"
+      responses:
+        "201":
+          description: "Creado"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ObjetivosSemanales"
+        "400":
+          description: "Peticion no valida"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "409":
+          description: "Ya existe o incumple una restriccion"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+    get:
+      tags:
+        - "objetivos_semanales"
+      operationId: "listObjetivosSemanales"
+      summary: "Lista objetivos_semanales (paginado)"
+      parameters:
+        - name: "page"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            default: 0
+        - name: "size"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            default: 20
+            maximum: 100
+      responses:
+        "200":
+          description: "Pagina de resultados"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                properties:
+                  items:
+                    type: "array"
+                    items:
+                      "$ref": "#/components/schemas/ObjetivosSemanales"
+                  total:
+                    type: "integer"
+                    format: "int64"
+                  page:
+                    type: "integer"
+                  size:
+                    type: "integer"
+        "400":
+          description: "Parametro no valido"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+  "/v1/objetivos-semanales/{usuarioId}":
+    get:
+      tags:
+        - "objetivos_semanales"
+      operationId: "getObjetivosSemanales"
+      summary: "Obtiene un registro de objetivos_semanales"
+      parameters:
+        - name: "usuarioId"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+            format: "uuid"
+          example: "1eee3183-c8aa-5fac-90bf-2f2ed4ce5939"
+      responses:
+        "200":
+          description: "Encontrado"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ObjetivosSemanales"
+        "404":
+          description: "No existe"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+    put:
+      tags:
+        - "objetivos_semanales"
+      operationId: "updateObjetivosSemanales"
+      summary: "Modifica un registro de objetivos_semanales"
+      parameters:
+        - name: "usuarioId"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+            format: "uuid"
+          example: "1eee3183-c8aa-5fac-90bf-2f2ed4ce5939"
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/ObjetivosSemanalesUpdateRequest"
+      responses:
+        "200":
+          description: "Modificado"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ObjetivosSemanales"
+        "400":
+          description: "Peticion no valida"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "404":
+          description: "No existe"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "409":
+          description: "Incumple una restriccion"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+    delete:
+      tags:
+        - "objetivos_semanales"
+      operationId: "deleteObjetivosSemanales"
+      summary: "Borra un registro de objetivos_semanales"
+      parameters:
+        - name: "usuarioId"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+            format: "uuid"
+          example: "1eee3183-c8aa-5fac-90bf-2f2ed4ce5939"
+      responses:
+        "204":
+          description: "Borrado"
+        "404":
+          description: "No existe"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "409":
+          description: "Lo impide una restriccion"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+  "/v1/sesiones-estudio-b2":
+    post:
+      tags:
+        - "sesiones_estudio_b2"
+      operationId: "createSesionesEstudioB2"
+      summary: "Crea un registro de sesiones_estudio_b2"
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/SesionesEstudioB2Request"
+      responses:
+        "201":
+          description: "Creado"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/SesionesEstudioB2"
+        "400":
+          description: "Peticion no valida"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "409":
+          description: "Ya existe o incumple una restriccion"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+    get:
+      tags:
+        - "sesiones_estudio_b2"
+      operationId: "listSesionesEstudioB2"
+      summary: "Lista sesiones_estudio_b2 (paginado)"
+      parameters:
+        - name: "usuarioId"
+          in: "query"
+          required: false
+          schema:
+            type: "string"
+            format: "uuid"
+          example: "32bf2f27-0522-5bb5-994d-1c753136fec1"
+        - name: "dia"
+          in: "query"
+          required: false
+          schema:
+            type: "string"
+            format: "date"
+          example: "2026-01-01"
+        - name: "tarea"
+          in: "query"
+          required: false
+          schema:
+            type: "string"
+          example: "tarea-a"
+        - name: "page"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            default: 0
+        - name: "size"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            default: 20
+            maximum: 100
+      responses:
+        "200":
+          description: "Pagina de resultados"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                properties:
+                  items:
+                    type: "array"
+                    items:
+                      "$ref": "#/components/schemas/SesionesEstudioB2"
+                  total:
+                    type: "integer"
+                    format: "int64"
+                  page:
+                    type: "integer"
+                  size:
+                    type: "integer"
+        "400":
+          description: "Parametro no valido"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+  "/v1/sesiones-estudio-b2/{usuarioId}/{dia}/{tarea}":
+    get:
+      tags:
+        - "sesiones_estudio_b2"
+      operationId: "getSesionesEstudioB2"
+      summary: "Obtiene un registro de sesiones_estudio_b2"
+      parameters:
+        - name: "usuarioId"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+            format: "uuid"
+          example: "32bf2f27-0522-5bb5-994d-1c753136fec1"
+        - name: "dia"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+            format: "date"
+          example: "2026-01-01"
+        - name: "tarea"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+          example: "tarea-a"
+      responses:
+        "200":
+          description: "Encontrado"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/SesionesEstudioB2"
+        "404":
+          description: "No existe"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+    put:
+      tags:
+        - "sesiones_estudio_b2"
+      operationId: "updateSesionesEstudioB2"
+      summary: "Modifica un registro de sesiones_estudio_b2"
+      parameters:
+        - name: "usuarioId"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+            format: "uuid"
+          example: "32bf2f27-0522-5bb5-994d-1c753136fec1"
+        - name: "dia"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+            format: "date"
+          example: "2026-01-01"
+        - name: "tarea"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+          example: "tarea-a"
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/SesionesEstudioB2UpdateRequest"
+      responses:
+        "200":
+          description: "Modificado"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/SesionesEstudioB2"
+        "400":
+          description: "Peticion no valida"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "404":
+          description: "No existe"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "409":
+          description: "Incumple una restriccion"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+    delete:
+      tags:
+        - "sesiones_estudio_b2"
+      operationId: "deleteSesionesEstudioB2"
+      summary: "Borra un registro de sesiones_estudio_b2"
+      parameters:
+        - name: "usuarioId"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+            format: "uuid"
+          example: "32bf2f27-0522-5bb5-994d-1c753136fec1"
+        - name: "dia"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+            format: "date"
+          example: "2026-01-01"
+        - name: "tarea"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+          example: "tarea-a"
+      responses:
+        "204":
+          description: "Borrado"
+        "404":
+          description: "No existe"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "409":
+          description: "Lo impide una restriccion"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+  "/v1/seguimiento-semanal":
+    post:
+      tags:
+        - "seguimiento_semanal"
+      operationId: "createSeguimientoSemanal"
+      summary: "Crea un registro de seguimiento_semanal"
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/SeguimientoSemanalRequest"
+      responses:
+        "201":
+          description: "Creado"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/SeguimientoSemanal"
+        "400":
+          description: "Peticion no valida"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "409":
+          description: "Ya existe o incumple una restriccion"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+    get:
+      tags:
+        - "seguimiento_semanal"
+      operationId: "listSeguimientoSemanal"
+      summary: "Lista seguimiento_semanal (paginado)"
+      parameters:
+        - name: "usuarioId"
+          in: "query"
+          required: false
+          schema:
+            type: "string"
+            format: "uuid"
+          example: "e51e3d46-0b7f-5b70-ae1a-26f402eef838"
+        - name: "semanaInicio"
+          in: "query"
+          required: false
+          schema:
+            type: "string"
+            format: "date"
+          example: "2026-01-01"
+        - name: "page"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            default: 0
+        - name: "size"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            default: 20
+            maximum: 100
+      responses:
+        "200":
+          description: "Pagina de resultados"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                properties:
+                  items:
+                    type: "array"
+                    items:
+                      "$ref": "#/components/schemas/SeguimientoSemanal"
+                  total:
+                    type: "integer"
+                    format: "int64"
+                  page:
+                    type: "integer"
+                  size:
+                    type: "integer"
+        "400":
+          description: "Parametro no valido"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+  "/v1/seguimiento-semanal/{usuarioId}/{semanaInicio}":
+    get:
+      tags:
+        - "seguimiento_semanal"
+      operationId: "getSeguimientoSemanal"
+      summary: "Obtiene un registro de seguimiento_semanal"
+      parameters:
+        - name: "usuarioId"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+            format: "uuid"
+          example: "e51e3d46-0b7f-5b70-ae1a-26f402eef838"
+        - name: "semanaInicio"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+            format: "date"
+          example: "2026-01-01"
+      responses:
+        "200":
+          description: "Encontrado"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/SeguimientoSemanal"
+        "404":
+          description: "No existe"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+    put:
+      tags:
+        - "seguimiento_semanal"
+      operationId: "updateSeguimientoSemanal"
+      summary: "Modifica un registro de seguimiento_semanal"
+      parameters:
+        - name: "usuarioId"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+            format: "uuid"
+          example: "e51e3d46-0b7f-5b70-ae1a-26f402eef838"
+        - name: "semanaInicio"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+            format: "date"
+          example: "2026-01-01"
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/SeguimientoSemanalUpdateRequest"
+      responses:
+        "200":
+          description: "Modificado"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/SeguimientoSemanal"
+        "400":
+          description: "Peticion no valida"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "404":
+          description: "No existe"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "409":
+          description: "Incumple una restriccion"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+    delete:
+      tags:
+        - "seguimiento_semanal"
+      operationId: "deleteSeguimientoSemanal"
+      summary: "Borra un registro de seguimiento_semanal"
+      parameters:
+        - name: "usuarioId"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+            format: "uuid"
+          example: "e51e3d46-0b7f-5b70-ae1a-26f402eef838"
+        - name: "semanaInicio"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+            format: "date"
+          example: "2026-01-01"
+      responses:
+        "204":
+          description: "Borrado"
+        "404":
+          description: "No existe"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "409":
+          description: "Lo impide una restriccion"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+  "/v1/actividad-diaria":
+    post:
+      tags:
+        - "actividad_diaria"
+      operationId: "createActividadDiaria"
+      summary: "Crea un registro de actividad_diaria"
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/ActividadDiariaRequest"
+      responses:
+        "201":
+          description: "Creado"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ActividadDiaria"
+        "400":
+          description: "Peticion no valida"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "409":
+          description: "Ya existe o incumple una restriccion"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+    get:
+      tags:
+        - "actividad_diaria"
+      operationId: "listActividadDiaria"
+      summary: "Lista actividad_diaria (paginado)"
+      parameters:
+        - name: "usuarioId"
+          in: "query"
+          required: false
+          schema:
+            type: "string"
+            format: "uuid"
+          example: "512d1ae4-3403-53c1-85b0-0ec91ff53f74"
+        - name: "dia"
+          in: "query"
+          required: false
+          schema:
+            type: "string"
+            format: "date"
+          example: "2026-01-01"
+        - name: "page"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            default: 0
+        - name: "size"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            default: 20
+            maximum: 100
+      responses:
+        "200":
+          description: "Pagina de resultados"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                properties:
+                  items:
+                    type: "array"
+                    items:
+                      "$ref": "#/components/schemas/ActividadDiaria"
+                  total:
+                    type: "integer"
+                    format: "int64"
+                  page:
+                    type: "integer"
+                  size:
+                    type: "integer"
+        "400":
+          description: "Parametro no valido"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+  "/v1/actividad-diaria/{usuarioId}/{dia}":
+    get:
+      tags:
+        - "actividad_diaria"
+      operationId: "getActividadDiaria"
+      summary: "Obtiene un registro de actividad_diaria"
+      parameters:
+        - name: "usuarioId"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+            format: "uuid"
+          example: "512d1ae4-3403-53c1-85b0-0ec91ff53f74"
+        - name: "dia"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+            format: "date"
+          example: "2026-01-01"
+      responses:
+        "200":
+          description: "Encontrado"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ActividadDiaria"
+        "404":
+          description: "No existe"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+    put:
+      tags:
+        - "actividad_diaria"
+      operationId: "updateActividadDiaria"
+      summary: "Modifica un registro de actividad_diaria"
+      parameters:
+        - name: "usuarioId"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+            format: "uuid"
+          example: "512d1ae4-3403-53c1-85b0-0ec91ff53f74"
+        - name: "dia"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+            format: "date"
+          example: "2026-01-01"
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/ActividadDiariaUpdateRequest"
+      responses:
+        "200":
+          description: "Modificado"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ActividadDiaria"
+        "400":
+          description: "Peticion no valida"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "404":
+          description: "No existe"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "409":
+          description: "Incumple una restriccion"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+    delete:
+      tags:
+        - "actividad_diaria"
+      operationId: "deleteActividadDiaria"
+      summary: "Borra un registro de actividad_diaria"
+      parameters:
+        - name: "usuarioId"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+            format: "uuid"
+          example: "512d1ae4-3403-53c1-85b0-0ec91ff53f74"
+        - name: "dia"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+            format: "date"
+          example: "2026-01-01"
+      responses:
+        "204":
+          description: "Borrado"
+        "404":
+          description: "No existe"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "409":
+          description: "Lo impide una restriccion"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
 components:
   schemas:
-    StudyPlan:
-      type: object
-      properties:
-        userId: { type: string, format: uuid }
-        fechaExamen: { type: string, format: date, nullable: true }
-        minutosDia: { type: integer, minimum: 10, maximum: 180 }
-        diasSemana: { type: array, items: { type: integer, minimum: 0, maximum: 6 }, minItems: 1, maxItems: 7 }
-        prioridad: { type: string, enum: [auto, grammar, vocabulary, reading, writing, listening, speaking] }
-        horaRecordatorio: { type: string, nullable: true }
-        recordatorioActivo: { type: boolean }
-        actualizadoEn: { type: string, format: date-time }
-    StudyPlanUpsert:
-      type: object
-      properties:
-        fechaExamen: { type: string, format: date }
-        minutosDia: { type: integer, minimum: 10, maximum: 180 }
-        diasSemana: { type: array, items: { type: integer, minimum: 0, maximum: 6 }, minItems: 1, maxItems: 7 }
-        prioridad: { type: string, enum: [auto, grammar, vocabulary, reading, writing, listening, speaking] }
-        horaRecordatorio: { type: string }
-        recordatorioActivo: { type: boolean }
-    AiPlan:
-      type: object
-      required: [userId, semanas, plan, actualizadoEn]
-      properties:
-        userId: { type: string, format: uuid }
-        semanas: { type: integer, enum: [4, 8, 12, 16, 24] }
-        plan: { type: object, additionalProperties: true }
-        actualizadoEn: { type: string, format: date-time }
-    AiPlanUpsert:
-      type: object
-      required: [semanas, plan]
-      properties:
-        semanas: { type: integer, enum: [4, 8, 12, 16, 24] }
-        plan: { type: object, additionalProperties: true }
-    WeeklyGoal:
-      type: object
-      required: [userId, tipo, cantidad, actualizadoEn]
-      properties:
-        userId: { type: string, format: uuid }
-        tipo: { type: string, enum: [unidades, examenes, actividades] }
-        cantidad: { type: integer, minimum: 1, maximum: 20 }
-        actualizadoEn: { type: string, format: date-time }
-    WeeklyGoalUpsert:
-      type: object
-      required: [tipo, cantidad]
-      properties:
-        tipo: { type: string, enum: [unidades, examenes, actividades] }
-        cantidad: { type: integer, minimum: 1, maximum: 20 }
-    StudySession:
-      type: object
-      required: [userId, dia, tarea, completadaEn]
-      properties:
-        userId: { type: string, format: uuid }
-        dia: { type: string, format: date }
-        tarea: { type: string, enum: [unidad, repaso, vocabulario, reading, writing, listening, speaking] }
-        completadaEn: { type: string, format: date-time }
-    StudySessionCreate:
-      type: object
-      required: [tarea]
-      properties:
-        dia: { type: string, format: date }
-        tarea: { type: string, enum: [unidad, repaso, vocabulario, reading, writing, listening, speaking] }
-    WeeklyReport:
-      type: object
-      required: [userId, semanaInicio, semanaFin, informe, generadoEn]
-      properties:
-        userId: { type: string, format: uuid }
-        semanaInicio: { type: string, format: date }
-        semanaFin: { type: string, format: date }
-        informe: { type: object, additionalProperties: true }
-        generadoEn: { type: string, format: date-time }
     Error:
-      type: object
-      required: [code, message]
-      properties: { code: { type: string }, message: { type: string } }
-  responses:
-    BadRequest: { description: Parámetros inválidos, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
-    NotFound: { description: Recurso no encontrado, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+      type: "object"
+      required:
+        - "code"
+        - "message"
+      properties:
+        code:
+          type: "string"
+        message:
+          type: "string"
+      example:
+        code: "RESOURCE_NOT_FOUND"
+        message: "recurso no encontrado"
+    PlanesEstudioB2:
+      type: "object"
+      properties:
+        usuarioId:
+          type: "string"
+          format: "uuid"
+        fechaExamen:
+          type: "string"
+          format: "date"
+          nullable: true
+        minutosDia:
+          type: "integer"
+          format: "int32"
+        diasSemana:
+          type: "array"
+          items:
+            type: "integer"
+            format: "int32"
+        prioridad:
+          type: "string"
+        horaRecordatorio:
+          type: "string"
+          nullable: true
+        recordatorioActivo:
+          type: "boolean"
+        actualizadoEn:
+          type: "string"
+          format: "date-time"
+      required:
+        - "usuarioId"
+        - "minutosDia"
+        - "diasSemana"
+        - "prioridad"
+        - "recordatorioActivo"
+        - "actualizadoEn"
+      example:
+        usuarioId: "d5684211-dc2a-5e60-895a-784df7711544"
+        fechaExamen: "2026-01-01"
+        minutosDia: 1
+        diasSemana:
+          - 1
+        prioridad: "prioridad-a"
+        horaRecordatorio: "10:00:00"
+        recordatorioActivo: true
+        actualizadoEn: "2026-01-01T10:00:00Z"
+    PlanesEstudioB2Request:
+      type: "object"
+      properties:
+        usuarioId:
+          type: "string"
+          format: "uuid"
+        fechaExamen:
+          type: "string"
+          format: "date"
+          nullable: true
+        minutosDia:
+          type: "integer"
+          format: "int32"
+        diasSemana:
+          type: "array"
+          items:
+            type: "integer"
+            format: "int32"
+        prioridad:
+          type: "string"
+        horaRecordatorio:
+          type: "string"
+          nullable: true
+        recordatorioActivo:
+          type: "boolean"
+        actualizadoEn:
+          type: "string"
+          format: "date-time"
+      required:
+        - "usuarioId"
+      example:
+        usuarioId: "d5684211-dc2a-5e60-895a-784df7711544"
+        fechaExamen: "2026-01-01"
+        minutosDia: 1
+        diasSemana:
+          - 1
+        prioridad: "prioridad-a"
+        horaRecordatorio: "10:00:00"
+        recordatorioActivo: true
+        actualizadoEn: "2026-01-01T10:00:00Z"
+    PlanesEstudioB2UpdateRequest:
+      type: "object"
+      properties:
+        fechaExamen:
+          type: "string"
+          format: "date"
+          nullable: true
+        minutosDia:
+          type: "integer"
+          format: "int32"
+        diasSemana:
+          type: "array"
+          items:
+            type: "integer"
+            format: "int32"
+        prioridad:
+          type: "string"
+        horaRecordatorio:
+          type: "string"
+          nullable: true
+        recordatorioActivo:
+          type: "boolean"
+        actualizadoEn:
+          type: "string"
+          format: "date-time"
+      example:
+        fechaExamen: "2026-02-01"
+        minutosDia: 2
+        diasSemana:
+          - 2
+        prioridad: "prioridad-b"
+        horaRecordatorio: "11:00:00"
+        recordatorioActivo: false
+        actualizadoEn: "2026-02-01T10:00:00Z"
+    PlanesIaB2:
+      type: "object"
+      properties:
+        usuarioId:
+          type: "string"
+          format: "uuid"
+        semanas:
+          type: "integer"
+          format: "int32"
+        plan:
+          description: "JSON libre (columna jsonb)"
+        actualizadoEn:
+          type: "string"
+          format: "date-time"
+      required:
+        - "usuarioId"
+        - "semanas"
+        - "plan"
+        - "actualizadoEn"
+      example:
+        usuarioId: "72588a16-d030-569a-b8c8-e5b941e76ad8"
+        semanas: 1
+        plan:
+          ejemplo: 0
+        actualizadoEn: "2026-01-01T10:00:00Z"
+    PlanesIaB2Request:
+      type: "object"
+      properties:
+        usuarioId:
+          type: "string"
+          format: "uuid"
+        semanas:
+          type: "integer"
+          format: "int32"
+        plan:
+          description: "JSON libre (columna jsonb)"
+        actualizadoEn:
+          type: "string"
+          format: "date-time"
+      required:
+        - "usuarioId"
+        - "semanas"
+        - "plan"
+      example:
+        usuarioId: "72588a16-d030-569a-b8c8-e5b941e76ad8"
+        semanas: 1
+        plan:
+          ejemplo: 0
+        actualizadoEn: "2026-01-01T10:00:00Z"
+    PlanesIaB2UpdateRequest:
+      type: "object"
+      properties:
+        semanas:
+          type: "integer"
+          format: "int32"
+        plan:
+          description: "JSON libre (columna jsonb)"
+        actualizadoEn:
+          type: "string"
+          format: "date-time"
+      required:
+        - "semanas"
+        - "plan"
+      example:
+        semanas: 2
+        plan:
+          ejemplo: 1
+        actualizadoEn: "2026-02-01T10:00:00Z"
+    ObjetivosSemanales:
+      type: "object"
+      properties:
+        usuarioId:
+          type: "string"
+          format: "uuid"
+        tipo:
+          type: "string"
+        cantidad:
+          type: "integer"
+          format: "int32"
+        actualizadoEn:
+          type: "string"
+          format: "date-time"
+      required:
+        - "usuarioId"
+        - "tipo"
+        - "cantidad"
+        - "actualizadoEn"
+      example:
+        usuarioId: "1eee3183-c8aa-5fac-90bf-2f2ed4ce5939"
+        tipo: "tipo-a"
+        cantidad: 1
+        actualizadoEn: "2026-01-01T10:00:00Z"
+    ObjetivosSemanalesRequest:
+      type: "object"
+      properties:
+        usuarioId:
+          type: "string"
+          format: "uuid"
+        tipo:
+          type: "string"
+        cantidad:
+          type: "integer"
+          format: "int32"
+        actualizadoEn:
+          type: "string"
+          format: "date-time"
+      required:
+        - "usuarioId"
+        - "tipo"
+        - "cantidad"
+      example:
+        usuarioId: "1eee3183-c8aa-5fac-90bf-2f2ed4ce5939"
+        tipo: "tipo-a"
+        cantidad: 1
+        actualizadoEn: "2026-01-01T10:00:00Z"
+    ObjetivosSemanalesUpdateRequest:
+      type: "object"
+      properties:
+        tipo:
+          type: "string"
+        cantidad:
+          type: "integer"
+          format: "int32"
+        actualizadoEn:
+          type: "string"
+          format: "date-time"
+      required:
+        - "tipo"
+        - "cantidad"
+      example:
+        tipo: "tipo-b"
+        cantidad: 2
+        actualizadoEn: "2026-02-01T10:00:00Z"
+    SesionesEstudioB2:
+      type: "object"
+      properties:
+        usuarioId:
+          type: "string"
+          format: "uuid"
+        dia:
+          type: "string"
+          format: "date"
+        tarea:
+          type: "string"
+        completadaEn:
+          type: "string"
+          format: "date-time"
+      required:
+        - "usuarioId"
+        - "dia"
+        - "tarea"
+        - "completadaEn"
+      example:
+        usuarioId: "32bf2f27-0522-5bb5-994d-1c753136fec1"
+        dia: "2026-01-01"
+        tarea: "tarea-a"
+        completadaEn: "2026-01-01T10:00:00Z"
+    SesionesEstudioB2Request:
+      type: "object"
+      properties:
+        usuarioId:
+          type: "string"
+          format: "uuid"
+        dia:
+          type: "string"
+          format: "date"
+        tarea:
+          type: "string"
+        completadaEn:
+          type: "string"
+          format: "date-time"
+      required:
+        - "usuarioId"
+        - "tarea"
+      example:
+        usuarioId: "32bf2f27-0522-5bb5-994d-1c753136fec1"
+        dia: "2026-01-01"
+        tarea: "tarea-a"
+        completadaEn: "2026-01-01T10:00:00Z"
+    SesionesEstudioB2UpdateRequest:
+      type: "object"
+      properties:
+        completadaEn:
+          type: "string"
+          format: "date-time"
+      example:
+        completadaEn: "2026-02-01T10:00:00Z"
+    SeguimientoSemanal:
+      type: "object"
+      properties:
+        usuarioId:
+          type: "string"
+          format: "uuid"
+        semanaInicio:
+          type: "string"
+          format: "date"
+        semanaFin:
+          type: "string"
+          format: "date"
+        informe:
+          description: "JSON libre (columna jsonb)"
+        generadoEn:
+          type: "string"
+          format: "date-time"
+      required:
+        - "usuarioId"
+        - "semanaInicio"
+        - "semanaFin"
+        - "informe"
+        - "generadoEn"
+      example:
+        usuarioId: "e51e3d46-0b7f-5b70-ae1a-26f402eef838"
+        semanaInicio: "2026-01-01"
+        semanaFin: "2026-01-01"
+        informe:
+          ejemplo: 0
+        generadoEn: "2026-01-01T10:00:00Z"
+    SeguimientoSemanalRequest:
+      type: "object"
+      properties:
+        usuarioId:
+          type: "string"
+          format: "uuid"
+        semanaInicio:
+          type: "string"
+          format: "date"
+        semanaFin:
+          type: "string"
+          format: "date"
+        informe:
+          description: "JSON libre (columna jsonb)"
+        generadoEn:
+          type: "string"
+          format: "date-time"
+      required:
+        - "usuarioId"
+        - "semanaInicio"
+        - "semanaFin"
+        - "informe"
+      example:
+        usuarioId: "e51e3d46-0b7f-5b70-ae1a-26f402eef838"
+        semanaInicio: "2026-01-01"
+        semanaFin: "2026-01-01"
+        informe:
+          ejemplo: 0
+        generadoEn: "2026-01-01T10:00:00Z"
+    SeguimientoSemanalUpdateRequest:
+      type: "object"
+      properties:
+        semanaFin:
+          type: "string"
+          format: "date"
+        informe:
+          description: "JSON libre (columna jsonb)"
+        generadoEn:
+          type: "string"
+          format: "date-time"
+      required:
+        - "semanaFin"
+        - "informe"
+      example:
+        semanaFin: "2026-02-01"
+        informe:
+          ejemplo: 1
+        generadoEn: "2026-02-01T10:00:00Z"
+    ActividadDiaria:
+      type: "object"
+      properties:
+        usuarioId:
+          type: "string"
+          format: "uuid"
+        dia:
+          type: "string"
+          format: "date"
+        primeraActividad:
+          type: "string"
+          format: "date-time"
+        origen:
+          type: "string"
+      required:
+        - "usuarioId"
+        - "dia"
+        - "primeraActividad"
+        - "origen"
+      example:
+        usuarioId: "512d1ae4-3403-53c1-85b0-0ec91ff53f74"
+        dia: "2026-01-01"
+        primeraActividad: "2026-01-01T10:00:00Z"
+        origen: "origen-a"
+    ActividadDiariaRequest:
+      type: "object"
+      properties:
+        usuarioId:
+          type: "string"
+          format: "uuid"
+        dia:
+          type: "string"
+          format: "date"
+        primeraActividad:
+          type: "string"
+          format: "date-time"
+        origen:
+          type: "string"
+      required:
+        - "usuarioId"
+        - "dia"
+      example:
+        usuarioId: "512d1ae4-3403-53c1-85b0-0ec91ff53f74"
+        dia: "2026-01-01"
+        primeraActividad: "2026-01-01T10:00:00Z"
+        origen: "origen-a"
+    ActividadDiariaUpdateRequest:
+      type: "object"
+      properties:
+        primeraActividad:
+          type: "string"
+          format: "date-time"
+        origen:
+          type: "string"
+      example:
+        primeraActividad: "2026-02-01T10:00:00Z"
+        origen: "origen-b"

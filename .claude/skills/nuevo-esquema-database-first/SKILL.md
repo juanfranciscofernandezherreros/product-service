@@ -1,29 +1,56 @@
 ---
 name: nuevo-esquema-database-first
-description: Convierte un esquema SQL nuevo (DDL PostgreSQL) en un microservicio CRUD completo en modo Database-First. Úsala cuando se añada un .sql nuevo en specs/, se pida un servicio a partir de tablas, o se quiera derivar el OpenAPI desde el DDL.
+description: Lleva un cambio del esquema de Supabase (tabla nueva, columna cambiada o servicio nuevo) hasta el microservicio generado. Úsala cuando cambie el esquema, se añada una tabla o un dominio, se quiera mover una tabla de servicio o los dominios no coincidan con Supabase.
 ---
 
-# Esquema nuevo (Database-First): de DDL a CRUD completo
+# Del esquema de Supabase al microservicio (Database-First)
 
-Cuando se añade un esquema nuevo (un `.sql` con el DDL), el resultado DEBE ser un microservicio completo que cumpla **todas** las especificaciones del SDD.
+Supabase es el origen. Los DDL del generador se derivan del export y no se editan a mano; el código se deriva de los DDL. Todo el recorrido es determinista: no hace falta IA.
 
-## Pasos
-1. **Registra el esquema.** Añádelo como `specs/domains/<servicio>.sql` (plantilla: `templates/database-spec.sql`) y añade una línea en `.ai/services.txt` con `SPEC_FILE` **vacío** (eso activa Database-First; el OpenAPI se derivará del DDL):
+## Pasos (en el repositorio del generador)
+
+1. **Exporta el esquema real.**
    ```
-   <servicio>-service;../<servicio>-service;<REMOTE_URL>;;specs/domains/<servicio>.sql
+   python scripts/export_supabase_schema.py
    ```
-   El repositorio `REMOTE_URL` debe existir antes de generar. Valida con `python scripts/validate_specs.py`.
-2. **Fase 0** (`.ai/prompts/00-db-to-openapi.md`): genera `specs/crud-spec.yaml` con el **CRUD COMPLETO** (crear → listar → obtener → actualizar → borrar) por entidad raíz, **subrecursos REST** para las tablas hijas, y `specs/acceptance-criteria.md`. Ninguna tabla operable queda sin endpoints.
-3. **Fases 1→5** (skill `generar-crud`): dominio puro (Java 21) → puertos/casos de uso + JUnit 5 → adaptadores web/JPA + Cucumber + ArchUnit → verificación `mvnw.cmd clean verify`.
-4. **Entregables obligatorios** (criterios de aceptación):
-   - cobertura JaCoCo ≥ 80% y reporte Cucumber HTML;
-   - `backend/docs/index.html` (diagrama SVG + request/response por endpoint + esquema exacto; skill `documentacion-funcional-html`);
-   - `README.md` / `CLAUDE.md` del servicio;
-   - perfil `dev` → Supabase con la política de acceso (`.claude/rules/supabase-acceso-datos.md`);
-   - `specs/VERIFICACION-DATOS.md`, `specs/PRUEBAS-CURL-CRUD.html` (CA-11) y `specs/CRITERIOS-ACEPTACION.html`.
-5. **Git**: cada servicio en su carpeta y su propio repositorio remoto. El commit y push del servicio forman parte de la Fase 5 cuando se ejecuta el pipeline; fuera de él, solo con petición explícita (`.claude/rules/un-servicio-un-repositorio.md`).
-6. **Contrato derivado**: si quieres conservarlo en el generador, copia el `specs/crud-spec.yaml` generado a `specs/openapi/<servicio>.yaml` y ponlo como `SPEC_FILE` en el manifiesto.
+   Necesita `psql` y la variable de entorno `SUPABASE_DB_URL` (secreto: nunca en el repositorio). Reescribe `specs/supabase-schema.sql`. Sin `psql`, pega `scripts/export-schema.sql` en el SQL Editor de Supabase.
 
-## Comprobaciones antes de dar por bueno el OpenAPI derivado
-- Cada tabla operable del DDL tiene sus endpoints (raíz o subrecurso).
-- Los nombres de tabla/columna y los tipos salen del DDL, no al revés (`.claude/rules/base-de-datos-sdd.md`).
+2. **Reparte las tablas.** Edita `specs/domain-map.txt`: cada tabla del export debe estar en exactamente un dominio. Una tabla nueva se añade al dominio de las tablas que referencia; un servicio nuevo es una línea nueva `dominio: tabla1, tabla2`.
+
+3. **Regenera los dominios y compruébalos.**
+   ```
+   python scripts/split_domains.py
+   python scripts/check_domains.py
+   ```
+   `split_domains.py` copia cada tabla tal cual a `specs/domains/<dominio>.sql` y omite solo las claves foráneas hacia tablas de fuera del servicio (las lista en la cabecera). `check_domains.py` debe terminar con 0 diferencias y 0 tablas sin dominio.
+
+4. **Si el dominio es nuevo**, añade su línea a `.ai/services.txt`, crea su repositorio remoto y añádelo a la matriz de `.github/workflows/validate.yml`:
+   ```
+   <dominio>-service;../<dominio>-service;<REMOTE_URL>;specs/openapi/<dominio>.yaml;specs/domains/<dominio>.sql
+   ```
+
+5. **Regenera los contratos y valida.**
+   ```
+   python scripts/generate.py --openapi
+   python scripts/validate_specs.py
+   ```
+
+6. **Genera los servicios afectados.**
+   ```
+   python scripts/generate.py --build
+   ```
+   Solo se regeneran los servicios cuyo DDL ha cambiado. Con `--push` se suben a su remoto si el build pasa (skill `generar-crud`).
+
+## Qué obtiene cada tabla
+
+- `POST`, `GET` (lista paginada con filtros por claves foráneas), `GET` por clave, `PUT` y `DELETE` bajo `/v1/<tabla-con-guiones>`. Las tablas en las que todas las columnas son clave no tienen `PUT`.
+- Clave generada por la base (identidad o UUID por defecto): no viaja en el alta. Clave aportada por el cliente: el alta duplicada devuelve 409.
+- Tipos: `jsonb` es JSON libre en la API; los arrays son listas; `timestamptz` es fecha-hora ISO.
+- Tests unitarios del caso de uso y del controlador, y una feature de Cucumber con el ciclo CRUD, duplicados, peticiones no válidas y recursos inexistentes.
+
+## Límites que conviene conocer
+
+- El generador exige clave primaria en todas las tablas.
+- Las restricciones CHECK y las claves foráneas no se validan en el servicio: las aplica la base y el servicio responde 409. El esquema de pruebas las omite para poder insertar datos de ejemplo genéricos.
+- Un export antiguo no guarda `GENERATED ... AS IDENTITY`; el generador asume identidad en las claves enteras de una sola columna sin valor por defecto. Vuelve a exportar para eliminar la suposición.
+- Lo que no sea CRUD (reglas de negocio, endpoints compuestos) se describe en `specs/business-rules/<SERVICE_NAME>.md` y lo aplica la IA con `--ai-rules`.

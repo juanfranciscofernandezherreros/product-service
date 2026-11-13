@@ -1,178 +1,1119 @@
-openapi: 3.0.3
+# Generado desde el DDL por el generador de servicios. No editar a mano.
+openapi: "3.0.3"
 info:
-  title: Vocabulary API
-  description: >-
-    API REST del dominio de vocabulario, derivada del esquema PostgreSQL
-    (tablas vocabulario_items y vocabulario_progreso). Database-First: el
-    esquema es la fuente de verdad; este contrato se genera a partir del DDL.
-  version: 1.0.0
+  title: "vocabulary-service API"
+  version: "1.0.0"
+  description: "CRUD de las tablas de vocabulary-service, derivado del esquema de base de datos."
 servers:
-  - url: https://api.tudominio.com/v1
-    description: Producción
+  - url: "http://localhost:8089"
+    description: "Local"
+tags:
+  - name: "vocabulario"
+  - name: "vocabulario_items"
+  - name: "vocabulario_progreso"
+  - name: "vocabulario_preferencias"
 paths:
-  /v1/vocabulary/items:
-    get:
-      summary: Listar ítems de vocabulario (paginado + filtro por nivel)
-      operationId: listVocabularyItems
-      parameters:
-        - { name: level, in: query, schema: { type: string, enum: [A1, A2, B1, B2, C1] } }
-        - { name: limit, in: query, schema: { type: integer, default: 20, minimum: 1, maximum: 100 } }
-        - { name: offset, in: query, schema: { type: integer, default: 0, minimum: 0 } }
-      responses:
-        '200':
-          description: Lista obtenida
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  total: { type: integer }
-                  items:
-                    type: array
-                    items: { $ref: '#/components/schemas/VocabularyItem' }
+  "/v1/vocabulario":
     post:
-      summary: Crear un ítem de vocabulario
-      operationId: createVocabularyItem
+      tags:
+        - "vocabulario"
+      operationId: "createVocabulario"
+      summary: "Crea un registro de vocabulario"
       requestBody:
         required: true
         content:
-          application/json:
-            schema: { $ref: '#/components/schemas/VocabularyItemCreate' }
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/VocabularioRequest"
       responses:
-        '201':
-          description: Creado
+        "201":
+          description: "Creado"
           content:
-            application/json:
-              schema: { $ref: '#/components/schemas/VocabularyItem' }
-        '400': { $ref: '#/components/responses/BadRequest' }
-        '409':
-          description: Ya existe un ítem con el mismo término en inglés (UNIQUE en)
-          content:
-            application/json:
-              schema: { $ref: '#/components/schemas/Error' }
-  /v1/vocabulary/items/{id}:
-    parameters:
-      - { name: id, in: path, required: true, schema: { type: integer, format: int64 } }
-    get:
-      summary: Obtener un ítem por id
-      operationId: getVocabularyItem
-      responses:
-        '200':
-          description: Encontrado
-          content:
-            application/json:
-              schema: { $ref: '#/components/schemas/VocabularyItem' }
-        '404': { $ref: '#/components/responses/NotFound' }
-    put:
-      summary: Actualizar un ítem
-      operationId: updateVocabularyItem
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema: { $ref: '#/components/schemas/VocabularyItemUpdate' }
-      responses:
-        '200':
-          description: Actualizado
-          content:
-            application/json:
-              schema: { $ref: '#/components/schemas/VocabularyItem' }
-        '400': { $ref: '#/components/responses/BadRequest' }
-        '404': { $ref: '#/components/responses/NotFound' }
-    delete:
-      summary: Eliminar un ítem
-      operationId: deleteVocabularyItem
-      responses:
-        '204': { description: Eliminado }
-        '404': { $ref: '#/components/responses/NotFound' }
-  /v1/vocabulary/users/{userId}/progress:
-    parameters:
-      - { name: userId, in: path, required: true, schema: { type: string, format: uuid } }
-    get:
-      summary: Progreso de vocabulario de un usuario
-      operationId: listVocabularyProgress
-      responses:
-        '200':
-          description: Progreso del usuario
-          content:
-            application/json:
+            "application/json":
               schema:
-                type: array
-                items: { $ref: '#/components/schemas/VocabularyProgress' }
+                "$ref": "#/components/schemas/Vocabulario"
+        "400":
+          description: "Peticion no valida"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "409":
+          description: "Ya existe o incumple una restriccion"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+    get:
+      tags:
+        - "vocabulario"
+      operationId: "listVocabulario"
+      summary: "Lista vocabulario (paginado)"
+      parameters:
+        - name: "page"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            default: 0
+        - name: "size"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            default: 20
+            maximum: 100
+      responses:
+        "200":
+          description: "Pagina de resultados"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                properties:
+                  items:
+                    type: "array"
+                    items:
+                      "$ref": "#/components/schemas/Vocabulario"
+                  total:
+                    type: "integer"
+                    format: "int64"
+                  page:
+                    type: "integer"
+                  size:
+                    type: "integer"
+        "400":
+          description: "Parametro no valido"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+  "/v1/vocabulario/{id}":
+    get:
+      tags:
+        - "vocabulario"
+      operationId: "getVocabulario"
+      summary: "Obtiene un registro de vocabulario"
+      parameters:
+        - name: "id"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+          example: 1
+      responses:
+        "200":
+          description: "Encontrado"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Vocabulario"
+        "404":
+          description: "No existe"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
     put:
-      summary: Registrar/actualizar el progreso de un ítem para el usuario (upsert)
-      operationId: upsertVocabularyProgress
+      tags:
+        - "vocabulario"
+      operationId: "updateVocabulario"
+      summary: "Modifica un registro de vocabulario"
+      parameters:
+        - name: "id"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+          example: 1
       requestBody:
         required: true
         content:
-          application/json:
-            schema: { $ref: '#/components/schemas/VocabularyProgressUpsert' }
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/VocabularioUpdateRequest"
       responses:
-        '200':
-          description: Progreso actualizado
+        "200":
+          description: "Modificado"
           content:
-            application/json:
-              schema: { $ref: '#/components/schemas/VocabularyProgress' }
-        '400': { $ref: '#/components/responses/BadRequest' }
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Vocabulario"
+        "400":
+          description: "Peticion no valida"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "404":
+          description: "No existe"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "409":
+          description: "Incumple una restriccion"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+    delete:
+      tags:
+        - "vocabulario"
+      operationId: "deleteVocabulario"
+      summary: "Borra un registro de vocabulario"
+      parameters:
+        - name: "id"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+          example: 1
+      responses:
+        "204":
+          description: "Borrado"
+        "404":
+          description: "No existe"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "409":
+          description: "Lo impide una restriccion"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+  "/v1/vocabulario-items":
+    post:
+      tags:
+        - "vocabulario_items"
+      operationId: "createVocabularioItems"
+      summary: "Crea un registro de vocabulario_items"
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/VocabularioItemsRequest"
+      responses:
+        "201":
+          description: "Creado"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/VocabularioItems"
+        "400":
+          description: "Peticion no valida"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "409":
+          description: "Ya existe o incumple una restriccion"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+    get:
+      tags:
+        - "vocabulario_items"
+      operationId: "listVocabularioItems"
+      summary: "Lista vocabulario_items (paginado)"
+      parameters:
+        - name: "page"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            default: 0
+        - name: "size"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            default: 20
+            maximum: 100
+      responses:
+        "200":
+          description: "Pagina de resultados"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                properties:
+                  items:
+                    type: "array"
+                    items:
+                      "$ref": "#/components/schemas/VocabularioItems"
+                  total:
+                    type: "integer"
+                    format: "int64"
+                  page:
+                    type: "integer"
+                  size:
+                    type: "integer"
+        "400":
+          description: "Parametro no valido"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+  "/v1/vocabulario-items/{id}":
+    get:
+      tags:
+        - "vocabulario_items"
+      operationId: "getVocabularioItems"
+      summary: "Obtiene un registro de vocabulario_items"
+      parameters:
+        - name: "id"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+          example: 1
+      responses:
+        "200":
+          description: "Encontrado"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/VocabularioItems"
+        "404":
+          description: "No existe"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+    put:
+      tags:
+        - "vocabulario_items"
+      operationId: "updateVocabularioItems"
+      summary: "Modifica un registro de vocabulario_items"
+      parameters:
+        - name: "id"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+          example: 1
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/VocabularioItemsUpdateRequest"
+      responses:
+        "200":
+          description: "Modificado"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/VocabularioItems"
+        "400":
+          description: "Peticion no valida"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "404":
+          description: "No existe"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "409":
+          description: "Incumple una restriccion"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+    delete:
+      tags:
+        - "vocabulario_items"
+      operationId: "deleteVocabularioItems"
+      summary: "Borra un registro de vocabulario_items"
+      parameters:
+        - name: "id"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+          example: 1
+      responses:
+        "204":
+          description: "Borrado"
+        "404":
+          description: "No existe"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "409":
+          description: "Lo impide una restriccion"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+  "/v1/vocabulario-progreso":
+    post:
+      tags:
+        - "vocabulario_progreso"
+      operationId: "createVocabularioProgreso"
+      summary: "Crea un registro de vocabulario_progreso"
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/VocabularioProgresoRequest"
+      responses:
+        "201":
+          description: "Creado"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/VocabularioProgreso"
+        "400":
+          description: "Peticion no valida"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "409":
+          description: "Ya existe o incumple una restriccion"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+    get:
+      tags:
+        - "vocabulario_progreso"
+      operationId: "listVocabularioProgreso"
+      summary: "Lista vocabulario_progreso (paginado)"
+      parameters:
+        - name: "userId"
+          in: "query"
+          required: false
+          schema:
+            type: "string"
+            format: "uuid"
+          example: "aabcfe68-a76b-5763-b0bb-e7ad6f054d1b"
+        - name: "itemId"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            format: "int64"
+          example: 1
+        - name: "page"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            default: 0
+        - name: "size"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            default: 20
+            maximum: 100
+      responses:
+        "200":
+          description: "Pagina de resultados"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                properties:
+                  items:
+                    type: "array"
+                    items:
+                      "$ref": "#/components/schemas/VocabularioProgreso"
+                  total:
+                    type: "integer"
+                    format: "int64"
+                  page:
+                    type: "integer"
+                  size:
+                    type: "integer"
+        "400":
+          description: "Parametro no valido"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+  "/v1/vocabulario-progreso/{userId}/{itemId}":
+    get:
+      tags:
+        - "vocabulario_progreso"
+      operationId: "getVocabularioProgreso"
+      summary: "Obtiene un registro de vocabulario_progreso"
+      parameters:
+        - name: "userId"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+            format: "uuid"
+          example: "aabcfe68-a76b-5763-b0bb-e7ad6f054d1b"
+        - name: "itemId"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+          example: 1
+      responses:
+        "200":
+          description: "Encontrado"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/VocabularioProgreso"
+        "404":
+          description: "No existe"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+    put:
+      tags:
+        - "vocabulario_progreso"
+      operationId: "updateVocabularioProgreso"
+      summary: "Modifica un registro de vocabulario_progreso"
+      parameters:
+        - name: "userId"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+            format: "uuid"
+          example: "aabcfe68-a76b-5763-b0bb-e7ad6f054d1b"
+        - name: "itemId"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+          example: 1
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/VocabularioProgresoUpdateRequest"
+      responses:
+        "200":
+          description: "Modificado"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/VocabularioProgreso"
+        "400":
+          description: "Peticion no valida"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "404":
+          description: "No existe"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "409":
+          description: "Incumple una restriccion"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+    delete:
+      tags:
+        - "vocabulario_progreso"
+      operationId: "deleteVocabularioProgreso"
+      summary: "Borra un registro de vocabulario_progreso"
+      parameters:
+        - name: "userId"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+            format: "uuid"
+          example: "aabcfe68-a76b-5763-b0bb-e7ad6f054d1b"
+        - name: "itemId"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+          example: 1
+      responses:
+        "204":
+          description: "Borrado"
+        "404":
+          description: "No existe"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "409":
+          description: "Lo impide una restriccion"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+  "/v1/vocabulario-preferencias":
+    post:
+      tags:
+        - "vocabulario_preferencias"
+      operationId: "createVocabularioPreferencias"
+      summary: "Crea un registro de vocabulario_preferencias"
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/VocabularioPreferenciasRequest"
+      responses:
+        "201":
+          description: "Creado"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/VocabularioPreferencias"
+        "400":
+          description: "Peticion no valida"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "409":
+          description: "Ya existe o incumple una restriccion"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+    get:
+      tags:
+        - "vocabulario_preferencias"
+      operationId: "listVocabularioPreferencias"
+      summary: "Lista vocabulario_preferencias (paginado)"
+      parameters:
+        - name: "page"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            default: 0
+        - name: "size"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            default: 20
+            maximum: 100
+      responses:
+        "200":
+          description: "Pagina de resultados"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                properties:
+                  items:
+                    type: "array"
+                    items:
+                      "$ref": "#/components/schemas/VocabularioPreferencias"
+                  total:
+                    type: "integer"
+                    format: "int64"
+                  page:
+                    type: "integer"
+                  size:
+                    type: "integer"
+        "400":
+          description: "Parametro no valido"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+  "/v1/vocabulario-preferencias/{userId}":
+    get:
+      tags:
+        - "vocabulario_preferencias"
+      operationId: "getVocabularioPreferencias"
+      summary: "Obtiene un registro de vocabulario_preferencias"
+      parameters:
+        - name: "userId"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+            format: "uuid"
+          example: "1cbc43d9-01fe-51a5-b4aa-8d97702c4cca"
+      responses:
+        "200":
+          description: "Encontrado"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/VocabularioPreferencias"
+        "404":
+          description: "No existe"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+    put:
+      tags:
+        - "vocabulario_preferencias"
+      operationId: "updateVocabularioPreferencias"
+      summary: "Modifica un registro de vocabulario_preferencias"
+      parameters:
+        - name: "userId"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+            format: "uuid"
+          example: "1cbc43d9-01fe-51a5-b4aa-8d97702c4cca"
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/VocabularioPreferenciasUpdateRequest"
+      responses:
+        "200":
+          description: "Modificado"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/VocabularioPreferencias"
+        "400":
+          description: "Peticion no valida"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "404":
+          description: "No existe"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "409":
+          description: "Incumple una restriccion"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+    delete:
+      tags:
+        - "vocabulario_preferencias"
+      operationId: "deleteVocabularioPreferencias"
+      summary: "Borra un registro de vocabulario_preferencias"
+      parameters:
+        - name: "userId"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+            format: "uuid"
+          example: "1cbc43d9-01fe-51a5-b4aa-8d97702c4cca"
+      responses:
+        "204":
+          description: "Borrado"
+        "404":
+          description: "No existe"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "409":
+          description: "Lo impide una restriccion"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
 components:
   schemas:
-    # Derivado de vocabulario_items (id, en UNIQUE, es, example, level CHECK A1..C1)
-    VocabularyItem:
-      type: object
-      required: [id, en, es, level]
-      properties:
-        id: { type: integer, format: int64 }
-        en: { type: string }
-        es: { type: string }
-        example: { type: string, nullable: true }
-        level: { type: string, enum: [A1, A2, B1, B2, C1] }
-    VocabularyItemCreate:
-      type: object
-      required: [en, es, level]
-      properties:
-        en: { type: string }
-        es: { type: string }
-        example: { type: string }
-        level: { type: string, enum: [A1, A2, B1, B2, C1] }
-    VocabularyItemUpdate:
-      type: object
-      properties:
-        es: { type: string }
-        example: { type: string }
-        level: { type: string, enum: [A1, A2, B1, B2, C1] }
-    # Derivado de vocabulario_progreso (user_id, item_id PK; streak>=0; last_grade 0..2)
-    VocabularyProgress:
-      type: object
-      required: [userId, itemId, streak, lastGrade, nextReviewAt, firstSeenDay]
-      properties:
-        userId: { type: string, format: uuid }
-        itemId: { type: integer, format: int64 }
-        streak: { type: integer, minimum: 0 }
-        lastGrade: { type: integer, minimum: 0, maximum: 2 }
-        nextReviewAt: { type: string, format: date-time }
-        firstSeenDay: { type: string, format: date }
-    VocabularyProgressUpsert:
-      type: object
-      required: [itemId, lastGrade]
-      properties:
-        itemId: { type: integer, format: int64 }
-        streak: { type: integer, minimum: 0 }
-        lastGrade: { type: integer, minimum: 0, maximum: 2 }
-        nextReviewAt: { type: string, format: date-time }
     Error:
-      type: object
-      required: [code, message]
+      type: "object"
+      required:
+        - "code"
+        - "message"
       properties:
-        code: { type: string, example: RESOURCE_ALREADY_EXISTS }
-        message: { type: string }
-  responses:
-    BadRequest:
-      description: Parámetros inválidos
-      content:
-        application/json:
-          schema: { $ref: '#/components/schemas/Error' }
-    NotFound:
-      description: Recurso no encontrado
-      content:
-        application/json:
-          schema: { $ref: '#/components/schemas/Error' }
+        code:
+          type: "string"
+        message:
+          type: "string"
+      example:
+        code: "RESOURCE_NOT_FOUND"
+        message: "recurso no encontrado"
+    Vocabulario:
+      type: "object"
+      properties:
+        id:
+          type: "integer"
+          format: "int64"
+        terminoEn:
+          type: "string"
+        traduccionEs:
+          type: "string"
+        categoria:
+          type: "string"
+        ejemploEn:
+          type: "string"
+          nullable: true
+        nivel:
+          type: "string"
+          nullable: true
+        articuloSlug:
+          type: "string"
+          nullable: true
+        orden:
+          type: "integer"
+          format: "int32"
+        publicado:
+          type: "boolean"
+        creadoEn:
+          type: "string"
+          format: "date-time"
+      required:
+        - "id"
+        - "terminoEn"
+        - "traduccionEs"
+        - "categoria"
+        - "orden"
+        - "publicado"
+        - "creadoEn"
+      example:
+        id: 1
+        terminoEn: "termino-en-a"
+        traduccionEs: "traduccion-es-a"
+        categoria: "categoria-a"
+        ejemploEn: "ejemplo-en-a"
+        nivel: "nivel-a"
+        articuloSlug: "articulo-slug-a"
+        orden: 1
+        publicado: true
+        creadoEn: "2026-01-01T10:00:00Z"
+    VocabularioRequest:
+      type: "object"
+      properties:
+        terminoEn:
+          type: "string"
+        traduccionEs:
+          type: "string"
+        categoria:
+          type: "string"
+        ejemploEn:
+          type: "string"
+          nullable: true
+        nivel:
+          type: "string"
+          nullable: true
+        articuloSlug:
+          type: "string"
+          nullable: true
+        orden:
+          type: "integer"
+          format: "int32"
+        publicado:
+          type: "boolean"
+        creadoEn:
+          type: "string"
+          format: "date-time"
+      required:
+        - "terminoEn"
+        - "traduccionEs"
+        - "categoria"
+      example:
+        terminoEn: "termino-en-a"
+        traduccionEs: "traduccion-es-a"
+        categoria: "categoria-a"
+        ejemploEn: "ejemplo-en-a"
+        nivel: "nivel-a"
+        articuloSlug: "articulo-slug-a"
+        orden: 1
+        publicado: true
+        creadoEn: "2026-01-01T10:00:00Z"
+    VocabularioUpdateRequest:
+      type: "object"
+      properties:
+        terminoEn:
+          type: "string"
+        traduccionEs:
+          type: "string"
+        categoria:
+          type: "string"
+        ejemploEn:
+          type: "string"
+          nullable: true
+        nivel:
+          type: "string"
+          nullable: true
+        articuloSlug:
+          type: "string"
+          nullable: true
+        orden:
+          type: "integer"
+          format: "int32"
+        publicado:
+          type: "boolean"
+        creadoEn:
+          type: "string"
+          format: "date-time"
+      required:
+        - "terminoEn"
+        - "traduccionEs"
+        - "categoria"
+      example:
+        terminoEn: "termino-en-b"
+        traduccionEs: "traduccion-es-b"
+        categoria: "categoria-b"
+        ejemploEn: "ejemplo-en-b"
+        nivel: "nivel-b"
+        articuloSlug: "articulo-slug-b"
+        orden: 2
+        publicado: false
+        creadoEn: "2026-02-01T10:00:00Z"
+    VocabularioItems:
+      type: "object"
+      properties:
+        id:
+          type: "integer"
+          format: "int64"
+        en:
+          type: "string"
+        es:
+          type: "string"
+        example:
+          type: "string"
+          nullable: true
+        level:
+          type: "string"
+      required:
+        - "id"
+        - "en"
+        - "es"
+        - "level"
+      example:
+        id: 1
+        en: "en-a"
+        es: "es-a"
+        example: "example-a"
+        level: "level-a"
+    VocabularioItemsRequest:
+      type: "object"
+      properties:
+        en:
+          type: "string"
+        es:
+          type: "string"
+        example:
+          type: "string"
+          nullable: true
+        level:
+          type: "string"
+      required:
+        - "en"
+        - "es"
+        - "level"
+      example:
+        en: "en-a"
+        es: "es-a"
+        example: "example-a"
+        level: "level-a"
+    VocabularioItemsUpdateRequest:
+      type: "object"
+      properties:
+        en:
+          type: "string"
+        es:
+          type: "string"
+        example:
+          type: "string"
+          nullable: true
+        level:
+          type: "string"
+      required:
+        - "en"
+        - "es"
+        - "level"
+      example:
+        en: "en-b"
+        es: "es-b"
+        example: "example-b"
+        level: "level-b"
+    VocabularioProgreso:
+      type: "object"
+      properties:
+        userId:
+          type: "string"
+          format: "uuid"
+        itemId:
+          type: "integer"
+          format: "int64"
+        streak:
+          type: "integer"
+          format: "int32"
+        lastGrade:
+          type: "integer"
+          format: "int32"
+        nextReviewAt:
+          type: "string"
+          format: "date-time"
+        firstSeenDay:
+          type: "string"
+          format: "date"
+      required:
+        - "userId"
+        - "itemId"
+        - "streak"
+        - "lastGrade"
+        - "nextReviewAt"
+        - "firstSeenDay"
+      example:
+        userId: "aabcfe68-a76b-5763-b0bb-e7ad6f054d1b"
+        itemId: 1
+        streak: 1
+        lastGrade: 1
+        nextReviewAt: "2026-01-01T10:00:00Z"
+        firstSeenDay: "2026-01-01"
+    VocabularioProgresoRequest:
+      type: "object"
+      properties:
+        userId:
+          type: "string"
+          format: "uuid"
+        itemId:
+          type: "integer"
+          format: "int64"
+        streak:
+          type: "integer"
+          format: "int32"
+        lastGrade:
+          type: "integer"
+          format: "int32"
+        nextReviewAt:
+          type: "string"
+          format: "date-time"
+        firstSeenDay:
+          type: "string"
+          format: "date"
+      required:
+        - "userId"
+        - "itemId"
+      example:
+        userId: "aabcfe68-a76b-5763-b0bb-e7ad6f054d1b"
+        itemId: 1
+        streak: 1
+        lastGrade: 1
+        nextReviewAt: "2026-01-01T10:00:00Z"
+        firstSeenDay: "2026-01-01"
+    VocabularioProgresoUpdateRequest:
+      type: "object"
+      properties:
+        streak:
+          type: "integer"
+          format: "int32"
+        lastGrade:
+          type: "integer"
+          format: "int32"
+        nextReviewAt:
+          type: "string"
+          format: "date-time"
+        firstSeenDay:
+          type: "string"
+          format: "date"
+      example:
+        streak: 2
+        lastGrade: 2
+        nextReviewAt: "2026-02-01T10:00:00Z"
+        firstSeenDay: "2026-02-01"
+    VocabularioPreferencias:
+      type: "object"
+      properties:
+        userId:
+          type: "string"
+          format: "uuid"
+        newPerDay:
+          type: "integer"
+          format: "int32"
+        levels:
+          type: "array"
+          items:
+            type: "string"
+        priority:
+          type: "string"
+        direction:
+          type: "string"
+      required:
+        - "userId"
+        - "newPerDay"
+        - "levels"
+        - "priority"
+        - "direction"
+      example:
+        userId: "1cbc43d9-01fe-51a5-b4aa-8d97702c4cca"
+        newPerDay: 1
+        levels:
+          - "levels-a"
+        priority: "priority-a"
+        direction: "direction-a"
+    VocabularioPreferenciasRequest:
+      type: "object"
+      properties:
+        userId:
+          type: "string"
+          format: "uuid"
+        newPerDay:
+          type: "integer"
+          format: "int32"
+        levels:
+          type: "array"
+          items:
+            type: "string"
+        priority:
+          type: "string"
+        direction:
+          type: "string"
+      required:
+        - "userId"
+      example:
+        userId: "1cbc43d9-01fe-51a5-b4aa-8d97702c4cca"
+        newPerDay: 1
+        levels:
+          - "levels-a"
+        priority: "priority-a"
+        direction: "direction-a"
+    VocabularioPreferenciasUpdateRequest:
+      type: "object"
+      properties:
+        newPerDay:
+          type: "integer"
+          format: "int32"
+        levels:
+          type: "array"
+          items:
+            type: "string"
+        priority:
+          type: "string"
+        direction:
+          type: "string"
+      example:
+        newPerDay: 2
+        levels:
+          - "levels-b"
+        priority: "priority-b"
+        direction: "direction-b"

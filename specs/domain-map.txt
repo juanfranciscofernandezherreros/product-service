@@ -1,0 +1,28 @@
+# Reparto de las tablas de Supabase entre servicios.
+#
+#   <dominio>: tabla1, tabla2, ...
+#
+# Cada tabla de specs/supabase-schema.sql debe aparecer exactamente una vez.
+# scripts/split_domains.py lee este fichero y escribe specs/domains/<dominio>.sql
+# copiando cada tabla tal cual del export. Edita aqui para mover una tabla de servicio.
+
+access: roles, permisos, roles_permisos, usuarios_roles
+
+battle: battle_questions, battle_rooms, battle_players, battle_round_questions, battle_answers
+
+content: categorias_blog, articulos, comentarios_articulos, colecciones_material, coleccion_articulos,
+         paginas_blog, recursos_descargables, movie_subtitle_phrases, lecturas, recursos_guardados
+
+courses: cursos, unidades_curso, actividades, actividad_preguntas, actividad_intentos, actividad_fallos,
+         cursos_profesores, asignaciones_alumno, progreso_curso, unidades_articulos
+
+exams: examenes, preguntas, resultados, diagnosticos_b2, simulacros_b2, examenes_lecturas, preguntas_falladas
+
+misc: sugerencias, bitacora_categorias, bitacora_anotaciones, writing_borradores
+
+social: perfiles, perfiles_publicos, seguimientos, mensajes_privados, solicitudes_mensaje, mensajes_vistos
+
+study-plan: planes_estudio_b2, planes_ia_b2, objetivos_semanales, sesiones_estudio_b2, seguimiento_semanal,
+            actividad_diaria
+
+vocabulary: vocabulario, vocabulario_items, vocabulario_progreso, vocabulario_preferencias
