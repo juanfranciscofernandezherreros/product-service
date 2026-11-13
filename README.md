@@ -15,7 +15,7 @@ Supabase ──export──▶ specs/supabase-schema.sql
                  specs/domains/<dominio>.sql ──▶ specs/openapi/<dominio>.yaml
                           │
                           ▼  scripts/generate.py (plantillas de generator/)
-            ../<servicio>/  proyecto Maven completo, tests, docs, contrato
+            ../<servicio>/  backend completo, tests, docs, contrato
                           │
                           ▼  solo si hace falta
               IA: reglas de negocio y arreglo de builds rotos

@@ -22,7 +22,7 @@ python scripts/generate.py --build --create-repos --push   # crea antes en GitHu
 Qué hace por cada servicio de `.ai/services.txt`:
 1. Lee su DDL (`DB_SPEC`) y construye el modelo: tablas, columnas, claves, tipos.
 2. Si el DDL, el generador y las plantillas no han cambiado desde la última vez, **lo omite** (`--force` para regenerar).
-3. Escribe en `TARGET_DIR`: el proyecto Maven completo en la raíz (dominio, puertos, casos de uso, controladores, DTO, entidades JPA, adaptadores, tests unitarios, features de Cucumber, ArchUnit, migraciones, perfiles, `pom.xml`, wrapper de Maven, `docker-compose.yml`, `docs/index.html`, README y CLAUDE.md), `specs/crud-spec.yaml`, `specs/database-spec.sql`, `specs/PRUEBAS-CURL-CRUD.html`, las reglas y skills, y `.ai/project-context.txt`.
+3. Escribe en `TARGET_DIR`: `backend/` completo (dominio, puertos, casos de uso, controladores, DTO, entidades JPA, adaptadores, tests unitarios, features de Cucumber, ArchUnit, migraciones, perfiles, `pom.xml`, wrapper de Maven, `docker-compose.yml`, `docs/index.html`, README y CLAUDE.md), `specs/crud-spec.yaml`, `specs/database-spec.sql`, `specs/PRUEBAS-CURL-CRUD.html`, las reglas y skills, y `.ai/project-context.txt`.
 4. Solo toca los ficheros que genera (lista en `.ai/generated-files.txt`); lo escrito a mano se conserva.
 
 No leas ni revises el código generado «por si acaso»: es idéntico en estilo en todos los servicios y lo valida la CI del generador. Para comprobar un servicio, ejecuta el build.

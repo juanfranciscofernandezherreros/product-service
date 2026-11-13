@@ -200,7 +200,7 @@ sustituye la clave de ejemplo de la ruta por la que devuelva el alta. Los cuerpo
 """
 
 
-def service_readme(s: Service, port: int) -> str:
+def backend_readme(s: Service, port: int) -> str:
     resources = "\n".join(f"- `{t.path}` — tabla `{t.name}`" for t in s.tables)
     return f"""# {s.name}
 
@@ -234,17 +234,15 @@ y `target/site/jacoco/index.html`.
 {resources}
 
 Cada recurso admite `POST`, `GET` (lista paginada con filtros), `GET` por clave, `PUT` y `DELETE`.
-Detalle con ejemplos en `docs/index.html`; contrato en `specs/crud-spec.yaml`; pruebas cURL en `specs/PRUEBAS-CURL-CRUD.html`.
+Detalle con ejemplos en `docs/index.html`; contrato en `../specs/crud-spec.yaml`.
 """
 
 
-def service_claude(s: Service) -> str:
+def backend_claude(s: Service) -> str:
     return f"""# CLAUDE.md — {s.name}
 
-Servicio generado de forma determinista desde `specs/database-spec.sql`. No edites a mano el codigo generado
-(la lista esta en `.ai/generated-files.txt`): cambia el DDL en el generador y vuelve a generar. Las reglas de
-negocio propias van en clases nuevas. Las normas del proyecto estan en `.claude/rules/` y los procedimientos
-en `.claude/skills/`.
+Servicio generado de forma determinista desde `../specs/database-spec.sql`. No edites a mano el codigo generado:
+cambia el DDL en el generador y vuelve a generar. Las reglas de negocio propias van en clases nuevas.
 
 ## Comandos
 - `docker compose up -d` · `./mvnw clean verify` · `./mvnw spring-boot:run -Dspring-boot.run.profiles=local`

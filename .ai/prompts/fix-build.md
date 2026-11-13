@@ -1,4 +1,4 @@
-El build de este microservicio (`mvnw clean verify` en la raíz) ha fallado. Debajo tienes el final del registro.
+El build de este microservicio (`backend/`, `mvnw clean verify`) ha fallado. Debajo tienes el final del registro.
 
 El código está generado por plantillas a partir de `specs/database-spec.sql`. Corrige solo lo necesario para que el build pase:
 

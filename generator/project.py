@@ -24,13 +24,14 @@ def supabase_ref(root: Path) -> str | None:
 
 def build_files(s: Service, root: Path, port: int) -> dict[str, str]:
     """Todos los ficheros de texto generados: ruta relativa a la carpeta del servicio -> contenido."""
-    files = {}
-    files.update(resources.resource_files(s, port, supabase_ref(root)))
-    files.update(fixed.fixed_sources(s))
-    files.update(java.java_sources(s))
-    files["docs/index.html"] = docs.index_html(s, port)
-    files["README.md"] = docs.service_readme(s, port)
-    files["CLAUDE.md"] = docs.service_claude(s)
+    backend = {}
+    backend.update(resources.resource_files(s, port, supabase_ref(root)))
+    backend.update(fixed.fixed_sources(s))
+    backend.update(java.java_sources(s))
+    backend["docs/index.html"] = docs.index_html(s, port)
+    backend["README.md"] = docs.backend_readme(s, port)
+    backend["CLAUDE.md"] = docs.backend_claude(s)
+    files = {f"backend/{path}": content for path, content in backend.items()}
     files["specs/crud-spec.yaml"] = openapi.render(s, port)
     files["specs/PRUEBAS-CURL-CRUD.html"] = docs.curl_html(s, port)
     return files
@@ -55,18 +56,6 @@ def is_current(target: Path, digest: str) -> bool:
     return state.is_file() and state.read_text(encoding="utf-8").strip() == digest
 
 
-def _remove_legacy_backend(target: Path) -> None:
-    """Borra la carpeta backend/ de la disposicion antigua si solo quedan en ella restos generados."""
-    legacy = target / "backend"
-    if not legacy.is_dir():
-        return
-    leftovers = {"mvnw", "mvnw.cmd", ".mvn", "target", "src", "docs"}
-    own_files = [p for p in legacy.rglob("*") if p.is_file()
-                 and p.relative_to(legacy).parts[0] not in {"mvnw", "mvnw.cmd", ".mvn", "target"}]
-    if not own_files and all(child.name in leftovers for child in legacy.iterdir()):
-        shutil.rmtree(legacy)
-
-
 def write_project(root: Path, name: str, ddl: Path, target: Path, port: int, context: dict[str, str]) -> Service:
     """Genera el servicio en `target`. Solo toca los ficheros que genera: lo escrito a mano se conserva."""
     s = load_service(name, ddl)
@@ -84,9 +73,8 @@ def write_project(root: Path, name: str, ddl: Path, target: Path, port: int, con
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(content, encoding="utf-8", newline="\n")
 
-    _remove_legacy_backend(target)
-
     # Copias literales: reglas y skills, plantillas comunes, wrapper de Maven y el DDL del servicio.
+    shutil.copy2(root / "CLAUDE.md", target / "CLAUDE.md")
     if (target / ".claude").exists():
         shutil.rmtree(target / ".claude")
     shutil.copytree(root / ".claude", target / ".claude")
@@ -94,8 +82,8 @@ def write_project(root: Path, name: str, ddl: Path, target: Path, port: int, con
     shutil.copy2(templates / "checkstyle.xml", target / "checkstyle.xml")
     shutil.copy2(templates / ".editorconfig", target / ".editorconfig")
     shutil.copy2(templates / "service.gitignore", target / ".gitignore")
-    shutil.copytree(templates / "maven-wrapper", target, dirs_exist_ok=True)
-    (target / "mvnw").chmod(0o755)
+    shutil.copytree(templates / "maven-wrapper", target / "backend", dirs_exist_ok=True)
+    (target / "backend" / "mvnw").chmod(0o755)
     (target / "specs").mkdir(exist_ok=True)
     shutil.copy2(ddl, target / "specs" / "database-spec.sql")
 
