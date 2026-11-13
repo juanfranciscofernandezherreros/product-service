@@ -1,248 +1,2788 @@
-openapi: 3.0.3
+# Generado desde el DDL por el generador de servicios. No editar a mano.
+openapi: "3.0.3"
 info:
-  title: Courses API
-  description: Dominio de cursos, unidades, actividades y progreso. Derivado del esquema PostgreSQL.
-  version: 1.0.0
+  title: "courses-service API"
+  version: "1.0.0"
+  description: "CRUD de las tablas de courses-service, derivado del esquema de base de datos."
 servers:
-  - url: https://api.tudominio.com/v1
+  - url: "http://localhost:8084"
+    description: "Local"
+tags:
+  - name: "cursos"
+  - name: "unidades_curso"
+  - name: "actividades"
+  - name: "actividad_preguntas"
+  - name: "actividad_intentos"
+  - name: "actividad_fallos"
+  - name: "cursos_profesores"
+  - name: "asignaciones_alumno"
+  - name: "progreso_curso"
+  - name: "unidades_articulos"
 paths:
-  /v1/courses:
-    get:
-      summary: Listar cursos (filtro por activo)
-      operationId: listCourses
-      parameters:
-        - { name: activo, in: query, schema: { type: boolean } }
-      responses:
-        '200': { description: OK, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/Course' } } } } }
+  "/v1/cursos":
     post:
-      summary: Crear curso
-      operationId: createCourse
-      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/CourseCreate' } } } }
+      tags:
+        - "cursos"
+      operationId: "createCursos"
+      summary: "Crea un registro de cursos"
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/CursosRequest"
       responses:
-        '201': { description: Creado, content: { application/json: { schema: { $ref: '#/components/schemas/Course' } } } }
-        '400': { $ref: '#/components/responses/BadRequest' }
-  /v1/courses/{id}:
-    parameters: [ { name: id, in: path, required: true, schema: { type: integer, format: int64 } } ]
-    get:
-      summary: Obtener curso
-      operationId: getCourse
-      responses:
-        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/Course' } } } }
-        '404': { $ref: '#/components/responses/NotFound' }
-    put:
-      summary: Actualizar curso
-      operationId: updateCourse
-      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/CourseCreate' } } } }
-      responses:
-        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/Course' } } } }
-        '400': { $ref: '#/components/responses/BadRequest' }
-        '404': { $ref: '#/components/responses/NotFound' }
-    delete:
-      summary: Eliminar curso
-      operationId: deleteCourse
-      responses: { '204': { description: Eliminado }, '404': { $ref: '#/components/responses/NotFound' } }
-  /v1/courses/units:
-    get:
-      summary: Listar unidades (filtro por nivel/publicado)
-      operationId: listUnits
-      parameters:
-        - { name: nivel, in: query, schema: { type: string } }
-        - { name: publicado, in: query, schema: { type: boolean } }
-      responses:
-        '200': { description: OK, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/Unit' } } } } }
-    post:
-      summary: Crear unidad
-      operationId: createUnit
-      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/UnitCreate' } } } }
-      responses:
-        '201': { description: Creada, content: { application/json: { schema: { $ref: '#/components/schemas/Unit' } } } }
-        '400': { $ref: '#/components/responses/BadRequest' }
-        '409': { description: Slug de unidad duplicado (UNIQUE slug), content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
-  /v1/courses/units/{id}:
-    parameters: [ { name: id, in: path, required: true, schema: { type: integer, format: int64 } } ]
-    get:
-      summary: Obtener unidad
-      operationId: getUnit
-      responses:
-        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/Unit' } } } }
-        '404': { $ref: '#/components/responses/NotFound' }
-  /v1/courses/activities:
-    get:
-      summary: Listar actividades (filtro por destreza/publicado)
-      operationId: listActivities
-      parameters:
-        - { name: destreza, in: query, schema: { type: string, enum: [reading, use_of_english, writing, listening, speaking, vocabulary, grammar] } }
-        - { name: publicado, in: query, schema: { type: boolean } }
-        - { name: limit, in: query, schema: { type: integer, default: 20, minimum: 1, maximum: 100 } }
-        - { name: offset, in: query, schema: { type: integer, default: 0, minimum: 0 } }
-      responses:
-        '200':
-          description: OK
+        "201":
+          description: "Creado"
           content:
-            application/json:
+            "application/json":
               schema:
-                type: object
+                "$ref": "#/components/schemas/Cursos"
+        "400":
+          description: "Peticion no valida"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "409":
+          description: "Ya existe o incumple una restriccion"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+    get:
+      tags:
+        - "cursos"
+      operationId: "listCursos"
+      summary: "Lista cursos (paginado)"
+      parameters:
+        - name: "page"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            default: 0
+        - name: "size"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            default: 20
+            maximum: 100
+      responses:
+        "200":
+          description: "Pagina de resultados"
+          content:
+            "application/json":
+              schema:
+                type: "object"
                 properties:
-                  total: { type: integer }
-                  items: { type: array, items: { $ref: '#/components/schemas/Activity' } }
-    post:
-      summary: Crear actividad
-      operationId: createActivity
-      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/ActivityCreate' } } } }
-      responses:
-        '201': { description: Creada, content: { application/json: { schema: { $ref: '#/components/schemas/Activity' } } } }
-        '400': { $ref: '#/components/responses/BadRequest' }
-        '409': { description: Slug de actividad duplicado (UNIQUE slug), content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
-  /v1/courses/activities/{id}:
-    parameters: [ { name: id, in: path, required: true, schema: { type: integer, format: int64 } } ]
+                  items:
+                    type: "array"
+                    items:
+                      "$ref": "#/components/schemas/Cursos"
+                  total:
+                    type: "integer"
+                    format: "int64"
+                  page:
+                    type: "integer"
+                  size:
+                    type: "integer"
+        "400":
+          description: "Parametro no valido"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+  "/v1/cursos/{id}":
     get:
-      summary: Obtener actividad
-      operationId: getActivity
+      tags:
+        - "cursos"
+      operationId: "getCursos"
+      summary: "Obtiene un registro de cursos"
+      parameters:
+        - name: "id"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+          example: 1
       responses:
-        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/Activity' } } } }
-        '404': { $ref: '#/components/responses/NotFound' }
-  /v1/courses/activities/{id}/questions:
-    parameters: [ { name: id, in: path, required: true, schema: { type: integer, format: int64 } } ]
+        "200":
+          description: "Encontrado"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Cursos"
+        "404":
+          description: "No existe"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+    put:
+      tags:
+        - "cursos"
+      operationId: "updateCursos"
+      summary: "Modifica un registro de cursos"
+      parameters:
+        - name: "id"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+          example: 1
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/CursosUpdateRequest"
+      responses:
+        "200":
+          description: "Modificado"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Cursos"
+        "400":
+          description: "Peticion no valida"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "404":
+          description: "No existe"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "409":
+          description: "Incumple una restriccion"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+    delete:
+      tags:
+        - "cursos"
+      operationId: "deleteCursos"
+      summary: "Borra un registro de cursos"
+      parameters:
+        - name: "id"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+          example: 1
+      responses:
+        "204":
+          description: "Borrado"
+        "404":
+          description: "No existe"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "409":
+          description: "Lo impide una restriccion"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+  "/v1/unidades-curso":
+    post:
+      tags:
+        - "unidades_curso"
+      operationId: "createUnidadesCurso"
+      summary: "Crea un registro de unidades_curso"
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/UnidadesCursoRequest"
+      responses:
+        "201":
+          description: "Creado"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/UnidadesCurso"
+        "400":
+          description: "Peticion no valida"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "409":
+          description: "Ya existe o incumple una restriccion"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
     get:
-      summary: Preguntas de una actividad (ordenadas)
-      operationId: listActivityQuestions
+      tags:
+        - "unidades_curso"
+      operationId: "listUnidadesCurso"
+      summary: "Lista unidades_curso (paginado)"
+      parameters:
+        - name: "page"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            default: 0
+        - name: "size"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            default: 20
+            maximum: 100
       responses:
-        '200': { description: OK, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/ActivityQuestion' } } } } }
+        "200":
+          description: "Pagina de resultados"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                properties:
+                  items:
+                    type: "array"
+                    items:
+                      "$ref": "#/components/schemas/UnidadesCurso"
+                  total:
+                    type: "integer"
+                    format: "int64"
+                  page:
+                    type: "integer"
+                  size:
+                    type: "integer"
+        "400":
+          description: "Parametro no valido"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+  "/v1/unidades-curso/{id}":
+    get:
+      tags:
+        - "unidades_curso"
+      operationId: "getUnidadesCurso"
+      summary: "Obtiene un registro de unidades_curso"
+      parameters:
+        - name: "id"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+          example: 1
+      responses:
+        "200":
+          description: "Encontrado"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/UnidadesCurso"
+        "404":
+          description: "No existe"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+    put:
+      tags:
+        - "unidades_curso"
+      operationId: "updateUnidadesCurso"
+      summary: "Modifica un registro de unidades_curso"
+      parameters:
+        - name: "id"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+          example: 1
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/UnidadesCursoUpdateRequest"
+      responses:
+        "200":
+          description: "Modificado"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/UnidadesCurso"
+        "400":
+          description: "Peticion no valida"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "404":
+          description: "No existe"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "409":
+          description: "Incumple una restriccion"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+    delete:
+      tags:
+        - "unidades_curso"
+      operationId: "deleteUnidadesCurso"
+      summary: "Borra un registro de unidades_curso"
+      parameters:
+        - name: "id"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+          example: 1
+      responses:
+        "204":
+          description: "Borrado"
+        "404":
+          description: "No existe"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "409":
+          description: "Lo impide una restriccion"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+  "/v1/actividades":
     post:
-      summary: Añadir pregunta a la actividad
-      operationId: addActivityQuestion
-      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/ActivityQuestionCreate' } } } }
+      tags:
+        - "actividades"
+      operationId: "createActividades"
+      summary: "Crea un registro de actividades"
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/ActividadesRequest"
       responses:
-        '201': { description: Creada, content: { application/json: { schema: { $ref: '#/components/schemas/ActivityQuestion' } } } }
-        '400': { $ref: '#/components/responses/BadRequest' }
-        '404': { $ref: '#/components/responses/NotFound' }
-        '409': { description: Orden duplicado en la actividad (UNIQUE actividad_id+orden), content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
-  /v1/courses/activities/{id}/attempts:
-    parameters: [ { name: id, in: path, required: true, schema: { type: integer, format: int64 } } ]
+        "201":
+          description: "Creado"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Actividades"
+        "400":
+          description: "Peticion no valida"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "409":
+          description: "Ya existe o incumple una restriccion"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+    get:
+      tags:
+        - "actividades"
+      operationId: "listActividades"
+      summary: "Lista actividades (paginado)"
+      parameters:
+        - name: "unidadId"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            format: "int64"
+          example: 1
+        - name: "page"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            default: 0
+        - name: "size"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            default: 20
+            maximum: 100
+      responses:
+        "200":
+          description: "Pagina de resultados"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                properties:
+                  items:
+                    type: "array"
+                    items:
+                      "$ref": "#/components/schemas/Actividades"
+                  total:
+                    type: "integer"
+                    format: "int64"
+                  page:
+                    type: "integer"
+                  size:
+                    type: "integer"
+        "400":
+          description: "Parametro no valido"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+  "/v1/actividades/{id}":
+    get:
+      tags:
+        - "actividades"
+      operationId: "getActividades"
+      summary: "Obtiene un registro de actividades"
+      parameters:
+        - name: "id"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+          example: 1
+      responses:
+        "200":
+          description: "Encontrado"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Actividades"
+        "404":
+          description: "No existe"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+    put:
+      tags:
+        - "actividades"
+      operationId: "updateActividades"
+      summary: "Modifica un registro de actividades"
+      parameters:
+        - name: "id"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+          example: 1
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/ActividadesUpdateRequest"
+      responses:
+        "200":
+          description: "Modificado"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Actividades"
+        "400":
+          description: "Peticion no valida"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "404":
+          description: "No existe"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "409":
+          description: "Incumple una restriccion"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+    delete:
+      tags:
+        - "actividades"
+      operationId: "deleteActividades"
+      summary: "Borra un registro de actividades"
+      parameters:
+        - name: "id"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+          example: 1
+      responses:
+        "204":
+          description: "Borrado"
+        "404":
+          description: "No existe"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "409":
+          description: "Lo impide una restriccion"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+  "/v1/actividad-preguntas":
     post:
-      summary: Registrar un intento de actividad
-      operationId: createActivityAttempt
-      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/ActivityAttemptCreate' } } } }
+      tags:
+        - "actividad_preguntas"
+      operationId: "createActividadPreguntas"
+      summary: "Crea un registro de actividad_preguntas"
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/ActividadPreguntasRequest"
       responses:
-        '201': { description: Creado, content: { application/json: { schema: { $ref: '#/components/schemas/ActivityAttempt' } } } }
-        '400': { $ref: '#/components/responses/BadRequest' }
-        '404': { $ref: '#/components/responses/NotFound' }
+        "201":
+          description: "Creado"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ActividadPreguntas"
+        "400":
+          description: "Peticion no valida"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "409":
+          description: "Ya existe o incumple una restriccion"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+    get:
+      tags:
+        - "actividad_preguntas"
+      operationId: "listActividadPreguntas"
+      summary: "Lista actividad_preguntas (paginado)"
+      parameters:
+        - name: "actividadId"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            format: "int64"
+          example: 1
+        - name: "page"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            default: 0
+        - name: "size"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            default: 20
+            maximum: 100
+      responses:
+        "200":
+          description: "Pagina de resultados"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                properties:
+                  items:
+                    type: "array"
+                    items:
+                      "$ref": "#/components/schemas/ActividadPreguntas"
+                  total:
+                    type: "integer"
+                    format: "int64"
+                  page:
+                    type: "integer"
+                  size:
+                    type: "integer"
+        "400":
+          description: "Parametro no valido"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+  "/v1/actividad-preguntas/{id}":
+    get:
+      tags:
+        - "actividad_preguntas"
+      operationId: "getActividadPreguntas"
+      summary: "Obtiene un registro de actividad_preguntas"
+      parameters:
+        - name: "id"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+          example: 1
+      responses:
+        "200":
+          description: "Encontrado"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ActividadPreguntas"
+        "404":
+          description: "No existe"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+    put:
+      tags:
+        - "actividad_preguntas"
+      operationId: "updateActividadPreguntas"
+      summary: "Modifica un registro de actividad_preguntas"
+      parameters:
+        - name: "id"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+          example: 1
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/ActividadPreguntasUpdateRequest"
+      responses:
+        "200":
+          description: "Modificado"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ActividadPreguntas"
+        "400":
+          description: "Peticion no valida"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "404":
+          description: "No existe"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "409":
+          description: "Incumple una restriccion"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+    delete:
+      tags:
+        - "actividad_preguntas"
+      operationId: "deleteActividadPreguntas"
+      summary: "Borra un registro de actividad_preguntas"
+      parameters:
+        - name: "id"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+          example: 1
+      responses:
+        "204":
+          description: "Borrado"
+        "404":
+          description: "No existe"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "409":
+          description: "Lo impide una restriccion"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+  "/v1/actividad-intentos":
+    post:
+      tags:
+        - "actividad_intentos"
+      operationId: "createActividadIntentos"
+      summary: "Crea un registro de actividad_intentos"
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/ActividadIntentosRequest"
+      responses:
+        "201":
+          description: "Creado"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ActividadIntentos"
+        "400":
+          description: "Peticion no valida"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "409":
+          description: "Ya existe o incumple una restriccion"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+    get:
+      tags:
+        - "actividad_intentos"
+      operationId: "listActividadIntentos"
+      summary: "Lista actividad_intentos (paginado)"
+      parameters:
+        - name: "usuarioId"
+          in: "query"
+          required: false
+          schema:
+            type: "string"
+            format: "uuid"
+          example: "f21746db-e668-5c26-9697-d657086ec80e"
+        - name: "actividadId"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            format: "int64"
+          example: 1
+        - name: "page"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            default: 0
+        - name: "size"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            default: 20
+            maximum: 100
+      responses:
+        "200":
+          description: "Pagina de resultados"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                properties:
+                  items:
+                    type: "array"
+                    items:
+                      "$ref": "#/components/schemas/ActividadIntentos"
+                  total:
+                    type: "integer"
+                    format: "int64"
+                  page:
+                    type: "integer"
+                  size:
+                    type: "integer"
+        "400":
+          description: "Parametro no valido"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+  "/v1/actividad-intentos/{id}":
+    get:
+      tags:
+        - "actividad_intentos"
+      operationId: "getActividadIntentos"
+      summary: "Obtiene un registro de actividad_intentos"
+      parameters:
+        - name: "id"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+            format: "uuid"
+          example: "81d423fe-6829-50e3-89fd-92fd620082a9"
+      responses:
+        "200":
+          description: "Encontrado"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ActividadIntentos"
+        "404":
+          description: "No existe"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+    put:
+      tags:
+        - "actividad_intentos"
+      operationId: "updateActividadIntentos"
+      summary: "Modifica un registro de actividad_intentos"
+      parameters:
+        - name: "id"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+            format: "uuid"
+          example: "81d423fe-6829-50e3-89fd-92fd620082a9"
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/ActividadIntentosUpdateRequest"
+      responses:
+        "200":
+          description: "Modificado"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ActividadIntentos"
+        "400":
+          description: "Peticion no valida"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "404":
+          description: "No existe"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "409":
+          description: "Incumple una restriccion"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+    delete:
+      tags:
+        - "actividad_intentos"
+      operationId: "deleteActividadIntentos"
+      summary: "Borra un registro de actividad_intentos"
+      parameters:
+        - name: "id"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+            format: "uuid"
+          example: "81d423fe-6829-50e3-89fd-92fd620082a9"
+      responses:
+        "204":
+          description: "Borrado"
+        "404":
+          description: "No existe"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "409":
+          description: "Lo impide una restriccion"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+  "/v1/actividad-fallos":
+    post:
+      tags:
+        - "actividad_fallos"
+      operationId: "createActividadFallos"
+      summary: "Crea un registro de actividad_fallos"
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/ActividadFallosRequest"
+      responses:
+        "201":
+          description: "Creado"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ActividadFallos"
+        "400":
+          description: "Peticion no valida"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "409":
+          description: "Ya existe o incumple una restriccion"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+    get:
+      tags:
+        - "actividad_fallos"
+      operationId: "listActividadFallos"
+      summary: "Lista actividad_fallos (paginado)"
+      parameters:
+        - name: "usuarioId"
+          in: "query"
+          required: false
+          schema:
+            type: "string"
+            format: "uuid"
+          example: "c7db6f25-065a-559a-9617-2a461840fb1a"
+        - name: "preguntaId"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            format: "int64"
+          example: 1
+        - name: "page"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            default: 0
+        - name: "size"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            default: 20
+            maximum: 100
+      responses:
+        "200":
+          description: "Pagina de resultados"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                properties:
+                  items:
+                    type: "array"
+                    items:
+                      "$ref": "#/components/schemas/ActividadFallos"
+                  total:
+                    type: "integer"
+                    format: "int64"
+                  page:
+                    type: "integer"
+                  size:
+                    type: "integer"
+        "400":
+          description: "Parametro no valido"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+  "/v1/actividad-fallos/{usuarioId}/{preguntaId}":
+    get:
+      tags:
+        - "actividad_fallos"
+      operationId: "getActividadFallos"
+      summary: "Obtiene un registro de actividad_fallos"
+      parameters:
+        - name: "usuarioId"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+            format: "uuid"
+          example: "c7db6f25-065a-559a-9617-2a461840fb1a"
+        - name: "preguntaId"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+          example: 1
+      responses:
+        "200":
+          description: "Encontrado"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ActividadFallos"
+        "404":
+          description: "No existe"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+    put:
+      tags:
+        - "actividad_fallos"
+      operationId: "updateActividadFallos"
+      summary: "Modifica un registro de actividad_fallos"
+      parameters:
+        - name: "usuarioId"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+            format: "uuid"
+          example: "c7db6f25-065a-559a-9617-2a461840fb1a"
+        - name: "preguntaId"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+          example: 1
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/ActividadFallosUpdateRequest"
+      responses:
+        "200":
+          description: "Modificado"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ActividadFallos"
+        "400":
+          description: "Peticion no valida"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "404":
+          description: "No existe"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "409":
+          description: "Incumple una restriccion"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+    delete:
+      tags:
+        - "actividad_fallos"
+      operationId: "deleteActividadFallos"
+      summary: "Borra un registro de actividad_fallos"
+      parameters:
+        - name: "usuarioId"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+            format: "uuid"
+          example: "c7db6f25-065a-559a-9617-2a461840fb1a"
+        - name: "preguntaId"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+          example: 1
+      responses:
+        "204":
+          description: "Borrado"
+        "404":
+          description: "No existe"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "409":
+          description: "Lo impide una restriccion"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+  "/v1/cursos-profesores":
+    post:
+      tags:
+        - "cursos_profesores"
+      operationId: "createCursosProfesores"
+      summary: "Crea un registro de cursos_profesores"
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/CursosProfesoresRequest"
+      responses:
+        "201":
+          description: "Creado"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/CursosProfesores"
+        "400":
+          description: "Peticion no valida"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "409":
+          description: "Ya existe o incumple una restriccion"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+    get:
+      tags:
+        - "cursos_profesores"
+      operationId: "listCursosProfesores"
+      summary: "Lista cursos_profesores (paginado)"
+      parameters:
+        - name: "cursoId"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            format: "int64"
+          example: 1
+        - name: "profesorId"
+          in: "query"
+          required: false
+          schema:
+            type: "string"
+            format: "uuid"
+          example: "0fb97639-4aab-5bbf-bf38-19fa64bce5b3"
+        - name: "page"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            default: 0
+        - name: "size"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            default: 20
+            maximum: 100
+      responses:
+        "200":
+          description: "Pagina de resultados"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                properties:
+                  items:
+                    type: "array"
+                    items:
+                      "$ref": "#/components/schemas/CursosProfesores"
+                  total:
+                    type: "integer"
+                    format: "int64"
+                  page:
+                    type: "integer"
+                  size:
+                    type: "integer"
+        "400":
+          description: "Parametro no valido"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+  "/v1/cursos-profesores/{cursoId}/{profesorId}":
+    get:
+      tags:
+        - "cursos_profesores"
+      operationId: "getCursosProfesores"
+      summary: "Obtiene un registro de cursos_profesores"
+      parameters:
+        - name: "cursoId"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+          example: 1
+        - name: "profesorId"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+            format: "uuid"
+          example: "0fb97639-4aab-5bbf-bf38-19fa64bce5b3"
+      responses:
+        "200":
+          description: "Encontrado"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/CursosProfesores"
+        "404":
+          description: "No existe"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+    delete:
+      tags:
+        - "cursos_profesores"
+      operationId: "deleteCursosProfesores"
+      summary: "Borra un registro de cursos_profesores"
+      parameters:
+        - name: "cursoId"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+          example: 1
+        - name: "profesorId"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+            format: "uuid"
+          example: "0fb97639-4aab-5bbf-bf38-19fa64bce5b3"
+      responses:
+        "204":
+          description: "Borrado"
+        "404":
+          description: "No existe"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "409":
+          description: "Lo impide una restriccion"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+  "/v1/asignaciones-alumno":
+    post:
+      tags:
+        - "asignaciones_alumno"
+      operationId: "createAsignacionesAlumno"
+      summary: "Crea un registro de asignaciones_alumno"
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/AsignacionesAlumnoRequest"
+      responses:
+        "201":
+          description: "Creado"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/AsignacionesAlumno"
+        "400":
+          description: "Peticion no valida"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "409":
+          description: "Ya existe o incumple una restriccion"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+    get:
+      tags:
+        - "asignaciones_alumno"
+      operationId: "listAsignacionesAlumno"
+      summary: "Lista asignaciones_alumno (paginado)"
+      parameters:
+        - name: "cursoId"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            format: "int64"
+          example: 1
+        - name: "alumnoId"
+          in: "query"
+          required: false
+          schema:
+            type: "string"
+            format: "uuid"
+          example: "7b09a3c3-ca61-57b1-9dd2-5f1cf06b7765"
+        - name: "profesorId"
+          in: "query"
+          required: false
+          schema:
+            type: "string"
+            format: "uuid"
+          example: "c65dd8cb-f4d9-5606-a1d2-103ffb5f808a"
+        - name: "page"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            default: 0
+        - name: "size"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            default: 20
+            maximum: 100
+      responses:
+        "200":
+          description: "Pagina de resultados"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                properties:
+                  items:
+                    type: "array"
+                    items:
+                      "$ref": "#/components/schemas/AsignacionesAlumno"
+                  total:
+                    type: "integer"
+                    format: "int64"
+                  page:
+                    type: "integer"
+                  size:
+                    type: "integer"
+        "400":
+          description: "Parametro no valido"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+  "/v1/asignaciones-alumno/{cursoId}/{alumnoId}/{profesorId}":
+    get:
+      tags:
+        - "asignaciones_alumno"
+      operationId: "getAsignacionesAlumno"
+      summary: "Obtiene un registro de asignaciones_alumno"
+      parameters:
+        - name: "cursoId"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+          example: 1
+        - name: "alumnoId"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+            format: "uuid"
+          example: "7b09a3c3-ca61-57b1-9dd2-5f1cf06b7765"
+        - name: "profesorId"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+            format: "uuid"
+          example: "c65dd8cb-f4d9-5606-a1d2-103ffb5f808a"
+      responses:
+        "200":
+          description: "Encontrado"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/AsignacionesAlumno"
+        "404":
+          description: "No existe"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+    put:
+      tags:
+        - "asignaciones_alumno"
+      operationId: "updateAsignacionesAlumno"
+      summary: "Modifica un registro de asignaciones_alumno"
+      parameters:
+        - name: "cursoId"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+          example: 1
+        - name: "alumnoId"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+            format: "uuid"
+          example: "7b09a3c3-ca61-57b1-9dd2-5f1cf06b7765"
+        - name: "profesorId"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+            format: "uuid"
+          example: "c65dd8cb-f4d9-5606-a1d2-103ffb5f808a"
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/AsignacionesAlumnoUpdateRequest"
+      responses:
+        "200":
+          description: "Modificado"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/AsignacionesAlumno"
+        "400":
+          description: "Peticion no valida"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "404":
+          description: "No existe"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "409":
+          description: "Incumple una restriccion"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+    delete:
+      tags:
+        - "asignaciones_alumno"
+      operationId: "deleteAsignacionesAlumno"
+      summary: "Borra un registro de asignaciones_alumno"
+      parameters:
+        - name: "cursoId"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+          example: 1
+        - name: "alumnoId"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+            format: "uuid"
+          example: "7b09a3c3-ca61-57b1-9dd2-5f1cf06b7765"
+        - name: "profesorId"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+            format: "uuid"
+          example: "c65dd8cb-f4d9-5606-a1d2-103ffb5f808a"
+      responses:
+        "204":
+          description: "Borrado"
+        "404":
+          description: "No existe"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "409":
+          description: "Lo impide una restriccion"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+  "/v1/progreso-curso":
+    post:
+      tags:
+        - "progreso_curso"
+      operationId: "createProgresoCurso"
+      summary: "Crea un registro de progreso_curso"
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/ProgresoCursoRequest"
+      responses:
+        "201":
+          description: "Creado"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ProgresoCurso"
+        "400":
+          description: "Peticion no valida"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "409":
+          description: "Ya existe o incumple una restriccion"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+    get:
+      tags:
+        - "progreso_curso"
+      operationId: "listProgresoCurso"
+      summary: "Lista progreso_curso (paginado)"
+      parameters:
+        - name: "usuarioId"
+          in: "query"
+          required: false
+          schema:
+            type: "string"
+            format: "uuid"
+          example: "549a2533-ed99-510d-997b-31325e10b13f"
+        - name: "unidadSlug"
+          in: "query"
+          required: false
+          schema:
+            type: "string"
+          example: "unidad-slug-a"
+        - name: "page"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            default: 0
+        - name: "size"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            default: 20
+            maximum: 100
+      responses:
+        "200":
+          description: "Pagina de resultados"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                properties:
+                  items:
+                    type: "array"
+                    items:
+                      "$ref": "#/components/schemas/ProgresoCurso"
+                  total:
+                    type: "integer"
+                    format: "int64"
+                  page:
+                    type: "integer"
+                  size:
+                    type: "integer"
+        "400":
+          description: "Parametro no valido"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+  "/v1/progreso-curso/{usuarioId}/{unidadSlug}":
+    get:
+      tags:
+        - "progreso_curso"
+      operationId: "getProgresoCurso"
+      summary: "Obtiene un registro de progreso_curso"
+      parameters:
+        - name: "usuarioId"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+            format: "uuid"
+          example: "549a2533-ed99-510d-997b-31325e10b13f"
+        - name: "unidadSlug"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+          example: "unidad-slug-a"
+      responses:
+        "200":
+          description: "Encontrado"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ProgresoCurso"
+        "404":
+          description: "No existe"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+    put:
+      tags:
+        - "progreso_curso"
+      operationId: "updateProgresoCurso"
+      summary: "Modifica un registro de progreso_curso"
+      parameters:
+        - name: "usuarioId"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+            format: "uuid"
+          example: "549a2533-ed99-510d-997b-31325e10b13f"
+        - name: "unidadSlug"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+          example: "unidad-slug-a"
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/ProgresoCursoUpdateRequest"
+      responses:
+        "200":
+          description: "Modificado"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ProgresoCurso"
+        "400":
+          description: "Peticion no valida"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "404":
+          description: "No existe"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "409":
+          description: "Incumple una restriccion"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+    delete:
+      tags:
+        - "progreso_curso"
+      operationId: "deleteProgresoCurso"
+      summary: "Borra un registro de progreso_curso"
+      parameters:
+        - name: "usuarioId"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+            format: "uuid"
+          example: "549a2533-ed99-510d-997b-31325e10b13f"
+        - name: "unidadSlug"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+          example: "unidad-slug-a"
+      responses:
+        "204":
+          description: "Borrado"
+        "404":
+          description: "No existe"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "409":
+          description: "Lo impide una restriccion"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+  "/v1/unidades-articulos":
+    post:
+      tags:
+        - "unidades_articulos"
+      operationId: "createUnidadesArticulos"
+      summary: "Crea un registro de unidades_articulos"
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/UnidadesArticulosRequest"
+      responses:
+        "201":
+          description: "Creado"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/UnidadesArticulos"
+        "400":
+          description: "Peticion no valida"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "409":
+          description: "Ya existe o incumple una restriccion"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+    get:
+      tags:
+        - "unidades_articulos"
+      operationId: "listUnidadesArticulos"
+      summary: "Lista unidades_articulos (paginado)"
+      parameters:
+        - name: "unidadId"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            format: "int64"
+          example: 1
+        - name: "articuloSlug"
+          in: "query"
+          required: false
+          schema:
+            type: "string"
+          example: "articulo-slug-a"
+        - name: "page"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            default: 0
+        - name: "size"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            default: 20
+            maximum: 100
+      responses:
+        "200":
+          description: "Pagina de resultados"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                properties:
+                  items:
+                    type: "array"
+                    items:
+                      "$ref": "#/components/schemas/UnidadesArticulos"
+                  total:
+                    type: "integer"
+                    format: "int64"
+                  page:
+                    type: "integer"
+                  size:
+                    type: "integer"
+        "400":
+          description: "Parametro no valido"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+  "/v1/unidades-articulos/{unidadId}/{articuloSlug}":
+    get:
+      tags:
+        - "unidades_articulos"
+      operationId: "getUnidadesArticulos"
+      summary: "Obtiene un registro de unidades_articulos"
+      parameters:
+        - name: "unidadId"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+          example: 1
+        - name: "articuloSlug"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+          example: "articulo-slug-a"
+      responses:
+        "200":
+          description: "Encontrado"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/UnidadesArticulos"
+        "404":
+          description: "No existe"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+    put:
+      tags:
+        - "unidades_articulos"
+      operationId: "updateUnidadesArticulos"
+      summary: "Modifica un registro de unidades_articulos"
+      parameters:
+        - name: "unidadId"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+          example: 1
+        - name: "articuloSlug"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+          example: "articulo-slug-a"
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/UnidadesArticulosUpdateRequest"
+      responses:
+        "200":
+          description: "Modificado"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/UnidadesArticulos"
+        "400":
+          description: "Peticion no valida"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "404":
+          description: "No existe"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "409":
+          description: "Incumple una restriccion"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+    delete:
+      tags:
+        - "unidades_articulos"
+      operationId: "deleteUnidadesArticulos"
+      summary: "Borra un registro de unidades_articulos"
+      parameters:
+        - name: "unidadId"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+          example: 1
+        - name: "articuloSlug"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+          example: "articulo-slug-a"
+      responses:
+        "204":
+          description: "Borrado"
+        "404":
+          description: "No existe"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "409":
+          description: "Lo impide una restriccion"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
 components:
   schemas:
-    Course:
-      type: object
-      required: [id, nombre, activo, creadoEn]
-      properties:
-        id: { type: integer, format: int64 }
-        nombre: { type: string, minLength: 1 }
-        descripcion: { type: string, nullable: true }
-        activo: { type: boolean }
-        creadoEn: { type: string, format: date-time }
-    CourseCreate:
-      type: object
-      required: [nombre]
-      properties:
-        nombre: { type: string, minLength: 1 }
-        descripcion: { type: string }
-        activo: { type: boolean }
-    Unit:
-      type: object
-      required: [id, slug, titulo, nivel, orden, publicado]
-      properties:
-        id: { type: integer, format: int64 }
-        slug: { type: string }
-        titulo: { type: string }
-        descripcion: { type: string, nullable: true }
-        nivel: { type: string }
-        orden: { type: integer }
-        publicado: { type: boolean }
-    UnitCreate:
-      type: object
-      required: [slug, titulo, nivel]
-      properties:
-        slug: { type: string }
-        titulo: { type: string }
-        descripcion: { type: string }
-        nivel: { type: string }
-        orden: { type: integer }
-        publicado: { type: boolean }
-    Activity:
-      type: object
-      required: [id, slug, titulo, destreza, orden, publicado, creadoEn]
-      properties:
-        id: { type: integer, format: int64 }
-        slug: { type: string, pattern: '^[a-z0-9][a-z0-9-]{2,99}$' }
-        titulo: { type: string }
-        descripcion: { type: string, nullable: true }
-        destreza: { type: string, enum: [reading, use_of_english, writing, listening, speaking, vocabulary, grammar] }
-        unidadId: { type: integer, format: int64, nullable: true }
-        articuloSlug: { type: string, nullable: true }
-        orden: { type: integer }
-        publicado: { type: boolean }
-        creadoEn: { type: string, format: date-time }
-    ActivityCreate:
-      type: object
-      required: [slug, titulo, destreza]
-      properties:
-        slug: { type: string, pattern: '^[a-z0-9][a-z0-9-]{2,99}$' }
-        titulo: { type: string }
-        descripcion: { type: string }
-        destreza: { type: string, enum: [reading, use_of_english, writing, listening, speaking, vocabulary, grammar] }
-        unidadId: { type: integer, format: int64 }
-        articuloSlug: { type: string }
-        orden: { type: integer }
-        publicado: { type: boolean }
-    ActivityQuestion:
-      type: object
-      required: [id, actividadId, orden, tipo, enunciado, configuracion]
-      properties:
-        id: { type: integer, format: int64 }
-        actividadId: { type: integer, format: int64 }
-        orden: { type: integer, minimum: 1 }
-        tipo: { type: string, enum: [seleccion, texto_corto, huecos, transformacion, redaccion] }
-        enunciado: { type: string }
-        configuracion: { type: object, additionalProperties: true }
-        medioTipo: { type: string, enum: [audio, imagen], nullable: true }
-        medioUrl: { type: string, nullable: true }
-        medioAlt: { type: string, nullable: true }
-    ActivityQuestionCreate:
-      type: object
-      required: [orden, tipo, enunciado]
-      properties:
-        orden: { type: integer, minimum: 1 }
-        tipo: { type: string, enum: [seleccion, texto_corto, huecos, transformacion, redaccion] }
-        enunciado: { type: string }
-        configuracion: { type: object, additionalProperties: true }
-        medioTipo: { type: string, enum: [audio, imagen] }
-        medioUrl: { type: string }
-        medioAlt: { type: string }
-    ActivityAttempt:
-      type: object
-      required: [id, usuarioId, actividadId, respuestas, detalle, aciertos, evaluables, pendientesRevision, fecha]
-      properties:
-        id: { type: string, format: uuid }
-        usuarioId: { type: string, format: uuid }
-        actividadId: { type: integer, format: int64 }
-        respuestas: { type: object, additionalProperties: true }
-        detalle: { type: object, additionalProperties: true }
-        aciertos: { type: integer, minimum: 0 }
-        evaluables: { type: integer, minimum: 0 }
-        pendientesRevision: { type: integer, minimum: 0 }
-        fecha: { type: string, format: date-time }
-    ActivityAttemptCreate:
-      type: object
-      required: [usuarioId, respuestas, detalle, aciertos, evaluables, pendientesRevision]
-      properties:
-        usuarioId: { type: string, format: uuid }
-        respuestas: { type: object, additionalProperties: true }
-        detalle: { type: object, additionalProperties: true }
-        aciertos: { type: integer, minimum: 0 }
-        evaluables: { type: integer, minimum: 0 }
-        pendientesRevision: { type: integer, minimum: 0 }
     Error:
-      type: object
-      required: [code, message]
-      properties: { code: { type: string }, message: { type: string } }
-  responses:
-    BadRequest: { description: Parámetros inválidos, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
-    NotFound: { description: Recurso no encontrado, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+      type: "object"
+      required:
+        - "code"
+        - "message"
+      properties:
+        code:
+          type: "string"
+        message:
+          type: "string"
+      example:
+        code: "RESOURCE_NOT_FOUND"
+        message: "recurso no encontrado"
+    Cursos:
+      type: "object"
+      properties:
+        id:
+          type: "integer"
+          format: "int64"
+        nombre:
+          type: "string"
+        descripcion:
+          type: "string"
+          nullable: true
+        activo:
+          type: "boolean"
+        creadoEn:
+          type: "string"
+          format: "date-time"
+      required:
+        - "id"
+        - "nombre"
+        - "activo"
+        - "creadoEn"
+      example:
+        id: 1
+        nombre: "nombre-a"
+        descripcion: "descripcion-a"
+        activo: true
+        creadoEn: "2026-01-01T10:00:00Z"
+    CursosRequest:
+      type: "object"
+      properties:
+        nombre:
+          type: "string"
+        descripcion:
+          type: "string"
+          nullable: true
+        activo:
+          type: "boolean"
+        creadoEn:
+          type: "string"
+          format: "date-time"
+      required:
+        - "nombre"
+      example:
+        nombre: "nombre-a"
+        descripcion: "descripcion-a"
+        activo: true
+        creadoEn: "2026-01-01T10:00:00Z"
+    CursosUpdateRequest:
+      type: "object"
+      properties:
+        nombre:
+          type: "string"
+        descripcion:
+          type: "string"
+          nullable: true
+        activo:
+          type: "boolean"
+        creadoEn:
+          type: "string"
+          format: "date-time"
+      required:
+        - "nombre"
+      example:
+        nombre: "nombre-b"
+        descripcion: "descripcion-b"
+        activo: false
+        creadoEn: "2026-02-01T10:00:00Z"
+    UnidadesCurso:
+      type: "object"
+      properties:
+        id:
+          type: "integer"
+          format: "int64"
+        slug:
+          type: "string"
+        titulo:
+          type: "string"
+        descripcion:
+          type: "string"
+          nullable: true
+        nivel:
+          type: "string"
+        orden:
+          type: "integer"
+          format: "int32"
+        publicado:
+          type: "boolean"
+      required:
+        - "id"
+        - "slug"
+        - "titulo"
+        - "nivel"
+        - "orden"
+        - "publicado"
+      example:
+        id: 1
+        slug: "slug-a"
+        titulo: "titulo-a"
+        descripcion: "descripcion-a"
+        nivel: "nivel-a"
+        orden: 1
+        publicado: true
+    UnidadesCursoRequest:
+      type: "object"
+      properties:
+        slug:
+          type: "string"
+        titulo:
+          type: "string"
+        descripcion:
+          type: "string"
+          nullable: true
+        nivel:
+          type: "string"
+        orden:
+          type: "integer"
+          format: "int32"
+        publicado:
+          type: "boolean"
+      required:
+        - "slug"
+        - "titulo"
+        - "nivel"
+      example:
+        slug: "slug-a"
+        titulo: "titulo-a"
+        descripcion: "descripcion-a"
+        nivel: "nivel-a"
+        orden: 1
+        publicado: true
+    UnidadesCursoUpdateRequest:
+      type: "object"
+      properties:
+        slug:
+          type: "string"
+        titulo:
+          type: "string"
+        descripcion:
+          type: "string"
+          nullable: true
+        nivel:
+          type: "string"
+        orden:
+          type: "integer"
+          format: "int32"
+        publicado:
+          type: "boolean"
+      required:
+        - "slug"
+        - "titulo"
+        - "nivel"
+      example:
+        slug: "slug-b"
+        titulo: "titulo-b"
+        descripcion: "descripcion-b"
+        nivel: "nivel-b"
+        orden: 2
+        publicado: false
+    Actividades:
+      type: "object"
+      properties:
+        id:
+          type: "integer"
+          format: "int64"
+        slug:
+          type: "string"
+        titulo:
+          type: "string"
+        descripcion:
+          type: "string"
+          nullable: true
+        destreza:
+          type: "string"
+        unidadId:
+          type: "integer"
+          format: "int64"
+          nullable: true
+        articuloSlug:
+          type: "string"
+          nullable: true
+        orden:
+          type: "integer"
+          format: "int32"
+        publicado:
+          type: "boolean"
+        creadoEn:
+          type: "string"
+          format: "date-time"
+      required:
+        - "id"
+        - "slug"
+        - "titulo"
+        - "destreza"
+        - "orden"
+        - "publicado"
+        - "creadoEn"
+      example:
+        id: 1
+        slug: "slug-a"
+        titulo: "titulo-a"
+        descripcion: "descripcion-a"
+        destreza: "destreza-a"
+        unidadId: 1
+        articuloSlug: "articulo-slug-a"
+        orden: 1
+        publicado: true
+        creadoEn: "2026-01-01T10:00:00Z"
+    ActividadesRequest:
+      type: "object"
+      properties:
+        slug:
+          type: "string"
+        titulo:
+          type: "string"
+        descripcion:
+          type: "string"
+          nullable: true
+        destreza:
+          type: "string"
+        unidadId:
+          type: "integer"
+          format: "int64"
+          nullable: true
+        articuloSlug:
+          type: "string"
+          nullable: true
+        orden:
+          type: "integer"
+          format: "int32"
+        publicado:
+          type: "boolean"
+        creadoEn:
+          type: "string"
+          format: "date-time"
+      required:
+        - "slug"
+        - "titulo"
+      example:
+        slug: "slug-a"
+        titulo: "titulo-a"
+        descripcion: "descripcion-a"
+        destreza: "destreza-a"
+        unidadId: 1
+        articuloSlug: "articulo-slug-a"
+        orden: 1
+        publicado: true
+        creadoEn: "2026-01-01T10:00:00Z"
+    ActividadesUpdateRequest:
+      type: "object"
+      properties:
+        slug:
+          type: "string"
+        titulo:
+          type: "string"
+        descripcion:
+          type: "string"
+          nullable: true
+        destreza:
+          type: "string"
+        unidadId:
+          type: "integer"
+          format: "int64"
+          nullable: true
+        articuloSlug:
+          type: "string"
+          nullable: true
+        orden:
+          type: "integer"
+          format: "int32"
+        publicado:
+          type: "boolean"
+        creadoEn:
+          type: "string"
+          format: "date-time"
+      required:
+        - "slug"
+        - "titulo"
+      example:
+        slug: "slug-b"
+        titulo: "titulo-b"
+        descripcion: "descripcion-b"
+        destreza: "destreza-b"
+        unidadId: 2
+        articuloSlug: "articulo-slug-b"
+        orden: 2
+        publicado: false
+        creadoEn: "2026-02-01T10:00:00Z"
+    ActividadPreguntas:
+      type: "object"
+      properties:
+        id:
+          type: "integer"
+          format: "int64"
+        actividadId:
+          type: "integer"
+          format: "int64"
+        orden:
+          type: "integer"
+          format: "int32"
+        tipo:
+          type: "string"
+        enunciado:
+          type: "string"
+        configuracion:
+          description: "JSON libre (columna jsonb)"
+        medioTipo:
+          type: "string"
+          nullable: true
+        medioUrl:
+          type: "string"
+          nullable: true
+        medioAlt:
+          type: "string"
+          nullable: true
+      required:
+        - "id"
+        - "actividadId"
+        - "orden"
+        - "tipo"
+        - "enunciado"
+        - "configuracion"
+      example:
+        id: 1
+        actividadId: 1
+        orden: 1
+        tipo: "tipo-a"
+        enunciado: "enunciado-a"
+        configuracion:
+          ejemplo: 0
+        medioTipo: "medio-tipo-a"
+        medioUrl: "medio-url-a"
+        medioAlt: "medio-alt-a"
+    ActividadPreguntasRequest:
+      type: "object"
+      properties:
+        actividadId:
+          type: "integer"
+          format: "int64"
+        orden:
+          type: "integer"
+          format: "int32"
+        tipo:
+          type: "string"
+        enunciado:
+          type: "string"
+        configuracion:
+          description: "JSON libre (columna jsonb)"
+        medioTipo:
+          type: "string"
+          nullable: true
+        medioUrl:
+          type: "string"
+          nullable: true
+        medioAlt:
+          type: "string"
+          nullable: true
+      required:
+        - "actividadId"
+        - "orden"
+        - "tipo"
+        - "enunciado"
+      example:
+        actividadId: 1
+        orden: 1
+        tipo: "tipo-a"
+        enunciado: "enunciado-a"
+        configuracion:
+          ejemplo: 0
+        medioTipo: "medio-tipo-a"
+        medioUrl: "medio-url-a"
+        medioAlt: "medio-alt-a"
+    ActividadPreguntasUpdateRequest:
+      type: "object"
+      properties:
+        actividadId:
+          type: "integer"
+          format: "int64"
+        orden:
+          type: "integer"
+          format: "int32"
+        tipo:
+          type: "string"
+        enunciado:
+          type: "string"
+        configuracion:
+          description: "JSON libre (columna jsonb)"
+        medioTipo:
+          type: "string"
+          nullable: true
+        medioUrl:
+          type: "string"
+          nullable: true
+        medioAlt:
+          type: "string"
+          nullable: true
+      required:
+        - "actividadId"
+        - "orden"
+        - "tipo"
+        - "enunciado"
+      example:
+        actividadId: 2
+        orden: 2
+        tipo: "tipo-b"
+        enunciado: "enunciado-b"
+        configuracion:
+          ejemplo: 1
+        medioTipo: "medio-tipo-b"
+        medioUrl: "medio-url-b"
+        medioAlt: "medio-alt-b"
+    ActividadIntentos:
+      type: "object"
+      properties:
+        id:
+          type: "string"
+          format: "uuid"
+        usuarioId:
+          type: "string"
+          format: "uuid"
+        actividadId:
+          type: "integer"
+          format: "int64"
+        respuestas:
+          description: "JSON libre (columna jsonb)"
+        detalle:
+          description: "JSON libre (columna jsonb)"
+        aciertos:
+          type: "integer"
+          format: "int32"
+        evaluables:
+          type: "integer"
+          format: "int32"
+        pendientesRevision:
+          type: "integer"
+          format: "int32"
+        fecha:
+          type: "string"
+          format: "date-time"
+      required:
+        - "id"
+        - "usuarioId"
+        - "actividadId"
+        - "respuestas"
+        - "detalle"
+        - "aciertos"
+        - "evaluables"
+        - "pendientesRevision"
+        - "fecha"
+      example:
+        id: "81d423fe-6829-50e3-89fd-92fd620082a9"
+        usuarioId: "f21746db-e668-5c26-9697-d657086ec80e"
+        actividadId: 1
+        respuestas:
+          ejemplo: 0
+        detalle:
+          ejemplo: 0
+        aciertos: 1
+        evaluables: 1
+        pendientesRevision: 1
+        fecha: "2026-01-01T10:00:00Z"
+    ActividadIntentosRequest:
+      type: "object"
+      properties:
+        id:
+          type: "string"
+          format: "uuid"
+        usuarioId:
+          type: "string"
+          format: "uuid"
+        actividadId:
+          type: "integer"
+          format: "int64"
+        respuestas:
+          description: "JSON libre (columna jsonb)"
+        detalle:
+          description: "JSON libre (columna jsonb)"
+        aciertos:
+          type: "integer"
+          format: "int32"
+        evaluables:
+          type: "integer"
+          format: "int32"
+        pendientesRevision:
+          type: "integer"
+          format: "int32"
+        fecha:
+          type: "string"
+          format: "date-time"
+      required:
+        - "id"
+        - "usuarioId"
+        - "actividadId"
+        - "respuestas"
+        - "detalle"
+        - "aciertos"
+        - "evaluables"
+        - "pendientesRevision"
+      example:
+        id: "81d423fe-6829-50e3-89fd-92fd620082a9"
+        usuarioId: "f21746db-e668-5c26-9697-d657086ec80e"
+        actividadId: 1
+        respuestas:
+          ejemplo: 0
+        detalle:
+          ejemplo: 0
+        aciertos: 1
+        evaluables: 1
+        pendientesRevision: 1
+        fecha: "2026-01-01T10:00:00Z"
+    ActividadIntentosUpdateRequest:
+      type: "object"
+      properties:
+        usuarioId:
+          type: "string"
+          format: "uuid"
+        actividadId:
+          type: "integer"
+          format: "int64"
+        respuestas:
+          description: "JSON libre (columna jsonb)"
+        detalle:
+          description: "JSON libre (columna jsonb)"
+        aciertos:
+          type: "integer"
+          format: "int32"
+        evaluables:
+          type: "integer"
+          format: "int32"
+        pendientesRevision:
+          type: "integer"
+          format: "int32"
+        fecha:
+          type: "string"
+          format: "date-time"
+      required:
+        - "usuarioId"
+        - "actividadId"
+        - "respuestas"
+        - "detalle"
+        - "aciertos"
+        - "evaluables"
+        - "pendientesRevision"
+      example:
+        usuarioId: "21596a08-4798-51e6-a553-6e55210b3b91"
+        actividadId: 2
+        respuestas:
+          ejemplo: 1
+        detalle:
+          ejemplo: 1
+        aciertos: 2
+        evaluables: 2
+        pendientesRevision: 2
+        fecha: "2026-02-01T10:00:00Z"
+    ActividadFallos:
+      type: "object"
+      properties:
+        usuarioId:
+          type: "string"
+          format: "uuid"
+        preguntaId:
+          type: "integer"
+          format: "int64"
+        vecesFallada:
+          type: "integer"
+          format: "int32"
+        ultimaRespuesta:
+          description: "JSON libre (columna jsonb)"
+          nullable: true
+        ultimoFallo:
+          type: "string"
+          format: "date-time"
+        dominada:
+          type: "boolean"
+      required:
+        - "usuarioId"
+        - "preguntaId"
+        - "vecesFallada"
+        - "ultimoFallo"
+        - "dominada"
+      example:
+        usuarioId: "c7db6f25-065a-559a-9617-2a461840fb1a"
+        preguntaId: 1
+        vecesFallada: 1
+        ultimaRespuesta:
+          ejemplo: 0
+        ultimoFallo: "2026-01-01T10:00:00Z"
+        dominada: true
+    ActividadFallosRequest:
+      type: "object"
+      properties:
+        usuarioId:
+          type: "string"
+          format: "uuid"
+        preguntaId:
+          type: "integer"
+          format: "int64"
+        vecesFallada:
+          type: "integer"
+          format: "int32"
+        ultimaRespuesta:
+          description: "JSON libre (columna jsonb)"
+          nullable: true
+        ultimoFallo:
+          type: "string"
+          format: "date-time"
+        dominada:
+          type: "boolean"
+      required:
+        - "usuarioId"
+        - "preguntaId"
+      example:
+        usuarioId: "c7db6f25-065a-559a-9617-2a461840fb1a"
+        preguntaId: 1
+        vecesFallada: 1
+        ultimaRespuesta:
+          ejemplo: 0
+        ultimoFallo: "2026-01-01T10:00:00Z"
+        dominada: true
+    ActividadFallosUpdateRequest:
+      type: "object"
+      properties:
+        vecesFallada:
+          type: "integer"
+          format: "int32"
+        ultimaRespuesta:
+          description: "JSON libre (columna jsonb)"
+          nullable: true
+        ultimoFallo:
+          type: "string"
+          format: "date-time"
+        dominada:
+          type: "boolean"
+      example:
+        vecesFallada: 2
+        ultimaRespuesta:
+          ejemplo: 1
+        ultimoFallo: "2026-02-01T10:00:00Z"
+        dominada: false
+    CursosProfesores:
+      type: "object"
+      properties:
+        cursoId:
+          type: "integer"
+          format: "int64"
+        profesorId:
+          type: "string"
+          format: "uuid"
+      required:
+        - "cursoId"
+        - "profesorId"
+      example:
+        cursoId: 1
+        profesorId: "0fb97639-4aab-5bbf-bf38-19fa64bce5b3"
+    CursosProfesoresRequest:
+      type: "object"
+      properties:
+        cursoId:
+          type: "integer"
+          format: "int64"
+        profesorId:
+          type: "string"
+          format: "uuid"
+      required:
+        - "cursoId"
+        - "profesorId"
+      example:
+        cursoId: 1
+        profesorId: "0fb97639-4aab-5bbf-bf38-19fa64bce5b3"
+    AsignacionesAlumno:
+      type: "object"
+      properties:
+        cursoId:
+          type: "integer"
+          format: "int64"
+        alumnoId:
+          type: "string"
+          format: "uuid"
+        profesorId:
+          type: "string"
+          format: "uuid"
+        asignadoEn:
+          type: "string"
+          format: "date-time"
+      required:
+        - "cursoId"
+        - "alumnoId"
+        - "profesorId"
+        - "asignadoEn"
+      example:
+        cursoId: 1
+        alumnoId: "7b09a3c3-ca61-57b1-9dd2-5f1cf06b7765"
+        profesorId: "c65dd8cb-f4d9-5606-a1d2-103ffb5f808a"
+        asignadoEn: "2026-01-01T10:00:00Z"
+    AsignacionesAlumnoRequest:
+      type: "object"
+      properties:
+        cursoId:
+          type: "integer"
+          format: "int64"
+        alumnoId:
+          type: "string"
+          format: "uuid"
+        profesorId:
+          type: "string"
+          format: "uuid"
+        asignadoEn:
+          type: "string"
+          format: "date-time"
+      required:
+        - "cursoId"
+        - "alumnoId"
+        - "profesorId"
+      example:
+        cursoId: 1
+        alumnoId: "7b09a3c3-ca61-57b1-9dd2-5f1cf06b7765"
+        profesorId: "c65dd8cb-f4d9-5606-a1d2-103ffb5f808a"
+        asignadoEn: "2026-01-01T10:00:00Z"
+    AsignacionesAlumnoUpdateRequest:
+      type: "object"
+      properties:
+        asignadoEn:
+          type: "string"
+          format: "date-time"
+      example:
+        asignadoEn: "2026-02-01T10:00:00Z"
+    ProgresoCurso:
+      type: "object"
+      properties:
+        usuarioId:
+          type: "string"
+          format: "uuid"
+        unidadSlug:
+          type: "string"
+        completadaEn:
+          type: "string"
+          format: "date-time"
+          nullable: true
+        estado:
+          type: "string"
+        iniciadaEn:
+          type: "string"
+          format: "date-time"
+      required:
+        - "usuarioId"
+        - "unidadSlug"
+        - "estado"
+        - "iniciadaEn"
+      example:
+        usuarioId: "549a2533-ed99-510d-997b-31325e10b13f"
+        unidadSlug: "unidad-slug-a"
+        completadaEn: "2026-01-01T10:00:00Z"
+        estado: "estado-a"
+        iniciadaEn: "2026-01-01T10:00:00Z"
+    ProgresoCursoRequest:
+      type: "object"
+      properties:
+        usuarioId:
+          type: "string"
+          format: "uuid"
+        unidadSlug:
+          type: "string"
+        completadaEn:
+          type: "string"
+          format: "date-time"
+          nullable: true
+        estado:
+          type: "string"
+        iniciadaEn:
+          type: "string"
+          format: "date-time"
+      required:
+        - "usuarioId"
+        - "unidadSlug"
+      example:
+        usuarioId: "549a2533-ed99-510d-997b-31325e10b13f"
+        unidadSlug: "unidad-slug-a"
+        completadaEn: "2026-01-01T10:00:00Z"
+        estado: "estado-a"
+        iniciadaEn: "2026-01-01T10:00:00Z"
+    ProgresoCursoUpdateRequest:
+      type: "object"
+      properties:
+        completadaEn:
+          type: "string"
+          format: "date-time"
+          nullable: true
+        estado:
+          type: "string"
+        iniciadaEn:
+          type: "string"
+          format: "date-time"
+      example:
+        completadaEn: "2026-02-01T10:00:00Z"
+        estado: "estado-b"
+        iniciadaEn: "2026-02-01T10:00:00Z"
+    UnidadesArticulos:
+      type: "object"
+      properties:
+        unidadId:
+          type: "integer"
+          format: "int64"
+        articuloSlug:
+          type: "string"
+        orden:
+          type: "integer"
+          format: "int32"
+      required:
+        - "unidadId"
+        - "articuloSlug"
+        - "orden"
+      example:
+        unidadId: 1
+        articuloSlug: "articulo-slug-a"
+        orden: 1
+    UnidadesArticulosRequest:
+      type: "object"
+      properties:
+        unidadId:
+          type: "integer"
+          format: "int64"
+        articuloSlug:
+          type: "string"
+        orden:
+          type: "integer"
+          format: "int32"
+      required:
+        - "unidadId"
+        - "articuloSlug"
+      example:
+        unidadId: 1
+        articuloSlug: "articulo-slug-a"
+        orden: 1
+    UnidadesArticulosUpdateRequest:
+      type: "object"
+      properties:
+        orden:
+          type: "integer"
+          format: "int32"
+      example:
+        orden: 2

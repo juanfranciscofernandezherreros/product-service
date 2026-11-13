@@ -1,159 +1,1479 @@
-openapi: 3.0.3
+# Generado desde el DDL por el generador de servicios. No editar a mano.
+openapi: "3.0.3"
 info:
-  title: Battle API
-  description: Dominio de battles (salas, jugadores, preguntas y respuestas). Derivado del esquema PostgreSQL.
-  version: 1.0.0
+  title: "battle-service API"
+  version: "1.0.0"
+  description: "CRUD de las tablas de battle-service, derivado del esquema de base de datos."
 servers:
-  - url: https://api.tudominio.com/v1
+  - url: "http://localhost:8082"
+    description: "Local"
+tags:
+  - name: "battle_questions"
+  - name: "battle_rooms"
+  - name: "battle_players"
+  - name: "battle_round_questions"
+  - name: "battle_answers"
 paths:
-  /v1/battle/questions:
-    get:
-      summary: Listar preguntas (filtro por level/topic)
-      operationId: listBattleQuestions
-      parameters:
-        - { name: level, in: query, schema: { type: string, enum: [A1, A2, B1, B2] } }
-        - { name: topic, in: query, schema: { type: string, enum: [daily, travel, work] } }
-        - { name: limit, in: query, schema: { type: integer, default: 20, minimum: 1, maximum: 100 } }
-        - { name: offset, in: query, schema: { type: integer, default: 0, minimum: 0 } }
+  "/v1/battle-questions":
+    post:
+      tags:
+        - "battle_questions"
+      operationId: "createBattleQuestions"
+      summary: "Crea un registro de battle_questions"
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/BattleQuestionsRequest"
       responses:
-        '200':
-          description: Lista
+        "201":
+          description: "Creado"
           content:
-            application/json:
+            "application/json":
               schema:
-                type: object
-                properties:
-                  total: { type: integer }
-                  items: { type: array, items: { $ref: '#/components/schemas/BattleQuestion' } }
-    post:
-      summary: Crear pregunta
-      operationId: createBattleQuestion
-      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/BattleQuestionCreate' } } } }
-      responses:
-        '201': { description: Creada, content: { application/json: { schema: { $ref: '#/components/schemas/BattleQuestion' } } } }
-        '400': { $ref: '#/components/responses/BadRequest' }
-        '409': { description: Duplicada (UNIQUE level+topic+prompt), content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
-  /v1/battle/questions/{id}:
-    parameters: [ { name: id, in: path, required: true, schema: { type: integer, format: int64 } } ]
+                "$ref": "#/components/schemas/BattleQuestions"
+        "400":
+          description: "Peticion no valida"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "409":
+          description: "Ya existe o incumple una restriccion"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
     get:
-      summary: Obtener pregunta
-      operationId: getBattleQuestion
-      responses:
-        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/BattleQuestion' } } } }
-        '404': { $ref: '#/components/responses/NotFound' }
-    put:
-      summary: Actualizar pregunta
-      operationId: updateBattleQuestion
-      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/BattleQuestionCreate' } } } }
-      responses:
-        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/BattleQuestion' } } } }
-        '400': { $ref: '#/components/responses/BadRequest' }
-        '404': { $ref: '#/components/responses/NotFound' }
-    delete:
-      summary: Eliminar pregunta
-      operationId: deleteBattleQuestion
-      responses: { '204': { description: Eliminada }, '404': { $ref: '#/components/responses/NotFound' } }
-  /v1/battle/rooms:
-    post:
-      summary: Crear sala
-      operationId: createBattleRoom
-      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/BattleRoomCreate' } } } }
-      responses:
-        '201': { description: Creada, content: { application/json: { schema: { $ref: '#/components/schemas/BattleRoom' } } } }
-        '400': { $ref: '#/components/responses/BadRequest' }
-    get:
-      summary: Listar salas (filtro por status)
-      operationId: listBattleRooms
+      tags:
+        - "battle_questions"
+      operationId: "listBattleQuestions"
+      summary: "Lista battle_questions (paginado)"
       parameters:
-        - { name: status, in: query, schema: { type: string, enum: [waiting, playing, finished, cancelled] } }
+        - name: "page"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            default: 0
+        - name: "size"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            default: 20
+            maximum: 100
       responses:
-        '200': { description: OK, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/BattleRoom' } } } } }
-  /v1/battle/rooms/{roomId}:
-    parameters: [ { name: roomId, in: path, required: true, schema: { type: string, format: uuid } } ]
+        "200":
+          description: "Pagina de resultados"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                properties:
+                  items:
+                    type: "array"
+                    items:
+                      "$ref": "#/components/schemas/BattleQuestions"
+                  total:
+                    type: "integer"
+                    format: "int64"
+                  page:
+                    type: "integer"
+                  size:
+                    type: "integer"
+        "400":
+          description: "Parametro no valido"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+  "/v1/battle-questions/{id}":
     get:
-      summary: Obtener sala
-      operationId: getBattleRoom
+      tags:
+        - "battle_questions"
+      operationId: "getBattleQuestions"
+      summary: "Obtiene un registro de battle_questions"
+      parameters:
+        - name: "id"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+          example: 1
       responses:
-        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/BattleRoom' } } } }
-        '404': { $ref: '#/components/responses/NotFound' }
-  /v1/battle/rooms/{roomId}/players:
-    parameters: [ { name: roomId, in: path, required: true, schema: { type: string, format: uuid } } ]
-    get:
-      summary: Listar jugadores de la sala
-      operationId: listBattlePlayers
+        "200":
+          description: "Encontrado"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/BattleQuestions"
+        "404":
+          description: "No existe"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+    put:
+      tags:
+        - "battle_questions"
+      operationId: "updateBattleQuestions"
+      summary: "Modifica un registro de battle_questions"
+      parameters:
+        - name: "id"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+          example: 1
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/BattleQuestionsUpdateRequest"
       responses:
-        '200': { description: OK, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/BattlePlayer' } } } } }
+        "200":
+          description: "Modificado"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/BattleQuestions"
+        "400":
+          description: "Peticion no valida"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "404":
+          description: "No existe"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "409":
+          description: "Incumple una restriccion"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+    delete:
+      tags:
+        - "battle_questions"
+      operationId: "deleteBattleQuestions"
+      summary: "Borra un registro de battle_questions"
+      parameters:
+        - name: "id"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+          example: 1
+      responses:
+        "204":
+          description: "Borrado"
+        "404":
+          description: "No existe"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "409":
+          description: "Lo impide una restriccion"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+  "/v1/battle-rooms":
     post:
-      summary: Unirse a la sala
-      operationId: joinBattleRoom
-      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/BattleJoin' } } } }
+      tags:
+        - "battle_rooms"
+      operationId: "createBattleRooms"
+      summary: "Crea un registro de battle_rooms"
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/BattleRoomsRequest"
       responses:
-        '201': { description: Unido, content: { application/json: { schema: { $ref: '#/components/schemas/BattlePlayer' } } } }
-        '400': { $ref: '#/components/responses/BadRequest' }
-        '404': { $ref: '#/components/responses/NotFound' }
+        "201":
+          description: "Creado"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/BattleRooms"
+        "400":
+          description: "Peticion no valida"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "409":
+          description: "Ya existe o incumple una restriccion"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+    get:
+      tags:
+        - "battle_rooms"
+      operationId: "listBattleRooms"
+      summary: "Lista battle_rooms (paginado)"
+      parameters:
+        - name: "hostId"
+          in: "query"
+          required: false
+          schema:
+            type: "string"
+            format: "uuid"
+          example: "2f378bea-e223-58fe-8ff9-ae278ca692bc"
+        - name: "page"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            default: 0
+        - name: "size"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            default: 20
+            maximum: 100
+      responses:
+        "200":
+          description: "Pagina de resultados"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                properties:
+                  items:
+                    type: "array"
+                    items:
+                      "$ref": "#/components/schemas/BattleRooms"
+                  total:
+                    type: "integer"
+                    format: "int64"
+                  page:
+                    type: "integer"
+                  size:
+                    type: "integer"
+        "400":
+          description: "Parametro no valido"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+  "/v1/battle-rooms/{id}":
+    get:
+      tags:
+        - "battle_rooms"
+      operationId: "getBattleRooms"
+      summary: "Obtiene un registro de battle_rooms"
+      parameters:
+        - name: "id"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+            format: "uuid"
+          example: "647e6f8d-1bdd-51eb-b18c-243f555fcc6d"
+      responses:
+        "200":
+          description: "Encontrado"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/BattleRooms"
+        "404":
+          description: "No existe"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+    put:
+      tags:
+        - "battle_rooms"
+      operationId: "updateBattleRooms"
+      summary: "Modifica un registro de battle_rooms"
+      parameters:
+        - name: "id"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+            format: "uuid"
+          example: "647e6f8d-1bdd-51eb-b18c-243f555fcc6d"
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/BattleRoomsUpdateRequest"
+      responses:
+        "200":
+          description: "Modificado"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/BattleRooms"
+        "400":
+          description: "Peticion no valida"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "404":
+          description: "No existe"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "409":
+          description: "Incumple una restriccion"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+    delete:
+      tags:
+        - "battle_rooms"
+      operationId: "deleteBattleRooms"
+      summary: "Borra un registro de battle_rooms"
+      parameters:
+        - name: "id"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+            format: "uuid"
+          example: "647e6f8d-1bdd-51eb-b18c-243f555fcc6d"
+      responses:
+        "204":
+          description: "Borrado"
+        "404":
+          description: "No existe"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "409":
+          description: "Lo impide una restriccion"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+  "/v1/battle-players":
+    post:
+      tags:
+        - "battle_players"
+      operationId: "createBattlePlayers"
+      summary: "Crea un registro de battle_players"
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/BattlePlayersRequest"
+      responses:
+        "201":
+          description: "Creado"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/BattlePlayers"
+        "400":
+          description: "Peticion no valida"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "409":
+          description: "Ya existe o incumple una restriccion"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+    get:
+      tags:
+        - "battle_players"
+      operationId: "listBattlePlayers"
+      summary: "Lista battle_players (paginado)"
+      parameters:
+        - name: "roomId"
+          in: "query"
+          required: false
+          schema:
+            type: "string"
+            format: "uuid"
+          example: "5f61e89d-ac34-5c55-8bb9-2c397e74bc34"
+        - name: "userId"
+          in: "query"
+          required: false
+          schema:
+            type: "string"
+            format: "uuid"
+          example: "a85069d5-1941-578a-b778-c0e30db4ffc9"
+        - name: "page"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            default: 0
+        - name: "size"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            default: 20
+            maximum: 100
+      responses:
+        "200":
+          description: "Pagina de resultados"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                properties:
+                  items:
+                    type: "array"
+                    items:
+                      "$ref": "#/components/schemas/BattlePlayers"
+                  total:
+                    type: "integer"
+                    format: "int64"
+                  page:
+                    type: "integer"
+                  size:
+                    type: "integer"
+        "400":
+          description: "Parametro no valido"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+  "/v1/battle-players/{roomId}/{userId}":
+    get:
+      tags:
+        - "battle_players"
+      operationId: "getBattlePlayers"
+      summary: "Obtiene un registro de battle_players"
+      parameters:
+        - name: "roomId"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+            format: "uuid"
+          example: "5f61e89d-ac34-5c55-8bb9-2c397e74bc34"
+        - name: "userId"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+            format: "uuid"
+          example: "a85069d5-1941-578a-b778-c0e30db4ffc9"
+      responses:
+        "200":
+          description: "Encontrado"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/BattlePlayers"
+        "404":
+          description: "No existe"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+    put:
+      tags:
+        - "battle_players"
+      operationId: "updateBattlePlayers"
+      summary: "Modifica un registro de battle_players"
+      parameters:
+        - name: "roomId"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+            format: "uuid"
+          example: "5f61e89d-ac34-5c55-8bb9-2c397e74bc34"
+        - name: "userId"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+            format: "uuid"
+          example: "a85069d5-1941-578a-b778-c0e30db4ffc9"
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/BattlePlayersUpdateRequest"
+      responses:
+        "200":
+          description: "Modificado"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/BattlePlayers"
+        "400":
+          description: "Peticion no valida"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "404":
+          description: "No existe"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "409":
+          description: "Incumple una restriccion"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+    delete:
+      tags:
+        - "battle_players"
+      operationId: "deleteBattlePlayers"
+      summary: "Borra un registro de battle_players"
+      parameters:
+        - name: "roomId"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+            format: "uuid"
+          example: "5f61e89d-ac34-5c55-8bb9-2c397e74bc34"
+        - name: "userId"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+            format: "uuid"
+          example: "a85069d5-1941-578a-b778-c0e30db4ffc9"
+      responses:
+        "204":
+          description: "Borrado"
+        "404":
+          description: "No existe"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "409":
+          description: "Lo impide una restriccion"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+  "/v1/battle-round-questions":
+    post:
+      tags:
+        - "battle_round_questions"
+      operationId: "createBattleRoundQuestions"
+      summary: "Crea un registro de battle_round_questions"
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/BattleRoundQuestionsRequest"
+      responses:
+        "201":
+          description: "Creado"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/BattleRoundQuestions"
+        "400":
+          description: "Peticion no valida"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "409":
+          description: "Ya existe o incumple una restriccion"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+    get:
+      tags:
+        - "battle_round_questions"
+      operationId: "listBattleRoundQuestions"
+      summary: "Lista battle_round_questions (paginado)"
+      parameters:
+        - name: "roomId"
+          in: "query"
+          required: false
+          schema:
+            type: "string"
+            format: "uuid"
+          example: "53fe8644-41ec-5ed5-9dfe-ec2a447f2a1b"
+        - name: "ordinal"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            format: "int32"
+          example: 1
+        - name: "questionId"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            format: "int64"
+          example: 1
+        - name: "page"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            default: 0
+        - name: "size"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            default: 20
+            maximum: 100
+      responses:
+        "200":
+          description: "Pagina de resultados"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                properties:
+                  items:
+                    type: "array"
+                    items:
+                      "$ref": "#/components/schemas/BattleRoundQuestions"
+                  total:
+                    type: "integer"
+                    format: "int64"
+                  page:
+                    type: "integer"
+                  size:
+                    type: "integer"
+        "400":
+          description: "Parametro no valido"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+  "/v1/battle-round-questions/{roomId}/{ordinal}":
+    get:
+      tags:
+        - "battle_round_questions"
+      operationId: "getBattleRoundQuestions"
+      summary: "Obtiene un registro de battle_round_questions"
+      parameters:
+        - name: "roomId"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+            format: "uuid"
+          example: "53fe8644-41ec-5ed5-9dfe-ec2a447f2a1b"
+        - name: "ordinal"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int32"
+          example: 1
+      responses:
+        "200":
+          description: "Encontrado"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/BattleRoundQuestions"
+        "404":
+          description: "No existe"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+    put:
+      tags:
+        - "battle_round_questions"
+      operationId: "updateBattleRoundQuestions"
+      summary: "Modifica un registro de battle_round_questions"
+      parameters:
+        - name: "roomId"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+            format: "uuid"
+          example: "53fe8644-41ec-5ed5-9dfe-ec2a447f2a1b"
+        - name: "ordinal"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int32"
+          example: 1
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/BattleRoundQuestionsUpdateRequest"
+      responses:
+        "200":
+          description: "Modificado"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/BattleRoundQuestions"
+        "400":
+          description: "Peticion no valida"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "404":
+          description: "No existe"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "409":
+          description: "Incumple una restriccion"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+    delete:
+      tags:
+        - "battle_round_questions"
+      operationId: "deleteBattleRoundQuestions"
+      summary: "Borra un registro de battle_round_questions"
+      parameters:
+        - name: "roomId"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+            format: "uuid"
+          example: "53fe8644-41ec-5ed5-9dfe-ec2a447f2a1b"
+        - name: "ordinal"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int32"
+          example: 1
+      responses:
+        "204":
+          description: "Borrado"
+        "404":
+          description: "No existe"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "409":
+          description: "Lo impide una restriccion"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+  "/v1/battle-answers":
+    post:
+      tags:
+        - "battle_answers"
+      operationId: "createBattleAnswers"
+      summary: "Crea un registro de battle_answers"
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/BattleAnswersRequest"
+      responses:
+        "201":
+          description: "Creado"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/BattleAnswers"
+        "400":
+          description: "Peticion no valida"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "409":
+          description: "Ya existe o incumple una restriccion"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+    get:
+      tags:
+        - "battle_answers"
+      operationId: "listBattleAnswers"
+      summary: "Lista battle_answers (paginado)"
+      parameters:
+        - name: "roomId"
+          in: "query"
+          required: false
+          schema:
+            type: "string"
+            format: "uuid"
+          example: "b0c887f1-e33a-5b6f-9736-29933e432253"
+        - name: "userId"
+          in: "query"
+          required: false
+          schema:
+            type: "string"
+            format: "uuid"
+          example: "9ae34e5f-e068-5c97-ab4b-22bedf622f75"
+        - name: "page"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            default: 0
+        - name: "size"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            default: 20
+            maximum: 100
+      responses:
+        "200":
+          description: "Pagina de resultados"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                properties:
+                  items:
+                    type: "array"
+                    items:
+                      "$ref": "#/components/schemas/BattleAnswers"
+                  total:
+                    type: "integer"
+                    format: "int64"
+                  page:
+                    type: "integer"
+                  size:
+                    type: "integer"
+        "400":
+          description: "Parametro no valido"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+  "/v1/battle-answers/{roomId}/{userId}":
+    get:
+      tags:
+        - "battle_answers"
+      operationId: "getBattleAnswers"
+      summary: "Obtiene un registro de battle_answers"
+      parameters:
+        - name: "roomId"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+            format: "uuid"
+          example: "b0c887f1-e33a-5b6f-9736-29933e432253"
+        - name: "userId"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+            format: "uuid"
+          example: "9ae34e5f-e068-5c97-ab4b-22bedf622f75"
+      responses:
+        "200":
+          description: "Encontrado"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/BattleAnswers"
+        "404":
+          description: "No existe"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+    put:
+      tags:
+        - "battle_answers"
+      operationId: "updateBattleAnswers"
+      summary: "Modifica un registro de battle_answers"
+      parameters:
+        - name: "roomId"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+            format: "uuid"
+          example: "b0c887f1-e33a-5b6f-9736-29933e432253"
+        - name: "userId"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+            format: "uuid"
+          example: "9ae34e5f-e068-5c97-ab4b-22bedf622f75"
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/BattleAnswersUpdateRequest"
+      responses:
+        "200":
+          description: "Modificado"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/BattleAnswers"
+        "400":
+          description: "Peticion no valida"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "404":
+          description: "No existe"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "409":
+          description: "Incumple una restriccion"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+    delete:
+      tags:
+        - "battle_answers"
+      operationId: "deleteBattleAnswers"
+      summary: "Borra un registro de battle_answers"
+      parameters:
+        - name: "roomId"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+            format: "uuid"
+          example: "b0c887f1-e33a-5b6f-9736-29933e432253"
+        - name: "userId"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+            format: "uuid"
+          example: "9ae34e5f-e068-5c97-ab4b-22bedf622f75"
+      responses:
+        "204":
+          description: "Borrado"
+        "404":
+          description: "No existe"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "409":
+          description: "Lo impide una restriccion"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
 components:
   schemas:
-    BattleQuestion:
-      type: object
-      required: [id, level, topic, prompt, options, correctIndex, explanation]
-      properties:
-        id: { type: integer, format: int64 }
-        level: { type: string, enum: [A1, A2, B1, B2] }
-        topic: { type: string, enum: [daily, travel, work] }
-        prompt: { type: string }
-        options: { type: array, items: { type: string }, minItems: 4, maxItems: 4 }
-        correctIndex: { type: integer, minimum: 0, maximum: 3 }
-        explanation: { type: string }
-    BattleQuestionCreate:
-      type: object
-      required: [level, topic, prompt, options, correctIndex, explanation]
-      properties:
-        level: { type: string, enum: [A1, A2, B1, B2] }
-        topic: { type: string, enum: [daily, travel, work] }
-        prompt: { type: string }
-        options: { type: array, items: { type: string }, minItems: 4, maxItems: 4 }
-        correctIndex: { type: integer, minimum: 0, maximum: 3 }
-        explanation: { type: string }
-    BattleRoom:
-      type: object
-      required: [id, code, hostId, level, topic, durationSeconds, capacity, status, createdAt]
-      properties:
-        id: { type: string, format: uuid }
-        code: { type: string }
-        hostId: { type: string, format: uuid }
-        level: { type: string, enum: [A1, A2, B1, B2] }
-        topic: { type: string, enum: [mixed, daily, travel, work] }
-        durationSeconds: { type: integer, enum: [120, 180, 300] }
-        capacity: { type: integer, minimum: 2, maximum: 12 }
-        status: { type: string, enum: [waiting, playing, finished, cancelled] }
-        createdAt: { type: string, format: date-time }
-    BattleRoomCreate:
-      type: object
-      required: [level, topic, durationSeconds, capacity]
-      properties:
-        level: { type: string, enum: [A1, A2, B1, B2] }
-        topic: { type: string, enum: [mixed, daily, travel, work] }
-        durationSeconds: { type: integer, enum: [120, 180, 300] }
-        capacity: { type: integer, minimum: 2, maximum: 12 }
-    BattlePlayer:
-      type: object
-      required: [roomId, userId, alias, status, joinedAt]
-      properties:
-        roomId: { type: string, format: uuid }
-        userId: { type: string, format: uuid }
-        alias: { type: string, minLength: 2, maxLength: 30 }
-        status: { type: string, enum: [pending, accepted, rejected] }
-        joinedAt: { type: string, format: date-time }
-    BattleJoin:
-      type: object
-      required: [userId, alias]
-      properties:
-        userId: { type: string, format: uuid }
-        alias: { type: string, minLength: 2, maxLength: 30 }
     Error:
-      type: object
-      required: [code, message]
-      properties: { code: { type: string }, message: { type: string } }
-  responses:
-    BadRequest: { description: Parámetros inválidos, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
-    NotFound: { description: Recurso no encontrado, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+      type: "object"
+      required:
+        - "code"
+        - "message"
+      properties:
+        code:
+          type: "string"
+        message:
+          type: "string"
+      example:
+        code: "RESOURCE_NOT_FOUND"
+        message: "recurso no encontrado"
+    BattleQuestions:
+      type: "object"
+      properties:
+        id:
+          type: "integer"
+          format: "int64"
+        level:
+          type: "string"
+        topic:
+          type: "string"
+        prompt:
+          type: "string"
+        options:
+          description: "JSON libre (columna jsonb)"
+        correctIndex:
+          type: "integer"
+          format: "int32"
+        explanation:
+          type: "string"
+      required:
+        - "id"
+        - "level"
+        - "topic"
+        - "prompt"
+        - "options"
+        - "correctIndex"
+        - "explanation"
+      example:
+        id: 1
+        level: "level-a"
+        topic: "topic-a"
+        prompt: "prompt-a"
+        options:
+          ejemplo: 0
+        correctIndex: 1
+        explanation: "explanation-a"
+    BattleQuestionsRequest:
+      type: "object"
+      properties:
+        level:
+          type: "string"
+        topic:
+          type: "string"
+        prompt:
+          type: "string"
+        options:
+          description: "JSON libre (columna jsonb)"
+        correctIndex:
+          type: "integer"
+          format: "int32"
+        explanation:
+          type: "string"
+      required:
+        - "level"
+        - "topic"
+        - "prompt"
+        - "options"
+        - "correctIndex"
+        - "explanation"
+      example:
+        level: "level-a"
+        topic: "topic-a"
+        prompt: "prompt-a"
+        options:
+          ejemplo: 0
+        correctIndex: 1
+        explanation: "explanation-a"
+    BattleQuestionsUpdateRequest:
+      type: "object"
+      properties:
+        level:
+          type: "string"
+        topic:
+          type: "string"
+        prompt:
+          type: "string"
+        options:
+          description: "JSON libre (columna jsonb)"
+        correctIndex:
+          type: "integer"
+          format: "int32"
+        explanation:
+          type: "string"
+      required:
+        - "level"
+        - "topic"
+        - "prompt"
+        - "options"
+        - "correctIndex"
+        - "explanation"
+      example:
+        level: "level-b"
+        topic: "topic-b"
+        prompt: "prompt-b"
+        options:
+          ejemplo: 1
+        correctIndex: 2
+        explanation: "explanation-b"
+    BattleRooms:
+      type: "object"
+      properties:
+        id:
+          type: "string"
+          format: "uuid"
+        code:
+          type: "string"
+        hostId:
+          type: "string"
+          format: "uuid"
+        level:
+          type: "string"
+        topic:
+          type: "string"
+        durationSeconds:
+          type: "integer"
+          format: "int32"
+        capacity:
+          type: "integer"
+          format: "int32"
+        status:
+          type: "string"
+        createdAt:
+          type: "string"
+          format: "date-time"
+        startedAt:
+          type: "string"
+          format: "date-time"
+          nullable: true
+        deadlineAt:
+          type: "string"
+          format: "date-time"
+          nullable: true
+      required:
+        - "id"
+        - "code"
+        - "hostId"
+        - "level"
+        - "topic"
+        - "durationSeconds"
+        - "capacity"
+        - "status"
+        - "createdAt"
+      example:
+        id: "647e6f8d-1bdd-51eb-b18c-243f555fcc6d"
+        code: "code-a"
+        hostId: "2f378bea-e223-58fe-8ff9-ae278ca692bc"
+        level: "level-a"
+        topic: "topic-a"
+        durationSeconds: 1
+        capacity: 1
+        status: "status-a"
+        createdAt: "2026-01-01T10:00:00Z"
+        startedAt: "2026-01-01T10:00:00Z"
+        deadlineAt: "2026-01-01T10:00:00Z"
+    BattleRoomsRequest:
+      type: "object"
+      properties:
+        code:
+          type: "string"
+        hostId:
+          type: "string"
+          format: "uuid"
+        level:
+          type: "string"
+        topic:
+          type: "string"
+        durationSeconds:
+          type: "integer"
+          format: "int32"
+        capacity:
+          type: "integer"
+          format: "int32"
+        status:
+          type: "string"
+        createdAt:
+          type: "string"
+          format: "date-time"
+        startedAt:
+          type: "string"
+          format: "date-time"
+          nullable: true
+        deadlineAt:
+          type: "string"
+          format: "date-time"
+          nullable: true
+      required:
+        - "level"
+        - "topic"
+        - "durationSeconds"
+        - "capacity"
+      example:
+        code: "code-a"
+        hostId: "2f378bea-e223-58fe-8ff9-ae278ca692bc"
+        level: "level-a"
+        topic: "topic-a"
+        durationSeconds: 1
+        capacity: 1
+        status: "status-a"
+        createdAt: "2026-01-01T10:00:00Z"
+        startedAt: "2026-01-01T10:00:00Z"
+        deadlineAt: "2026-01-01T10:00:00Z"
+    BattleRoomsUpdateRequest:
+      type: "object"
+      properties:
+        code:
+          type: "string"
+        hostId:
+          type: "string"
+          format: "uuid"
+        level:
+          type: "string"
+        topic:
+          type: "string"
+        durationSeconds:
+          type: "integer"
+          format: "int32"
+        capacity:
+          type: "integer"
+          format: "int32"
+        status:
+          type: "string"
+        createdAt:
+          type: "string"
+          format: "date-time"
+        startedAt:
+          type: "string"
+          format: "date-time"
+          nullable: true
+        deadlineAt:
+          type: "string"
+          format: "date-time"
+          nullable: true
+      required:
+        - "level"
+        - "topic"
+        - "durationSeconds"
+        - "capacity"
+      example:
+        code: "code-b"
+        hostId: "4c1f853c-a6bd-53d5-b9a5-cd8dd219d74e"
+        level: "level-b"
+        topic: "topic-b"
+        durationSeconds: 2
+        capacity: 2
+        status: "status-b"
+        createdAt: "2026-02-01T10:00:00Z"
+        startedAt: "2026-02-01T10:00:00Z"
+        deadlineAt: "2026-02-01T10:00:00Z"
+    BattlePlayers:
+      type: "object"
+      properties:
+        roomId:
+          type: "string"
+          format: "uuid"
+        userId:
+          type: "string"
+          format: "uuid"
+        alias:
+          type: "string"
+        status:
+          type: "string"
+        joinedAt:
+          type: "string"
+          format: "date-time"
+      required:
+        - "roomId"
+        - "userId"
+        - "alias"
+        - "status"
+        - "joinedAt"
+      example:
+        roomId: "5f61e89d-ac34-5c55-8bb9-2c397e74bc34"
+        userId: "a85069d5-1941-578a-b778-c0e30db4ffc9"
+        alias: "alias-a"
+        status: "status-a"
+        joinedAt: "2026-01-01T10:00:00Z"
+    BattlePlayersRequest:
+      type: "object"
+      properties:
+        roomId:
+          type: "string"
+          format: "uuid"
+        userId:
+          type: "string"
+          format: "uuid"
+        alias:
+          type: "string"
+        status:
+          type: "string"
+        joinedAt:
+          type: "string"
+          format: "date-time"
+      required:
+        - "roomId"
+        - "alias"
+      example:
+        roomId: "5f61e89d-ac34-5c55-8bb9-2c397e74bc34"
+        userId: "a85069d5-1941-578a-b778-c0e30db4ffc9"
+        alias: "alias-a"
+        status: "status-a"
+        joinedAt: "2026-01-01T10:00:00Z"
+    BattlePlayersUpdateRequest:
+      type: "object"
+      properties:
+        alias:
+          type: "string"
+        status:
+          type: "string"
+        joinedAt:
+          type: "string"
+          format: "date-time"
+      required:
+        - "alias"
+      example:
+        alias: "alias-b"
+        status: "status-b"
+        joinedAt: "2026-02-01T10:00:00Z"
+    BattleRoundQuestions:
+      type: "object"
+      properties:
+        roomId:
+          type: "string"
+          format: "uuid"
+        ordinal:
+          type: "integer"
+          format: "int32"
+        questionId:
+          type: "integer"
+          format: "int64"
+      required:
+        - "roomId"
+        - "ordinal"
+        - "questionId"
+      example:
+        roomId: "53fe8644-41ec-5ed5-9dfe-ec2a447f2a1b"
+        ordinal: 1
+        questionId: 1
+    BattleRoundQuestionsRequest:
+      type: "object"
+      properties:
+        roomId:
+          type: "string"
+          format: "uuid"
+        ordinal:
+          type: "integer"
+          format: "int32"
+        questionId:
+          type: "integer"
+          format: "int64"
+      required:
+        - "roomId"
+        - "ordinal"
+        - "questionId"
+      example:
+        roomId: "53fe8644-41ec-5ed5-9dfe-ec2a447f2a1b"
+        ordinal: 1
+        questionId: 1
+    BattleRoundQuestionsUpdateRequest:
+      type: "object"
+      properties:
+        questionId:
+          type: "integer"
+          format: "int64"
+      required:
+        - "questionId"
+      example:
+        questionId: 2
+    BattleAnswers:
+      type: "object"
+      properties:
+        roomId:
+          type: "string"
+          format: "uuid"
+        userId:
+          type: "string"
+          format: "uuid"
+        answers:
+          description: "JSON libre (columna jsonb)"
+        submittedAt:
+          type: "string"
+          format: "date-time"
+          nullable: true
+        score:
+          type: "integer"
+          format: "int32"
+          nullable: true
+        elapsedMs:
+          type: "integer"
+          format: "int32"
+          nullable: true
+      required:
+        - "roomId"
+        - "userId"
+        - "answers"
+      example:
+        roomId: "b0c887f1-e33a-5b6f-9736-29933e432253"
+        userId: "9ae34e5f-e068-5c97-ab4b-22bedf622f75"
+        answers:
+          ejemplo: 0
+        submittedAt: "2026-01-01T10:00:00Z"
+        score: 1
+        elapsedMs: 1
+    BattleAnswersRequest:
+      type: "object"
+      properties:
+        roomId:
+          type: "string"
+          format: "uuid"
+        userId:
+          type: "string"
+          format: "uuid"
+        answers:
+          description: "JSON libre (columna jsonb)"
+        submittedAt:
+          type: "string"
+          format: "date-time"
+          nullable: true
+        score:
+          type: "integer"
+          format: "int32"
+          nullable: true
+        elapsedMs:
+          type: "integer"
+          format: "int32"
+          nullable: true
+      required:
+        - "roomId"
+        - "userId"
+      example:
+        roomId: "b0c887f1-e33a-5b6f-9736-29933e432253"
+        userId: "9ae34e5f-e068-5c97-ab4b-22bedf622f75"
+        answers:
+          ejemplo: 0
+        submittedAt: "2026-01-01T10:00:00Z"
+        score: 1
+        elapsedMs: 1
+    BattleAnswersUpdateRequest:
+      type: "object"
+      properties:
+        answers:
+          description: "JSON libre (columna jsonb)"
+        submittedAt:
+          type: "string"
+          format: "date-time"
+          nullable: true
+        score:
+          type: "integer"
+          format: "int32"
+          nullable: true
+        elapsedMs:
+          type: "integer"
+          format: "int32"
+          nullable: true
+      example:
+        answers:
+          ejemplo: 1
+        submittedAt: "2026-02-01T10:00:00Z"
+        score: 2
+        elapsedMs: 2

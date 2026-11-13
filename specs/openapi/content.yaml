@@ -1,301 +1,2894 @@
-openapi: 3.0.3
+# Generado desde el DDL por el generador de servicios. No editar a mano.
+openapi: "3.0.3"
 info:
-  title: Content & Blog API
-  description: Dominio de contenidos — artículos, categorías, comentarios, páginas, colecciones, recursos descargables y frases de subtítulos. Derivado del esquema PostgreSQL.
-  version: 1.0.0
+  title: "content-service API"
+  version: "1.0.0"
+  description: "CRUD de las tablas de content-service, derivado del esquema de base de datos."
 servers:
-  - url: https://api.tudominio.com/v1
+  - url: "http://localhost:8083"
+    description: "Local"
+tags:
+  - name: "categorias_blog"
+  - name: "articulos"
+  - name: "comentarios_articulos"
+  - name: "colecciones_material"
+  - name: "coleccion_articulos"
+  - name: "paginas_blog"
+  - name: "recursos_descargables"
+  - name: "movie_subtitle_phrases"
+  - name: "lecturas"
+  - name: "recursos_guardados"
 paths:
-  /v1/content/articles:
-    get:
-      summary: Listar artículos (paginado, filtro por categoría/nivel)
-      operationId: listArticles
-      parameters:
-        - { name: categoriaSlug, in: query, schema: { type: string } }
-        - { name: nivel, in: query, schema: { type: string } }
-        - { name: limit, in: query, schema: { type: integer, default: 20, minimum: 1, maximum: 100 } }
-        - { name: offset, in: query, schema: { type: integer, default: 0, minimum: 0 } }
+  "/v1/categorias-blog":
+    post:
+      tags:
+        - "categorias_blog"
+      operationId: "createCategoriasBlog"
+      summary: "Crea un registro de categorias_blog"
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/CategoriasBlogRequest"
       responses:
-        '200':
-          description: OK
+        "201":
+          description: "Creado"
           content:
-            application/json:
+            "application/json":
               schema:
-                type: object
+                "$ref": "#/components/schemas/CategoriasBlog"
+        "400":
+          description: "Peticion no valida"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "409":
+          description: "Ya existe o incumple una restriccion"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+    get:
+      tags:
+        - "categorias_blog"
+      operationId: "listCategoriasBlog"
+      summary: "Lista categorias_blog (paginado)"
+      parameters:
+        - name: "page"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            default: 0
+        - name: "size"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            default: 20
+            maximum: 100
+      responses:
+        "200":
+          description: "Pagina de resultados"
+          content:
+            "application/json":
+              schema:
+                type: "object"
                 properties:
-                  total: { type: integer }
-                  items: { type: array, items: { $ref: '#/components/schemas/Article' } }
-    post:
-      summary: Crear artículo
-      operationId: createArticle
-      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/ArticleCreate' } } } }
-      responses:
-        '201': { description: Creado, content: { application/json: { schema: { $ref: '#/components/schemas/Article' } } } }
-        '400': { $ref: '#/components/responses/BadRequest' }
-        '409': { description: Ruta o slug duplicados (UNIQUE ruta/slug), content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
-  /v1/content/articles/{slug}:
-    parameters: [ { name: slug, in: path, required: true, schema: { type: string } } ]
+                  items:
+                    type: "array"
+                    items:
+                      "$ref": "#/components/schemas/CategoriasBlog"
+                  total:
+                    type: "integer"
+                    format: "int64"
+                  page:
+                    type: "integer"
+                  size:
+                    type: "integer"
+        "400":
+          description: "Parametro no valido"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+  "/v1/categorias-blog/{slug}":
     get:
-      summary: Obtener artículo por slug
-      operationId: getArticle
+      tags:
+        - "categorias_blog"
+      operationId: "getCategoriasBlog"
+      summary: "Obtiene un registro de categorias_blog"
+      parameters:
+        - name: "slug"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+          example: "slug-a"
       responses:
-        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/Article' } } } }
-        '404': { $ref: '#/components/responses/NotFound' }
+        "200":
+          description: "Encontrado"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/CategoriasBlog"
+        "404":
+          description: "No existe"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
     put:
-      summary: Actualizar artículo
-      operationId: updateArticle
-      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/ArticleUpdate' } } } }
+      tags:
+        - "categorias_blog"
+      operationId: "updateCategoriasBlog"
+      summary: "Modifica un registro de categorias_blog"
+      parameters:
+        - name: "slug"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+          example: "slug-a"
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/CategoriasBlogUpdateRequest"
       responses:
-        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/Article' } } } }
-        '400': { $ref: '#/components/responses/BadRequest' }
-        '404': { $ref: '#/components/responses/NotFound' }
+        "200":
+          description: "Modificado"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/CategoriasBlog"
+        "400":
+          description: "Peticion no valida"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "404":
+          description: "No existe"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "409":
+          description: "Incumple una restriccion"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
     delete:
-      summary: Eliminar artículo
-      operationId: deleteArticle
-      responses: { '204': { description: Eliminado }, '404': { $ref: '#/components/responses/NotFound' } }
-  /v1/content/articles/{slug}/comments:
-    parameters: [ { name: slug, in: path, required: true, schema: { type: string } } ]
-    get:
-      summary: Comentarios de un artículo
-      operationId: listComments
-      responses:
-        '200': { description: OK, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/Comment' } } } } }
-    post:
-      summary: Crear comentario
-      operationId: createComment
-      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/CommentCreate' } } } }
-      responses:
-        '201': { description: Creado, content: { application/json: { schema: { $ref: '#/components/schemas/Comment' } } } }
-        '400': { $ref: '#/components/responses/BadRequest' }
-        '404': { $ref: '#/components/responses/NotFound' }
-  /v1/content/categories:
-    get:
-      summary: Listar categorías de blog
-      operationId: listCategories
-      responses:
-        '200': { description: OK, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/Category' } } } } }
-    post:
-      summary: Crear categoría
-      operationId: createCategory
-      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/Category' } } } }
-      responses:
-        '201': { description: Creada, content: { application/json: { schema: { $ref: '#/components/schemas/Category' } } } }
-        '400': { $ref: '#/components/responses/BadRequest' }
-        '409': { description: Categoría ya existe (PK slug), content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
-  /v1/content/pages:
-    get:
-      summary: Listar páginas de blog
-      operationId: listPages
-      responses:
-        '200': { description: OK, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/Page' } } } } }
-    post:
-      summary: Crear página
-      operationId: createPage
-      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/Page' } } } }
-      responses:
-        '201': { description: Creada, content: { application/json: { schema: { $ref: '#/components/schemas/Page' } } } }
-        '400': { $ref: '#/components/responses/BadRequest' }
-        '409': { description: Página ya existe (PK ruta), content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
-  /v1/content/collections:
-    get:
-      summary: Listar colecciones de material
-      operationId: listCollections
-      responses:
-        '200': { description: OK, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/Collection' } } } } }
-    post:
-      summary: Crear colección
-      operationId: createCollection
-      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/CollectionCreate' } } } }
-      responses:
-        '201': { description: Creada, content: { application/json: { schema: { $ref: '#/components/schemas/Collection' } } } }
-        '400': { $ref: '#/components/responses/BadRequest' }
-        '409': { description: Slug o nombre de archivo duplicados, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
-  /v1/content/downloadables:
-    get:
-      summary: Listar recursos descargables (filtro por categoría)
-      operationId: listDownloadables
+      tags:
+        - "categorias_blog"
+      operationId: "deleteCategoriasBlog"
+      summary: "Borra un registro de categorias_blog"
       parameters:
-        - { name: categoria, in: query, schema: { type: string } }
+        - name: "slug"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+          example: "slug-a"
       responses:
-        '200': { description: OK, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/Downloadable' } } } } }
+        "204":
+          description: "Borrado"
+        "404":
+          description: "No existe"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "409":
+          description: "Lo impide una restriccion"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+  "/v1/articulos":
     post:
-      summary: Crear recurso descargable
-      operationId: createDownloadable
-      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/DownloadableCreate' } } } }
+      tags:
+        - "articulos"
+      operationId: "createArticulos"
+      summary: "Crea un registro de articulos"
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/ArticulosRequest"
       responses:
-        '201': { description: Creado, content: { application/json: { schema: { $ref: '#/components/schemas/Downloadable' } } } }
-        '400': { $ref: '#/components/responses/BadRequest' }
-        '409': { description: Slug duplicado, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
-  /v1/content/movie-phrases:
+        "201":
+          description: "Creado"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Articulos"
+        "400":
+          description: "Peticion no valida"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "409":
+          description: "Ya existe o incumple una restriccion"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
     get:
-      summary: Listar frases de subtítulos (filtro por película)
-      operationId: listMoviePhrases
+      tags:
+        - "articulos"
+      operationId: "listArticulos"
+      summary: "Lista articulos (paginado)"
       parameters:
-        - { name: movieSlug, in: query, schema: { type: string } }
+        - name: "categoriaSlug"
+          in: "query"
+          required: false
+          schema:
+            type: "string"
+          example: "categoria-slug-a"
+        - name: "usuarioId"
+          in: "query"
+          required: false
+          schema:
+            type: "string"
+            format: "uuid"
+          example: "ad34b7b2-f22a-5d8d-b80a-4d77110a37ed"
+        - name: "page"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            default: 0
+        - name: "size"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            default: 20
+            maximum: 100
       responses:
-        '200': { description: OK, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/MoviePhrase' } } } } }
+        "200":
+          description: "Pagina de resultados"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                properties:
+                  items:
+                    type: "array"
+                    items:
+                      "$ref": "#/components/schemas/Articulos"
+                  total:
+                    type: "integer"
+                    format: "int64"
+                  page:
+                    type: "integer"
+                  size:
+                    type: "integer"
+        "400":
+          description: "Parametro no valido"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+  "/v1/articulos/{id}":
+    get:
+      tags:
+        - "articulos"
+      operationId: "getArticulos"
+      summary: "Obtiene un registro de articulos"
+      parameters:
+        - name: "id"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+          example: 1
+      responses:
+        "200":
+          description: "Encontrado"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Articulos"
+        "404":
+          description: "No existe"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+    put:
+      tags:
+        - "articulos"
+      operationId: "updateArticulos"
+      summary: "Modifica un registro de articulos"
+      parameters:
+        - name: "id"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+          example: 1
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/ArticulosUpdateRequest"
+      responses:
+        "200":
+          description: "Modificado"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Articulos"
+        "400":
+          description: "Peticion no valida"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "404":
+          description: "No existe"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "409":
+          description: "Incumple una restriccion"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+    delete:
+      tags:
+        - "articulos"
+      operationId: "deleteArticulos"
+      summary: "Borra un registro de articulos"
+      parameters:
+        - name: "id"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+          example: 1
+      responses:
+        "204":
+          description: "Borrado"
+        "404":
+          description: "No existe"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "409":
+          description: "Lo impide una restriccion"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+  "/v1/comentarios-articulos":
     post:
-      summary: Crear frase de subtítulo
-      operationId: createMoviePhrase
-      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/MoviePhraseCreate' } } } }
+      tags:
+        - "comentarios_articulos"
+      operationId: "createComentariosArticulos"
+      summary: "Crea un registro de comentarios_articulos"
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/ComentariosArticulosRequest"
       responses:
-        '201': { description: Creada, content: { application/json: { schema: { $ref: '#/components/schemas/MoviePhrase' } } } }
-        '400': { $ref: '#/components/responses/BadRequest' }
-        '409': { description: Número de subtítulo duplicado para la película (UNIQUE movie_slug+subtitle_number), content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+        "201":
+          description: "Creado"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ComentariosArticulos"
+        "400":
+          description: "Peticion no valida"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "409":
+          description: "Ya existe o incumple una restriccion"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+    get:
+      tags:
+        - "comentarios_articulos"
+      operationId: "listComentariosArticulos"
+      summary: "Lista comentarios_articulos (paginado)"
+      parameters:
+        - name: "articuloSlug"
+          in: "query"
+          required: false
+          schema:
+            type: "string"
+          example: "articulo-slug-a"
+        - name: "padreId"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            format: "int64"
+          example: 1
+        - name: "autorId"
+          in: "query"
+          required: false
+          schema:
+            type: "string"
+            format: "uuid"
+          example: "b0a1ea79-faac-5760-95e0-b5ce6c957777"
+        - name: "page"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            default: 0
+        - name: "size"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            default: 20
+            maximum: 100
+      responses:
+        "200":
+          description: "Pagina de resultados"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                properties:
+                  items:
+                    type: "array"
+                    items:
+                      "$ref": "#/components/schemas/ComentariosArticulos"
+                  total:
+                    type: "integer"
+                    format: "int64"
+                  page:
+                    type: "integer"
+                  size:
+                    type: "integer"
+        "400":
+          description: "Parametro no valido"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+  "/v1/comentarios-articulos/{id}":
+    get:
+      tags:
+        - "comentarios_articulos"
+      operationId: "getComentariosArticulos"
+      summary: "Obtiene un registro de comentarios_articulos"
+      parameters:
+        - name: "id"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+          example: 1
+      responses:
+        "200":
+          description: "Encontrado"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ComentariosArticulos"
+        "404":
+          description: "No existe"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+    put:
+      tags:
+        - "comentarios_articulos"
+      operationId: "updateComentariosArticulos"
+      summary: "Modifica un registro de comentarios_articulos"
+      parameters:
+        - name: "id"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+          example: 1
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/ComentariosArticulosUpdateRequest"
+      responses:
+        "200":
+          description: "Modificado"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ComentariosArticulos"
+        "400":
+          description: "Peticion no valida"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "404":
+          description: "No existe"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "409":
+          description: "Incumple una restriccion"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+    delete:
+      tags:
+        - "comentarios_articulos"
+      operationId: "deleteComentariosArticulos"
+      summary: "Borra un registro de comentarios_articulos"
+      parameters:
+        - name: "id"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+          example: 1
+      responses:
+        "204":
+          description: "Borrado"
+        "404":
+          description: "No existe"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "409":
+          description: "Lo impide una restriccion"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+  "/v1/colecciones-material":
+    post:
+      tags:
+        - "colecciones_material"
+      operationId: "createColeccionesMaterial"
+      summary: "Crea un registro de colecciones_material"
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/ColeccionesMaterialRequest"
+      responses:
+        "201":
+          description: "Creado"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ColeccionesMaterial"
+        "400":
+          description: "Peticion no valida"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "409":
+          description: "Ya existe o incumple una restriccion"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+    get:
+      tags:
+        - "colecciones_material"
+      operationId: "listColeccionesMaterial"
+      summary: "Lista colecciones_material (paginado)"
+      parameters:
+        - name: "page"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            default: 0
+        - name: "size"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            default: 20
+            maximum: 100
+      responses:
+        "200":
+          description: "Pagina de resultados"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                properties:
+                  items:
+                    type: "array"
+                    items:
+                      "$ref": "#/components/schemas/ColeccionesMaterial"
+                  total:
+                    type: "integer"
+                    format: "int64"
+                  page:
+                    type: "integer"
+                  size:
+                    type: "integer"
+        "400":
+          description: "Parametro no valido"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+  "/v1/colecciones-material/{id}":
+    get:
+      tags:
+        - "colecciones_material"
+      operationId: "getColeccionesMaterial"
+      summary: "Obtiene un registro de colecciones_material"
+      parameters:
+        - name: "id"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+          example: 1
+      responses:
+        "200":
+          description: "Encontrado"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ColeccionesMaterial"
+        "404":
+          description: "No existe"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+    put:
+      tags:
+        - "colecciones_material"
+      operationId: "updateColeccionesMaterial"
+      summary: "Modifica un registro de colecciones_material"
+      parameters:
+        - name: "id"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+          example: 1
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/ColeccionesMaterialUpdateRequest"
+      responses:
+        "200":
+          description: "Modificado"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ColeccionesMaterial"
+        "400":
+          description: "Peticion no valida"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "404":
+          description: "No existe"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "409":
+          description: "Incumple una restriccion"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+    delete:
+      tags:
+        - "colecciones_material"
+      operationId: "deleteColeccionesMaterial"
+      summary: "Borra un registro de colecciones_material"
+      parameters:
+        - name: "id"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+          example: 1
+      responses:
+        "204":
+          description: "Borrado"
+        "404":
+          description: "No existe"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "409":
+          description: "Lo impide una restriccion"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+  "/v1/coleccion-articulos":
+    post:
+      tags:
+        - "coleccion_articulos"
+      operationId: "createColeccionArticulos"
+      summary: "Crea un registro de coleccion_articulos"
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/ColeccionArticulosRequest"
+      responses:
+        "201":
+          description: "Creado"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ColeccionArticulos"
+        "400":
+          description: "Peticion no valida"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "409":
+          description: "Ya existe o incumple una restriccion"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+    get:
+      tags:
+        - "coleccion_articulos"
+      operationId: "listColeccionArticulos"
+      summary: "Lista coleccion_articulos (paginado)"
+      parameters:
+        - name: "coleccionId"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            format: "int64"
+          example: 1
+        - name: "articuloSlug"
+          in: "query"
+          required: false
+          schema:
+            type: "string"
+          example: "articulo-slug-a"
+        - name: "page"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            default: 0
+        - name: "size"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            default: 20
+            maximum: 100
+      responses:
+        "200":
+          description: "Pagina de resultados"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                properties:
+                  items:
+                    type: "array"
+                    items:
+                      "$ref": "#/components/schemas/ColeccionArticulos"
+                  total:
+                    type: "integer"
+                    format: "int64"
+                  page:
+                    type: "integer"
+                  size:
+                    type: "integer"
+        "400":
+          description: "Parametro no valido"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+  "/v1/coleccion-articulos/{coleccionId}/{articuloSlug}":
+    get:
+      tags:
+        - "coleccion_articulos"
+      operationId: "getColeccionArticulos"
+      summary: "Obtiene un registro de coleccion_articulos"
+      parameters:
+        - name: "coleccionId"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+          example: 1
+        - name: "articuloSlug"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+          example: "articulo-slug-a"
+      responses:
+        "200":
+          description: "Encontrado"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ColeccionArticulos"
+        "404":
+          description: "No existe"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+    put:
+      tags:
+        - "coleccion_articulos"
+      operationId: "updateColeccionArticulos"
+      summary: "Modifica un registro de coleccion_articulos"
+      parameters:
+        - name: "coleccionId"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+          example: 1
+        - name: "articuloSlug"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+          example: "articulo-slug-a"
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/ColeccionArticulosUpdateRequest"
+      responses:
+        "200":
+          description: "Modificado"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ColeccionArticulos"
+        "400":
+          description: "Peticion no valida"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "404":
+          description: "No existe"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "409":
+          description: "Incumple una restriccion"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+    delete:
+      tags:
+        - "coleccion_articulos"
+      operationId: "deleteColeccionArticulos"
+      summary: "Borra un registro de coleccion_articulos"
+      parameters:
+        - name: "coleccionId"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+          example: 1
+        - name: "articuloSlug"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+          example: "articulo-slug-a"
+      responses:
+        "204":
+          description: "Borrado"
+        "404":
+          description: "No existe"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "409":
+          description: "Lo impide una restriccion"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+  "/v1/paginas-blog":
+    post:
+      tags:
+        - "paginas_blog"
+      operationId: "createPaginasBlog"
+      summary: "Crea un registro de paginas_blog"
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/PaginasBlogRequest"
+      responses:
+        "201":
+          description: "Creado"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/PaginasBlog"
+        "400":
+          description: "Peticion no valida"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "409":
+          description: "Ya existe o incumple una restriccion"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+    get:
+      tags:
+        - "paginas_blog"
+      operationId: "listPaginasBlog"
+      summary: "Lista paginas_blog (paginado)"
+      parameters:
+        - name: "page"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            default: 0
+        - name: "size"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            default: 20
+            maximum: 100
+      responses:
+        "200":
+          description: "Pagina de resultados"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                properties:
+                  items:
+                    type: "array"
+                    items:
+                      "$ref": "#/components/schemas/PaginasBlog"
+                  total:
+                    type: "integer"
+                    format: "int64"
+                  page:
+                    type: "integer"
+                  size:
+                    type: "integer"
+        "400":
+          description: "Parametro no valido"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+  "/v1/paginas-blog/{ruta}":
+    get:
+      tags:
+        - "paginas_blog"
+      operationId: "getPaginasBlog"
+      summary: "Obtiene un registro de paginas_blog"
+      parameters:
+        - name: "ruta"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+          example: "ruta-a"
+      responses:
+        "200":
+          description: "Encontrado"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/PaginasBlog"
+        "404":
+          description: "No existe"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+    put:
+      tags:
+        - "paginas_blog"
+      operationId: "updatePaginasBlog"
+      summary: "Modifica un registro de paginas_blog"
+      parameters:
+        - name: "ruta"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+          example: "ruta-a"
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/PaginasBlogUpdateRequest"
+      responses:
+        "200":
+          description: "Modificado"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/PaginasBlog"
+        "400":
+          description: "Peticion no valida"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "404":
+          description: "No existe"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "409":
+          description: "Incumple una restriccion"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+    delete:
+      tags:
+        - "paginas_blog"
+      operationId: "deletePaginasBlog"
+      summary: "Borra un registro de paginas_blog"
+      parameters:
+        - name: "ruta"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+          example: "ruta-a"
+      responses:
+        "204":
+          description: "Borrado"
+        "404":
+          description: "No existe"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "409":
+          description: "Lo impide una restriccion"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+  "/v1/recursos-descargables":
+    post:
+      tags:
+        - "recursos_descargables"
+      operationId: "createRecursosDescargables"
+      summary: "Crea un registro de recursos_descargables"
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/RecursosDescargablesRequest"
+      responses:
+        "201":
+          description: "Creado"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/RecursosDescargables"
+        "400":
+          description: "Peticion no valida"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "409":
+          description: "Ya existe o incumple una restriccion"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+    get:
+      tags:
+        - "recursos_descargables"
+      operationId: "listRecursosDescargables"
+      summary: "Lista recursos_descargables (paginado)"
+      parameters:
+        - name: "page"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            default: 0
+        - name: "size"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            default: 20
+            maximum: 100
+      responses:
+        "200":
+          description: "Pagina de resultados"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                properties:
+                  items:
+                    type: "array"
+                    items:
+                      "$ref": "#/components/schemas/RecursosDescargables"
+                  total:
+                    type: "integer"
+                    format: "int64"
+                  page:
+                    type: "integer"
+                  size:
+                    type: "integer"
+        "400":
+          description: "Parametro no valido"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+  "/v1/recursos-descargables/{id}":
+    get:
+      tags:
+        - "recursos_descargables"
+      operationId: "getRecursosDescargables"
+      summary: "Obtiene un registro de recursos_descargables"
+      parameters:
+        - name: "id"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+          example: 1
+      responses:
+        "200":
+          description: "Encontrado"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/RecursosDescargables"
+        "404":
+          description: "No existe"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+    put:
+      tags:
+        - "recursos_descargables"
+      operationId: "updateRecursosDescargables"
+      summary: "Modifica un registro de recursos_descargables"
+      parameters:
+        - name: "id"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+          example: 1
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/RecursosDescargablesUpdateRequest"
+      responses:
+        "200":
+          description: "Modificado"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/RecursosDescargables"
+        "400":
+          description: "Peticion no valida"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "404":
+          description: "No existe"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "409":
+          description: "Incumple una restriccion"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+    delete:
+      tags:
+        - "recursos_descargables"
+      operationId: "deleteRecursosDescargables"
+      summary: "Borra un registro de recursos_descargables"
+      parameters:
+        - name: "id"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+          example: 1
+      responses:
+        "204":
+          description: "Borrado"
+        "404":
+          description: "No existe"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "409":
+          description: "Lo impide una restriccion"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+  "/v1/movie-subtitle-phrases":
+    post:
+      tags:
+        - "movie_subtitle_phrases"
+      operationId: "createMovieSubtitlePhrases"
+      summary: "Crea un registro de movie_subtitle_phrases"
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/MovieSubtitlePhrasesRequest"
+      responses:
+        "201":
+          description: "Creado"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/MovieSubtitlePhrases"
+        "400":
+          description: "Peticion no valida"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "409":
+          description: "Ya existe o incumple una restriccion"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+    get:
+      tags:
+        - "movie_subtitle_phrases"
+      operationId: "listMovieSubtitlePhrases"
+      summary: "Lista movie_subtitle_phrases (paginado)"
+      parameters:
+        - name: "page"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            default: 0
+        - name: "size"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            default: 20
+            maximum: 100
+      responses:
+        "200":
+          description: "Pagina de resultados"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                properties:
+                  items:
+                    type: "array"
+                    items:
+                      "$ref": "#/components/schemas/MovieSubtitlePhrases"
+                  total:
+                    type: "integer"
+                    format: "int64"
+                  page:
+                    type: "integer"
+                  size:
+                    type: "integer"
+        "400":
+          description: "Parametro no valido"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+  "/v1/movie-subtitle-phrases/{id}":
+    get:
+      tags:
+        - "movie_subtitle_phrases"
+      operationId: "getMovieSubtitlePhrases"
+      summary: "Obtiene un registro de movie_subtitle_phrases"
+      parameters:
+        - name: "id"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+          example: 1
+      responses:
+        "200":
+          description: "Encontrado"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/MovieSubtitlePhrases"
+        "404":
+          description: "No existe"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+    put:
+      tags:
+        - "movie_subtitle_phrases"
+      operationId: "updateMovieSubtitlePhrases"
+      summary: "Modifica un registro de movie_subtitle_phrases"
+      parameters:
+        - name: "id"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+          example: 1
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/MovieSubtitlePhrasesUpdateRequest"
+      responses:
+        "200":
+          description: "Modificado"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/MovieSubtitlePhrases"
+        "400":
+          description: "Peticion no valida"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "404":
+          description: "No existe"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "409":
+          description: "Incumple una restriccion"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+    delete:
+      tags:
+        - "movie_subtitle_phrases"
+      operationId: "deleteMovieSubtitlePhrases"
+      summary: "Borra un registro de movie_subtitle_phrases"
+      parameters:
+        - name: "id"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+          example: 1
+      responses:
+        "204":
+          description: "Borrado"
+        "404":
+          description: "No existe"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "409":
+          description: "Lo impide una restriccion"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+  "/v1/lecturas":
+    post:
+      tags:
+        - "lecturas"
+      operationId: "createLecturas"
+      summary: "Crea un registro de lecturas"
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/LecturasRequest"
+      responses:
+        "201":
+          description: "Creado"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Lecturas"
+        "400":
+          description: "Peticion no valida"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "409":
+          description: "Ya existe o incumple una restriccion"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+    get:
+      tags:
+        - "lecturas"
+      operationId: "listLecturas"
+      summary: "Lista lecturas (paginado)"
+      parameters:
+        - name: "usuarioId"
+          in: "query"
+          required: false
+          schema:
+            type: "string"
+            format: "uuid"
+          example: "cbf9b89f-6298-57ab-8b7a-df1d9432d4f0"
+        - name: "articuloUrl"
+          in: "query"
+          required: false
+          schema:
+            type: "string"
+          example: "articulo-url-a"
+        - name: "page"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            default: 0
+        - name: "size"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            default: 20
+            maximum: 100
+      responses:
+        "200":
+          description: "Pagina de resultados"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                properties:
+                  items:
+                    type: "array"
+                    items:
+                      "$ref": "#/components/schemas/Lecturas"
+                  total:
+                    type: "integer"
+                    format: "int64"
+                  page:
+                    type: "integer"
+                  size:
+                    type: "integer"
+        "400":
+          description: "Parametro no valido"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+  "/v1/lecturas/{usuarioId}/{articuloUrl}":
+    get:
+      tags:
+        - "lecturas"
+      operationId: "getLecturas"
+      summary: "Obtiene un registro de lecturas"
+      parameters:
+        - name: "usuarioId"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+            format: "uuid"
+          example: "cbf9b89f-6298-57ab-8b7a-df1d9432d4f0"
+        - name: "articuloUrl"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+          example: "articulo-url-a"
+      responses:
+        "200":
+          description: "Encontrado"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Lecturas"
+        "404":
+          description: "No existe"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+    put:
+      tags:
+        - "lecturas"
+      operationId: "updateLecturas"
+      summary: "Modifica un registro de lecturas"
+      parameters:
+        - name: "usuarioId"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+            format: "uuid"
+          example: "cbf9b89f-6298-57ab-8b7a-df1d9432d4f0"
+        - name: "articuloUrl"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+          example: "articulo-url-a"
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/LecturasUpdateRequest"
+      responses:
+        "200":
+          description: "Modificado"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Lecturas"
+        "400":
+          description: "Peticion no valida"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "404":
+          description: "No existe"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "409":
+          description: "Incumple una restriccion"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+    delete:
+      tags:
+        - "lecturas"
+      operationId: "deleteLecturas"
+      summary: "Borra un registro de lecturas"
+      parameters:
+        - name: "usuarioId"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+            format: "uuid"
+          example: "cbf9b89f-6298-57ab-8b7a-df1d9432d4f0"
+        - name: "articuloUrl"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+          example: "articulo-url-a"
+      responses:
+        "204":
+          description: "Borrado"
+        "404":
+          description: "No existe"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "409":
+          description: "Lo impide una restriccion"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+  "/v1/recursos-guardados":
+    post:
+      tags:
+        - "recursos_guardados"
+      operationId: "createRecursosGuardados"
+      summary: "Crea un registro de recursos_guardados"
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/RecursosGuardadosRequest"
+      responses:
+        "201":
+          description: "Creado"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/RecursosGuardados"
+        "400":
+          description: "Peticion no valida"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "409":
+          description: "Ya existe o incumple una restriccion"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+    get:
+      tags:
+        - "recursos_guardados"
+      operationId: "listRecursosGuardados"
+      summary: "Lista recursos_guardados (paginado)"
+      parameters:
+        - name: "usuarioId"
+          in: "query"
+          required: false
+          schema:
+            type: "string"
+            format: "uuid"
+          example: "f278f158-1f03-5429-b5fd-2094b46a6bb3"
+        - name: "tipo"
+          in: "query"
+          required: false
+          schema:
+            type: "string"
+          example: "tipo-a"
+        - name: "referencia"
+          in: "query"
+          required: false
+          schema:
+            type: "string"
+          example: "referencia-a"
+        - name: "page"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            default: 0
+        - name: "size"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            default: 20
+            maximum: 100
+      responses:
+        "200":
+          description: "Pagina de resultados"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                properties:
+                  items:
+                    type: "array"
+                    items:
+                      "$ref": "#/components/schemas/RecursosGuardados"
+                  total:
+                    type: "integer"
+                    format: "int64"
+                  page:
+                    type: "integer"
+                  size:
+                    type: "integer"
+        "400":
+          description: "Parametro no valido"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+  "/v1/recursos-guardados/{usuarioId}/{tipo}/{referencia}":
+    get:
+      tags:
+        - "recursos_guardados"
+      operationId: "getRecursosGuardados"
+      summary: "Obtiene un registro de recursos_guardados"
+      parameters:
+        - name: "usuarioId"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+            format: "uuid"
+          example: "f278f158-1f03-5429-b5fd-2094b46a6bb3"
+        - name: "tipo"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+          example: "tipo-a"
+        - name: "referencia"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+          example: "referencia-a"
+      responses:
+        "200":
+          description: "Encontrado"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/RecursosGuardados"
+        "404":
+          description: "No existe"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+    put:
+      tags:
+        - "recursos_guardados"
+      operationId: "updateRecursosGuardados"
+      summary: "Modifica un registro de recursos_guardados"
+      parameters:
+        - name: "usuarioId"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+            format: "uuid"
+          example: "f278f158-1f03-5429-b5fd-2094b46a6bb3"
+        - name: "tipo"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+          example: "tipo-a"
+        - name: "referencia"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+          example: "referencia-a"
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/RecursosGuardadosUpdateRequest"
+      responses:
+        "200":
+          description: "Modificado"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/RecursosGuardados"
+        "400":
+          description: "Peticion no valida"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "404":
+          description: "No existe"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "409":
+          description: "Incumple una restriccion"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+    delete:
+      tags:
+        - "recursos_guardados"
+      operationId: "deleteRecursosGuardados"
+      summary: "Borra un registro de recursos_guardados"
+      parameters:
+        - name: "usuarioId"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+            format: "uuid"
+          example: "f278f158-1f03-5429-b5fd-2094b46a6bb3"
+        - name: "tipo"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+          example: "tipo-a"
+        - name: "referencia"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+          example: "referencia-a"
+      responses:
+        "204":
+          description: "Borrado"
+        "404":
+          description: "No existe"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "409":
+          description: "Lo impide una restriccion"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
 components:
   schemas:
-    Article:
-      type: object
-      required: [id, ruta, slug, titulo, html, urlPublica, origen, actualizadoEn]
-      properties:
-        id: { type: integer, format: int64 }
-        ruta: { type: string, pattern: '^post/[a-z0-9-]+[.]html$' }
-        slug: { type: string }
-        titulo: { type: string }
-        descripcion: { type: string, nullable: true }
-        html: { type: string }
-        urlPublica: { type: string }
-        origen: { type: string }
-        categoriaSlug: { type: string, nullable: true }
-        fechaPublicacion: { type: string, format: date, nullable: true }
-        nivel: { type: string, nullable: true }
-        palabras: { type: integer, nullable: true }
-        esArticuloIndice: { type: boolean }
-        actualizadoEn: { type: string, format: date-time }
-    ArticleCreate:
-      type: object
-      required: [ruta, slug, titulo, html, urlPublica]
-      properties:
-        ruta: { type: string, pattern: '^post/[a-z0-9-]+[.]html$' }
-        slug: { type: string }
-        titulo: { type: string }
-        descripcion: { type: string }
-        html: { type: string }
-        urlPublica: { type: string }
-        categoriaSlug: { type: string }
-        fechaPublicacion: { type: string, format: date }
-        nivel: { type: string }
-    ArticleUpdate:
-      type: object
-      properties:
-        titulo: { type: string }
-        descripcion: { type: string }
-        html: { type: string }
-        categoriaSlug: { type: string }
-        nivel: { type: string }
-    Comment:
-      type: object
-      required: [id, articuloSlug, contenido, creadoEn]
-      properties:
-        id: { type: integer, format: int64 }
-        articuloSlug: { type: string }
-        padreId: { type: integer, format: int64, nullable: true }
-        autorId: { type: string, format: uuid, nullable: true }
-        contenido: { type: string, minLength: 1, maxLength: 2000 }
-        creadoEn: { type: string, format: date-time }
-    CommentCreate:
-      type: object
-      required: [contenido]
-      properties:
-        padreId: { type: integer, format: int64 }
-        autorId: { type: string, format: uuid }
-        contenido: { type: string, minLength: 1, maxLength: 2000 }
-    Category:
-      type: object
-      required: [slug, nombre]
-      properties:
-        slug: { type: string }
-        nombre: { type: string }
-        descripcion: { type: string, nullable: true }
-        orden: { type: integer }
-    Page:
-      type: object
-      required: [ruta, titulo, html, urlPublica]
-      properties:
-        ruta: { type: string }
-        titulo: { type: string }
-        descripcion: { type: string, nullable: true }
-        html: { type: string }
-        urlPublica: { type: string }
-        actualizadoEn: { type: string, format: date-time, nullable: true }
-    Collection:
-      type: object
-      required: [id, slug, titulo, tipo, nombreArchivo, publicado]
-      properties:
-        id: { type: integer, format: int64 }
-        slug: { type: string }
-        titulo: { type: string }
-        descripcion: { type: string, nullable: true }
-        tipo: { type: string, enum: [articulos, vocabulario] }
-        incluirTodosArticulos: { type: boolean }
-        nombreArchivo: { type: string, pattern: '^[a-zA-Z0-9_-]+[.]pdf$' }
-        fechaPublicacion: { type: string, format: date, nullable: true }
-        publicado: { type: boolean }
-    CollectionCreate:
-      type: object
-      required: [slug, titulo, tipo, nombreArchivo]
-      properties:
-        slug: { type: string }
-        titulo: { type: string }
-        descripcion: { type: string }
-        tipo: { type: string, enum: [articulos, vocabulario] }
-        incluirTodosArticulos: { type: boolean }
-        nombreArchivo: { type: string, pattern: '^[a-zA-Z0-9_-]+[.]pdf$' }
-        fechaPublicacion: { type: string, format: date }
-    Downloadable:
-      type: object
-      required: [id, slug, titulo, categoria, urlArchivo, publicado, creadoEn]
-      properties:
-        id: { type: integer, format: int64 }
-        slug: { type: string }
-        titulo: { type: string }
-        descripcion: { type: string, nullable: true }
-        categoria: { type: string }
-        fechaPublicacion: { type: string, format: date, nullable: true }
-        urlArchivo: { type: string }
-        urlLectura: { type: string, nullable: true }
-        orden: { type: integer }
-        publicado: { type: boolean }
-        creadoEn: { type: string, format: date-time }
-    DownloadableCreate:
-      type: object
-      required: [slug, titulo, urlArchivo]
-      properties:
-        slug: { type: string }
-        titulo: { type: string }
-        descripcion: { type: string }
-        categoria: { type: string }
-        fechaPublicacion: { type: string, format: date }
-        urlArchivo: { type: string }
-        urlLectura: { type: string }
-    MoviePhrase:
-      type: object
-      required: [id, movieSlug, movieTitle, subtitleNumber, timecode, phrase, createdAt]
-      properties:
-        id: { type: integer, format: int64 }
-        movieSlug: { type: string }
-        movieTitle: { type: string }
-        subtitleNumber: { type: integer, minimum: 1 }
-        timecode: { type: string }
-        phrase: { type: string }
-        tenseLabels: { type: string }
-        notes: { type: string }
-        createdAt: { type: string, format: date-time }
-    MoviePhraseCreate:
-      type: object
-      required: [movieSlug, movieTitle, subtitleNumber, timecode, phrase]
-      properties:
-        movieSlug: { type: string }
-        movieTitle: { type: string }
-        subtitleNumber: { type: integer, minimum: 1 }
-        timecode: { type: string }
-        phrase: { type: string }
-        tenseLabels: { type: string }
-        notes: { type: string }
     Error:
-      type: object
-      required: [code, message]
-      properties: { code: { type: string }, message: { type: string } }
-  responses:
-    BadRequest: { description: Parámetros inválidos, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
-    NotFound: { description: Recurso no encontrado, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+      type: "object"
+      required:
+        - "code"
+        - "message"
+      properties:
+        code:
+          type: "string"
+        message:
+          type: "string"
+      example:
+        code: "RESOURCE_NOT_FOUND"
+        message: "recurso no encontrado"
+    CategoriasBlog:
+      type: "object"
+      properties:
+        slug:
+          type: "string"
+        nombre:
+          type: "string"
+        descripcion:
+          type: "string"
+          nullable: true
+        orden:
+          type: "integer"
+          format: "int32"
+      required:
+        - "slug"
+        - "nombre"
+        - "orden"
+      example:
+        slug: "slug-a"
+        nombre: "nombre-a"
+        descripcion: "descripcion-a"
+        orden: 1
+    CategoriasBlogRequest:
+      type: "object"
+      properties:
+        slug:
+          type: "string"
+        nombre:
+          type: "string"
+        descripcion:
+          type: "string"
+          nullable: true
+        orden:
+          type: "integer"
+          format: "int32"
+      required:
+        - "slug"
+        - "nombre"
+      example:
+        slug: "slug-a"
+        nombre: "nombre-a"
+        descripcion: "descripcion-a"
+        orden: 1
+    CategoriasBlogUpdateRequest:
+      type: "object"
+      properties:
+        nombre:
+          type: "string"
+        descripcion:
+          type: "string"
+          nullable: true
+        orden:
+          type: "integer"
+          format: "int32"
+      required:
+        - "nombre"
+      example:
+        nombre: "nombre-b"
+        descripcion: "descripcion-b"
+        orden: 2
+    Articulos:
+      type: "object"
+      properties:
+        id:
+          type: "integer"
+          format: "int64"
+        ruta:
+          type: "string"
+        slug:
+          type: "string"
+        titulo:
+          type: "string"
+        descripcion:
+          type: "string"
+          nullable: true
+        html:
+          type: "string"
+        urlPublica:
+          type: "string"
+        origen:
+          type: "string"
+        actualizadoEn:
+          type: "string"
+          format: "date-time"
+        categoriaSlug:
+          type: "string"
+          nullable: true
+        fechaPublicacion:
+          type: "string"
+          format: "date"
+          nullable: true
+        nivel:
+          type: "string"
+          nullable: true
+        contenidoTexto:
+          type: "string"
+          nullable: true
+        palabras:
+          type: "integer"
+          format: "int32"
+          nullable: true
+        esArticuloIndice:
+          type: "boolean"
+        usuarioId:
+          type: "string"
+          format: "uuid"
+          nullable: true
+      required:
+        - "id"
+        - "ruta"
+        - "slug"
+        - "titulo"
+        - "html"
+        - "urlPublica"
+        - "origen"
+        - "actualizadoEn"
+        - "esArticuloIndice"
+      example:
+        id: 1
+        ruta: "ruta-a"
+        slug: "slug-a"
+        titulo: "titulo-a"
+        descripcion: "descripcion-a"
+        html: "html-a"
+        urlPublica: "url-publica-a"
+        origen: "origen-a"
+        actualizadoEn: "2026-01-01T10:00:00Z"
+        categoriaSlug: "categoria-slug-a"
+        fechaPublicacion: "2026-01-01"
+        nivel: "nivel-a"
+        contenidoTexto: "contenido-texto-a"
+        palabras: 1
+        esArticuloIndice: true
+        usuarioId: "ad34b7b2-f22a-5d8d-b80a-4d77110a37ed"
+    ArticulosRequest:
+      type: "object"
+      properties:
+        ruta:
+          type: "string"
+        slug:
+          type: "string"
+        titulo:
+          type: "string"
+        descripcion:
+          type: "string"
+          nullable: true
+        html:
+          type: "string"
+        urlPublica:
+          type: "string"
+        origen:
+          type: "string"
+        actualizadoEn:
+          type: "string"
+          format: "date-time"
+        categoriaSlug:
+          type: "string"
+          nullable: true
+        fechaPublicacion:
+          type: "string"
+          format: "date"
+          nullable: true
+        nivel:
+          type: "string"
+          nullable: true
+        contenidoTexto:
+          type: "string"
+          nullable: true
+        palabras:
+          type: "integer"
+          format: "int32"
+          nullable: true
+        esArticuloIndice:
+          type: "boolean"
+        usuarioId:
+          type: "string"
+          format: "uuid"
+          nullable: true
+      required:
+        - "ruta"
+        - "slug"
+        - "titulo"
+        - "html"
+        - "urlPublica"
+      example:
+        ruta: "ruta-a"
+        slug: "slug-a"
+        titulo: "titulo-a"
+        descripcion: "descripcion-a"
+        html: "html-a"
+        urlPublica: "url-publica-a"
+        origen: "origen-a"
+        actualizadoEn: "2026-01-01T10:00:00Z"
+        categoriaSlug: "categoria-slug-a"
+        fechaPublicacion: "2026-01-01"
+        nivel: "nivel-a"
+        contenidoTexto: "contenido-texto-a"
+        palabras: 1
+        esArticuloIndice: true
+        usuarioId: "ad34b7b2-f22a-5d8d-b80a-4d77110a37ed"
+    ArticulosUpdateRequest:
+      type: "object"
+      properties:
+        ruta:
+          type: "string"
+        slug:
+          type: "string"
+        titulo:
+          type: "string"
+        descripcion:
+          type: "string"
+          nullable: true
+        html:
+          type: "string"
+        urlPublica:
+          type: "string"
+        origen:
+          type: "string"
+        actualizadoEn:
+          type: "string"
+          format: "date-time"
+        categoriaSlug:
+          type: "string"
+          nullable: true
+        fechaPublicacion:
+          type: "string"
+          format: "date"
+          nullable: true
+        nivel:
+          type: "string"
+          nullable: true
+        contenidoTexto:
+          type: "string"
+          nullable: true
+        palabras:
+          type: "integer"
+          format: "int32"
+          nullable: true
+        esArticuloIndice:
+          type: "boolean"
+        usuarioId:
+          type: "string"
+          format: "uuid"
+          nullable: true
+      required:
+        - "ruta"
+        - "slug"
+        - "titulo"
+        - "html"
+        - "urlPublica"
+      example:
+        ruta: "ruta-b"
+        slug: "slug-b"
+        titulo: "titulo-b"
+        descripcion: "descripcion-b"
+        html: "html-b"
+        urlPublica: "url-publica-b"
+        origen: "origen-b"
+        actualizadoEn: "2026-02-01T10:00:00Z"
+        categoriaSlug: "categoria-slug-b"
+        fechaPublicacion: "2026-02-01"
+        nivel: "nivel-b"
+        contenidoTexto: "contenido-texto-b"
+        palabras: 2
+        esArticuloIndice: false
+        usuarioId: "fe2ff401-b891-5c02-a991-5f1cf589b915"
+    ComentariosArticulos:
+      type: "object"
+      properties:
+        id:
+          type: "integer"
+          format: "int64"
+        articuloSlug:
+          type: "string"
+        padreId:
+          type: "integer"
+          format: "int64"
+          nullable: true
+        autorId:
+          type: "string"
+          format: "uuid"
+          nullable: true
+        contenido:
+          type: "string"
+        creadoEn:
+          type: "string"
+          format: "date-time"
+        eliminado:
+          type: "boolean"
+        oculto:
+          type: "boolean"
+      required:
+        - "id"
+        - "articuloSlug"
+        - "contenido"
+        - "creadoEn"
+        - "eliminado"
+        - "oculto"
+      example:
+        id: 1
+        articuloSlug: "articulo-slug-a"
+        padreId: 1
+        autorId: "b0a1ea79-faac-5760-95e0-b5ce6c957777"
+        contenido: "contenido-a"
+        creadoEn: "2026-01-01T10:00:00Z"
+        eliminado: true
+        oculto: true
+    ComentariosArticulosRequest:
+      type: "object"
+      properties:
+        articuloSlug:
+          type: "string"
+        padreId:
+          type: "integer"
+          format: "int64"
+          nullable: true
+        autorId:
+          type: "string"
+          format: "uuid"
+          nullable: true
+        contenido:
+          type: "string"
+        creadoEn:
+          type: "string"
+          format: "date-time"
+        eliminado:
+          type: "boolean"
+        oculto:
+          type: "boolean"
+      required:
+        - "articuloSlug"
+        - "contenido"
+      example:
+        articuloSlug: "articulo-slug-a"
+        padreId: 1
+        autorId: "b0a1ea79-faac-5760-95e0-b5ce6c957777"
+        contenido: "contenido-a"
+        creadoEn: "2026-01-01T10:00:00Z"
+        eliminado: true
+        oculto: true
+    ComentariosArticulosUpdateRequest:
+      type: "object"
+      properties:
+        articuloSlug:
+          type: "string"
+        padreId:
+          type: "integer"
+          format: "int64"
+          nullable: true
+        autorId:
+          type: "string"
+          format: "uuid"
+          nullable: true
+        contenido:
+          type: "string"
+        creadoEn:
+          type: "string"
+          format: "date-time"
+        eliminado:
+          type: "boolean"
+        oculto:
+          type: "boolean"
+      required:
+        - "articuloSlug"
+        - "contenido"
+      example:
+        articuloSlug: "articulo-slug-b"
+        padreId: 2
+        autorId: "ac5ca58c-81a6-5a48-a278-f0881641a806"
+        contenido: "contenido-b"
+        creadoEn: "2026-02-01T10:00:00Z"
+        eliminado: false
+        oculto: false
+    ColeccionesMaterial:
+      type: "object"
+      properties:
+        id:
+          type: "integer"
+          format: "int64"
+        slug:
+          type: "string"
+        titulo:
+          type: "string"
+        descripcion:
+          type: "string"
+          nullable: true
+        tipo:
+          type: "string"
+        incluirTodosArticulos:
+          type: "boolean"
+        nombreArchivo:
+          type: "string"
+        fechaPublicacion:
+          type: "string"
+          format: "date"
+          nullable: true
+        publicado:
+          type: "boolean"
+      required:
+        - "id"
+        - "slug"
+        - "titulo"
+        - "tipo"
+        - "incluirTodosArticulos"
+        - "nombreArchivo"
+        - "publicado"
+      example:
+        id: 1
+        slug: "slug-a"
+        titulo: "titulo-a"
+        descripcion: "descripcion-a"
+        tipo: "tipo-a"
+        incluirTodosArticulos: true
+        nombreArchivo: "nombre-archivo-a"
+        fechaPublicacion: "2026-01-01"
+        publicado: true
+    ColeccionesMaterialRequest:
+      type: "object"
+      properties:
+        slug:
+          type: "string"
+        titulo:
+          type: "string"
+        descripcion:
+          type: "string"
+          nullable: true
+        tipo:
+          type: "string"
+        incluirTodosArticulos:
+          type: "boolean"
+        nombreArchivo:
+          type: "string"
+        fechaPublicacion:
+          type: "string"
+          format: "date"
+          nullable: true
+        publicado:
+          type: "boolean"
+      required:
+        - "slug"
+        - "titulo"
+        - "tipo"
+        - "nombreArchivo"
+      example:
+        slug: "slug-a"
+        titulo: "titulo-a"
+        descripcion: "descripcion-a"
+        tipo: "tipo-a"
+        incluirTodosArticulos: true
+        nombreArchivo: "nombre-archivo-a"
+        fechaPublicacion: "2026-01-01"
+        publicado: true
+    ColeccionesMaterialUpdateRequest:
+      type: "object"
+      properties:
+        slug:
+          type: "string"
+        titulo:
+          type: "string"
+        descripcion:
+          type: "string"
+          nullable: true
+        tipo:
+          type: "string"
+        incluirTodosArticulos:
+          type: "boolean"
+        nombreArchivo:
+          type: "string"
+        fechaPublicacion:
+          type: "string"
+          format: "date"
+          nullable: true
+        publicado:
+          type: "boolean"
+      required:
+        - "slug"
+        - "titulo"
+        - "tipo"
+        - "nombreArchivo"
+      example:
+        slug: "slug-b"
+        titulo: "titulo-b"
+        descripcion: "descripcion-b"
+        tipo: "tipo-b"
+        incluirTodosArticulos: false
+        nombreArchivo: "nombre-archivo-b"
+        fechaPublicacion: "2026-02-01"
+        publicado: false
+    ColeccionArticulos:
+      type: "object"
+      properties:
+        coleccionId:
+          type: "integer"
+          format: "int64"
+        articuloSlug:
+          type: "string"
+        orden:
+          type: "integer"
+          format: "int32"
+      required:
+        - "coleccionId"
+        - "articuloSlug"
+        - "orden"
+      example:
+        coleccionId: 1
+        articuloSlug: "articulo-slug-a"
+        orden: 1
+    ColeccionArticulosRequest:
+      type: "object"
+      properties:
+        coleccionId:
+          type: "integer"
+          format: "int64"
+        articuloSlug:
+          type: "string"
+        orden:
+          type: "integer"
+          format: "int32"
+      required:
+        - "coleccionId"
+        - "articuloSlug"
+      example:
+        coleccionId: 1
+        articuloSlug: "articulo-slug-a"
+        orden: 1
+    ColeccionArticulosUpdateRequest:
+      type: "object"
+      properties:
+        orden:
+          type: "integer"
+          format: "int32"
+      example:
+        orden: 2
+    PaginasBlog:
+      type: "object"
+      properties:
+        ruta:
+          type: "string"
+        titulo:
+          type: "string"
+        descripcion:
+          type: "string"
+          nullable: true
+        html:
+          type: "string"
+        urlPublica:
+          type: "string"
+        actualizadoEn:
+          type: "string"
+          format: "date-time"
+          nullable: true
+      required:
+        - "ruta"
+        - "titulo"
+        - "html"
+        - "urlPublica"
+      example:
+        ruta: "ruta-a"
+        titulo: "titulo-a"
+        descripcion: "descripcion-a"
+        html: "html-a"
+        urlPublica: "url-publica-a"
+        actualizadoEn: "2026-01-01T10:00:00Z"
+    PaginasBlogRequest:
+      type: "object"
+      properties:
+        ruta:
+          type: "string"
+        titulo:
+          type: "string"
+        descripcion:
+          type: "string"
+          nullable: true
+        html:
+          type: "string"
+        urlPublica:
+          type: "string"
+        actualizadoEn:
+          type: "string"
+          format: "date-time"
+          nullable: true
+      required:
+        - "ruta"
+        - "titulo"
+        - "html"
+        - "urlPublica"
+      example:
+        ruta: "ruta-a"
+        titulo: "titulo-a"
+        descripcion: "descripcion-a"
+        html: "html-a"
+        urlPublica: "url-publica-a"
+        actualizadoEn: "2026-01-01T10:00:00Z"
+    PaginasBlogUpdateRequest:
+      type: "object"
+      properties:
+        titulo:
+          type: "string"
+        descripcion:
+          type: "string"
+          nullable: true
+        html:
+          type: "string"
+        urlPublica:
+          type: "string"
+        actualizadoEn:
+          type: "string"
+          format: "date-time"
+          nullable: true
+      required:
+        - "titulo"
+        - "html"
+        - "urlPublica"
+      example:
+        titulo: "titulo-b"
+        descripcion: "descripcion-b"
+        html: "html-b"
+        urlPublica: "url-publica-b"
+        actualizadoEn: "2026-02-01T10:00:00Z"
+    RecursosDescargables:
+      type: "object"
+      properties:
+        id:
+          type: "integer"
+          format: "int64"
+        slug:
+          type: "string"
+        titulo:
+          type: "string"
+        descripcion:
+          type: "string"
+          nullable: true
+        categoria:
+          type: "string"
+        fechaPublicacion:
+          type: "string"
+          format: "date"
+          nullable: true
+        urlArchivo:
+          type: "string"
+        urlLectura:
+          type: "string"
+          nullable: true
+        orden:
+          type: "integer"
+          format: "int32"
+        publicado:
+          type: "boolean"
+        creadoEn:
+          type: "string"
+          format: "date-time"
+      required:
+        - "id"
+        - "slug"
+        - "titulo"
+        - "categoria"
+        - "urlArchivo"
+        - "orden"
+        - "publicado"
+        - "creadoEn"
+      example:
+        id: 1
+        slug: "slug-a"
+        titulo: "titulo-a"
+        descripcion: "descripcion-a"
+        categoria: "categoria-a"
+        fechaPublicacion: "2026-01-01"
+        urlArchivo: "url-archivo-a"
+        urlLectura: "url-lectura-a"
+        orden: 1
+        publicado: true
+        creadoEn: "2026-01-01T10:00:00Z"
+    RecursosDescargablesRequest:
+      type: "object"
+      properties:
+        slug:
+          type: "string"
+        titulo:
+          type: "string"
+        descripcion:
+          type: "string"
+          nullable: true
+        categoria:
+          type: "string"
+        fechaPublicacion:
+          type: "string"
+          format: "date"
+          nullable: true
+        urlArchivo:
+          type: "string"
+        urlLectura:
+          type: "string"
+          nullable: true
+        orden:
+          type: "integer"
+          format: "int32"
+        publicado:
+          type: "boolean"
+        creadoEn:
+          type: "string"
+          format: "date-time"
+      required:
+        - "slug"
+        - "titulo"
+        - "urlArchivo"
+      example:
+        slug: "slug-a"
+        titulo: "titulo-a"
+        descripcion: "descripcion-a"
+        categoria: "categoria-a"
+        fechaPublicacion: "2026-01-01"
+        urlArchivo: "url-archivo-a"
+        urlLectura: "url-lectura-a"
+        orden: 1
+        publicado: true
+        creadoEn: "2026-01-01T10:00:00Z"
+    RecursosDescargablesUpdateRequest:
+      type: "object"
+      properties:
+        slug:
+          type: "string"
+        titulo:
+          type: "string"
+        descripcion:
+          type: "string"
+          nullable: true
+        categoria:
+          type: "string"
+        fechaPublicacion:
+          type: "string"
+          format: "date"
+          nullable: true
+        urlArchivo:
+          type: "string"
+        urlLectura:
+          type: "string"
+          nullable: true
+        orden:
+          type: "integer"
+          format: "int32"
+        publicado:
+          type: "boolean"
+        creadoEn:
+          type: "string"
+          format: "date-time"
+      required:
+        - "slug"
+        - "titulo"
+        - "urlArchivo"
+      example:
+        slug: "slug-b"
+        titulo: "titulo-b"
+        descripcion: "descripcion-b"
+        categoria: "categoria-b"
+        fechaPublicacion: "2026-02-01"
+        urlArchivo: "url-archivo-b"
+        urlLectura: "url-lectura-b"
+        orden: 2
+        publicado: false
+        creadoEn: "2026-02-01T10:00:00Z"
+    MovieSubtitlePhrases:
+      type: "object"
+      properties:
+        id:
+          type: "integer"
+          format: "int64"
+        movieSlug:
+          type: "string"
+        movieTitle:
+          type: "string"
+        subtitleNumber:
+          type: "integer"
+          format: "int32"
+        timecode:
+          type: "string"
+        phrase:
+          type: "string"
+        tenseLabels:
+          type: "string"
+        notes:
+          type: "string"
+        createdAt:
+          type: "string"
+          format: "date-time"
+      required:
+        - "id"
+        - "movieSlug"
+        - "movieTitle"
+        - "subtitleNumber"
+        - "timecode"
+        - "phrase"
+        - "tenseLabels"
+        - "notes"
+        - "createdAt"
+      example:
+        id: 1
+        movieSlug: "movie-slug-a"
+        movieTitle: "movie-title-a"
+        subtitleNumber: 1
+        timecode: "timecode-a"
+        phrase: "phrase-a"
+        tenseLabels: "tense-labels-a"
+        notes: "notes-a"
+        createdAt: "2026-01-01T10:00:00Z"
+    MovieSubtitlePhrasesRequest:
+      type: "object"
+      properties:
+        movieSlug:
+          type: "string"
+        movieTitle:
+          type: "string"
+        subtitleNumber:
+          type: "integer"
+          format: "int32"
+        timecode:
+          type: "string"
+        phrase:
+          type: "string"
+        tenseLabels:
+          type: "string"
+        notes:
+          type: "string"
+        createdAt:
+          type: "string"
+          format: "date-time"
+      required:
+        - "movieSlug"
+        - "movieTitle"
+        - "subtitleNumber"
+        - "timecode"
+        - "phrase"
+      example:
+        movieSlug: "movie-slug-a"
+        movieTitle: "movie-title-a"
+        subtitleNumber: 1
+        timecode: "timecode-a"
+        phrase: "phrase-a"
+        tenseLabels: "tense-labels-a"
+        notes: "notes-a"
+        createdAt: "2026-01-01T10:00:00Z"
+    MovieSubtitlePhrasesUpdateRequest:
+      type: "object"
+      properties:
+        movieSlug:
+          type: "string"
+        movieTitle:
+          type: "string"
+        subtitleNumber:
+          type: "integer"
+          format: "int32"
+        timecode:
+          type: "string"
+        phrase:
+          type: "string"
+        tenseLabels:
+          type: "string"
+        notes:
+          type: "string"
+        createdAt:
+          type: "string"
+          format: "date-time"
+      required:
+        - "movieSlug"
+        - "movieTitle"
+        - "subtitleNumber"
+        - "timecode"
+        - "phrase"
+      example:
+        movieSlug: "movie-slug-b"
+        movieTitle: "movie-title-b"
+        subtitleNumber: 2
+        timecode: "timecode-b"
+        phrase: "phrase-b"
+        tenseLabels: "tense-labels-b"
+        notes: "notes-b"
+        createdAt: "2026-02-01T10:00:00Z"
+    Lecturas:
+      type: "object"
+      properties:
+        usuarioId:
+          type: "string"
+          format: "uuid"
+        articuloUrl:
+          type: "string"
+        leidoEn:
+          type: "string"
+          format: "date-time"
+      required:
+        - "usuarioId"
+        - "articuloUrl"
+        - "leidoEn"
+      example:
+        usuarioId: "cbf9b89f-6298-57ab-8b7a-df1d9432d4f0"
+        articuloUrl: "articulo-url-a"
+        leidoEn: "2026-01-01T10:00:00Z"
+    LecturasRequest:
+      type: "object"
+      properties:
+        usuarioId:
+          type: "string"
+          format: "uuid"
+        articuloUrl:
+          type: "string"
+        leidoEn:
+          type: "string"
+          format: "date-time"
+      required:
+        - "usuarioId"
+        - "articuloUrl"
+      example:
+        usuarioId: "cbf9b89f-6298-57ab-8b7a-df1d9432d4f0"
+        articuloUrl: "articulo-url-a"
+        leidoEn: "2026-01-01T10:00:00Z"
+    LecturasUpdateRequest:
+      type: "object"
+      properties:
+        leidoEn:
+          type: "string"
+          format: "date-time"
+      example:
+        leidoEn: "2026-02-01T10:00:00Z"
+    RecursosGuardados:
+      type: "object"
+      properties:
+        usuarioId:
+          type: "string"
+          format: "uuid"
+        tipo:
+          type: "string"
+        referencia:
+          type: "string"
+        guardadoEn:
+          type: "string"
+          format: "date-time"
+      required:
+        - "usuarioId"
+        - "tipo"
+        - "referencia"
+        - "guardadoEn"
+      example:
+        usuarioId: "f278f158-1f03-5429-b5fd-2094b46a6bb3"
+        tipo: "tipo-a"
+        referencia: "referencia-a"
+        guardadoEn: "2026-01-01T10:00:00Z"
+    RecursosGuardadosRequest:
+      type: "object"
+      properties:
+        usuarioId:
+          type: "string"
+          format: "uuid"
+        tipo:
+          type: "string"
+        referencia:
+          type: "string"
+        guardadoEn:
+          type: "string"
+          format: "date-time"
+      required:
+        - "usuarioId"
+        - "tipo"
+        - "referencia"
+      example:
+        usuarioId: "f278f158-1f03-5429-b5fd-2094b46a6bb3"
+        tipo: "tipo-a"
+        referencia: "referencia-a"
+        guardadoEn: "2026-01-01T10:00:00Z"
+    RecursosGuardadosUpdateRequest:
+      type: "object"
+      properties:
+        guardadoEn:
+          type: "string"
+          format: "date-time"
+      example:
+        guardadoEn: "2026-02-01T10:00:00Z"

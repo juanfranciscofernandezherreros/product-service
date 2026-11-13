@@ -1,102 +1,885 @@
-openapi: 3.0.3
+# Generado desde el DDL por el generador de servicios. No editar a mano.
+openapi: "3.0.3"
 info:
-  title: Access (Roles & Permissions) API
-  description: Dominio de roles, permisos y asignaciones. Derivado del esquema PostgreSQL.
-  version: 1.0.0
+  title: "access-service API"
+  version: "1.0.0"
+  description: "CRUD de las tablas de access-service, derivado del esquema de base de datos."
 servers:
-  - url: https://api.tudominio.com/v1
+  - url: "http://localhost:8081"
+    description: "Local"
+tags:
+  - name: "roles"
+  - name: "permisos"
+  - name: "roles_permisos"
+  - name: "usuarios_roles"
 paths:
-  /v1/access/roles:
-    get:
-      summary: Listar roles
-      operationId: listRoles
-      responses:
-        '200': { description: OK, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/Role' } } } } }
+  "/v1/roles":
     post:
-      summary: Crear rol
-      operationId: createRole
-      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/Role' } } } }
+      tags:
+        - "roles"
+      operationId: "createRoles"
+      summary: "Crea un registro de roles"
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/RolesRequest"
       responses:
-        '201': { description: Creado, content: { application/json: { schema: { $ref: '#/components/schemas/Role' } } } }
-        '400': { $ref: '#/components/responses/BadRequest' }
-        '409': { description: Rol ya existe (PK codigo), content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
-  /v1/access/roles/{codigo}:
-    parameters: [ { name: codigo, in: path, required: true, schema: { type: string } } ]
+        "201":
+          description: "Creado"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Roles"
+        "400":
+          description: "Peticion no valida"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "409":
+          description: "Ya existe o incumple una restriccion"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
     get:
-      summary: Obtener rol
-      operationId: getRole
+      tags:
+        - "roles"
+      operationId: "listRoles"
+      summary: "Lista roles (paginado)"
+      parameters:
+        - name: "page"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            default: 0
+        - name: "size"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            default: 20
+            maximum: 100
       responses:
-        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/Role' } } } }
-        '404': { $ref: '#/components/responses/NotFound' }
+        "200":
+          description: "Pagina de resultados"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                properties:
+                  items:
+                    type: "array"
+                    items:
+                      "$ref": "#/components/schemas/Roles"
+                  total:
+                    type: "integer"
+                    format: "int64"
+                  page:
+                    type: "integer"
+                  size:
+                    type: "integer"
+        "400":
+          description: "Parametro no valido"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+  "/v1/roles/{codigo}":
+    get:
+      tags:
+        - "roles"
+      operationId: "getRoles"
+      summary: "Obtiene un registro de roles"
+      parameters:
+        - name: "codigo"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+          example: "codigo-a"
+      responses:
+        "200":
+          description: "Encontrado"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Roles"
+        "404":
+          description: "No existe"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+    put:
+      tags:
+        - "roles"
+      operationId: "updateRoles"
+      summary: "Modifica un registro de roles"
+      parameters:
+        - name: "codigo"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+          example: "codigo-a"
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/RolesUpdateRequest"
+      responses:
+        "200":
+          description: "Modificado"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Roles"
+        "400":
+          description: "Peticion no valida"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "404":
+          description: "No existe"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "409":
+          description: "Incumple una restriccion"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
     delete:
-      summary: Eliminar rol
-      operationId: deleteRole
-      responses: { '204': { description: Eliminado }, '404': { $ref: '#/components/responses/NotFound' } }
-  /v1/access/roles/{codigo}/permissions:
-    parameters: [ { name: codigo, in: path, required: true, schema: { type: string } } ]
-    get:
-      summary: Permisos del rol
-      operationId: listRolePermissions
+      tags:
+        - "roles"
+      operationId: "deleteRoles"
+      summary: "Borra un registro de roles"
+      parameters:
+        - name: "codigo"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+          example: "codigo-a"
       responses:
-        '200': { description: OK, content: { application/json: { schema: { type: array, items: { type: string } } } } }
+        "204":
+          description: "Borrado"
+        "404":
+          description: "No existe"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "409":
+          description: "Lo impide una restriccion"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+  "/v1/permisos":
     post:
-      summary: Asignar permiso al rol
-      operationId: addRolePermission
-      requestBody: { required: true, content: { application/json: { schema: { type: object, required: [permiso], properties: { permiso: { type: string } } } } } }
+      tags:
+        - "permisos"
+      operationId: "createPermisos"
+      summary: "Crea un registro de permisos"
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/PermisosRequest"
       responses:
-        '201': { description: Asignado }
-        '400': { $ref: '#/components/responses/BadRequest' }
-        '404': { $ref: '#/components/responses/NotFound' }
-  /v1/access/permissions:
+        "201":
+          description: "Creado"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Permisos"
+        "400":
+          description: "Peticion no valida"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "409":
+          description: "Ya existe o incumple una restriccion"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
     get:
-      summary: Listar permisos
-      operationId: listPermissions
+      tags:
+        - "permisos"
+      operationId: "listPermisos"
+      summary: "Lista permisos (paginado)"
+      parameters:
+        - name: "page"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            default: 0
+        - name: "size"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            default: 20
+            maximum: 100
       responses:
-        '200': { description: OK, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/Permission' } } } } }
-    post:
-      summary: Crear permiso
-      operationId: createPermission
-      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/Permission' } } } }
-      responses:
-        '201': { description: Creado, content: { application/json: { schema: { $ref: '#/components/schemas/Permission' } } } }
-        '400': { $ref: '#/components/responses/BadRequest' }
-        '409': { description: Permiso ya existe (PK codigo), content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
-  /v1/access/users/{userId}/roles:
-    parameters: [ { name: userId, in: path, required: true, schema: { type: string, format: uuid } } ]
+        "200":
+          description: "Pagina de resultados"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                properties:
+                  items:
+                    type: "array"
+                    items:
+                      "$ref": "#/components/schemas/Permisos"
+                  total:
+                    type: "integer"
+                    format: "int64"
+                  page:
+                    type: "integer"
+                  size:
+                    type: "integer"
+        "400":
+          description: "Parametro no valido"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+  "/v1/permisos/{codigo}":
     get:
-      summary: Roles de un usuario
-      operationId: listUserRoles
+      tags:
+        - "permisos"
+      operationId: "getPermisos"
+      summary: "Obtiene un registro de permisos"
+      parameters:
+        - name: "codigo"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+          example: "codigo-a"
       responses:
-        '200': { description: OK, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/UserRole' } } } } }
+        "200":
+          description: "Encontrado"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Permisos"
+        "404":
+          description: "No existe"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+    put:
+      tags:
+        - "permisos"
+      operationId: "updatePermisos"
+      summary: "Modifica un registro de permisos"
+      parameters:
+        - name: "codigo"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+          example: "codigo-a"
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/PermisosUpdateRequest"
+      responses:
+        "200":
+          description: "Modificado"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Permisos"
+        "400":
+          description: "Peticion no valida"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "404":
+          description: "No existe"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "409":
+          description: "Incumple una restriccion"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+    delete:
+      tags:
+        - "permisos"
+      operationId: "deletePermisos"
+      summary: "Borra un registro de permisos"
+      parameters:
+        - name: "codigo"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+          example: "codigo-a"
+      responses:
+        "204":
+          description: "Borrado"
+        "404":
+          description: "No existe"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "409":
+          description: "Lo impide una restriccion"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+  "/v1/roles-permisos":
     post:
-      summary: Asignar rol a un usuario
-      operationId: assignUserRole
-      requestBody: { required: true, content: { application/json: { schema: { type: object, required: [rol], properties: { rol: { type: string }, asignadoPor: { type: string, format: uuid } } } } } }
+      tags:
+        - "roles_permisos"
+      operationId: "createRolesPermisos"
+      summary: "Crea un registro de roles_permisos"
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/RolesPermisosRequest"
       responses:
-        '201': { description: Asignado, content: { application/json: { schema: { $ref: '#/components/schemas/UserRole' } } } }
-        '400': { $ref: '#/components/responses/BadRequest' }
+        "201":
+          description: "Creado"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/RolesPermisos"
+        "400":
+          description: "Peticion no valida"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "409":
+          description: "Ya existe o incumple una restriccion"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+    get:
+      tags:
+        - "roles_permisos"
+      operationId: "listRolesPermisos"
+      summary: "Lista roles_permisos (paginado)"
+      parameters:
+        - name: "rol"
+          in: "query"
+          required: false
+          schema:
+            type: "string"
+          example: "rol-a"
+        - name: "permiso"
+          in: "query"
+          required: false
+          schema:
+            type: "string"
+          example: "permiso-a"
+        - name: "page"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            default: 0
+        - name: "size"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            default: 20
+            maximum: 100
+      responses:
+        "200":
+          description: "Pagina de resultados"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                properties:
+                  items:
+                    type: "array"
+                    items:
+                      "$ref": "#/components/schemas/RolesPermisos"
+                  total:
+                    type: "integer"
+                    format: "int64"
+                  page:
+                    type: "integer"
+                  size:
+                    type: "integer"
+        "400":
+          description: "Parametro no valido"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+  "/v1/roles-permisos/{rol}/{permiso}":
+    get:
+      tags:
+        - "roles_permisos"
+      operationId: "getRolesPermisos"
+      summary: "Obtiene un registro de roles_permisos"
+      parameters:
+        - name: "rol"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+          example: "rol-a"
+        - name: "permiso"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+          example: "permiso-a"
+      responses:
+        "200":
+          description: "Encontrado"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/RolesPermisos"
+        "404":
+          description: "No existe"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+    delete:
+      tags:
+        - "roles_permisos"
+      operationId: "deleteRolesPermisos"
+      summary: "Borra un registro de roles_permisos"
+      parameters:
+        - name: "rol"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+          example: "rol-a"
+        - name: "permiso"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+          example: "permiso-a"
+      responses:
+        "204":
+          description: "Borrado"
+        "404":
+          description: "No existe"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "409":
+          description: "Lo impide una restriccion"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+  "/v1/usuarios-roles":
+    post:
+      tags:
+        - "usuarios_roles"
+      operationId: "createUsuariosRoles"
+      summary: "Crea un registro de usuarios_roles"
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/UsuariosRolesRequest"
+      responses:
+        "201":
+          description: "Creado"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/UsuariosRoles"
+        "400":
+          description: "Peticion no valida"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "409":
+          description: "Ya existe o incumple una restriccion"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+    get:
+      tags:
+        - "usuarios_roles"
+      operationId: "listUsuariosRoles"
+      summary: "Lista usuarios_roles (paginado)"
+      parameters:
+        - name: "usuarioId"
+          in: "query"
+          required: false
+          schema:
+            type: "string"
+            format: "uuid"
+          example: "2a48f88a-db7c-582c-aad4-be969ff1089a"
+        - name: "rol"
+          in: "query"
+          required: false
+          schema:
+            type: "string"
+          example: "rol-a"
+        - name: "page"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            default: 0
+        - name: "size"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            default: 20
+            maximum: 100
+      responses:
+        "200":
+          description: "Pagina de resultados"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                properties:
+                  items:
+                    type: "array"
+                    items:
+                      "$ref": "#/components/schemas/UsuariosRoles"
+                  total:
+                    type: "integer"
+                    format: "int64"
+                  page:
+                    type: "integer"
+                  size:
+                    type: "integer"
+        "400":
+          description: "Parametro no valido"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+  "/v1/usuarios-roles/{usuarioId}/{rol}":
+    get:
+      tags:
+        - "usuarios_roles"
+      operationId: "getUsuariosRoles"
+      summary: "Obtiene un registro de usuarios_roles"
+      parameters:
+        - name: "usuarioId"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+            format: "uuid"
+          example: "2a48f88a-db7c-582c-aad4-be969ff1089a"
+        - name: "rol"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+          example: "rol-a"
+      responses:
+        "200":
+          description: "Encontrado"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/UsuariosRoles"
+        "404":
+          description: "No existe"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+    put:
+      tags:
+        - "usuarios_roles"
+      operationId: "updateUsuariosRoles"
+      summary: "Modifica un registro de usuarios_roles"
+      parameters:
+        - name: "usuarioId"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+            format: "uuid"
+          example: "2a48f88a-db7c-582c-aad4-be969ff1089a"
+        - name: "rol"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+          example: "rol-a"
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/UsuariosRolesUpdateRequest"
+      responses:
+        "200":
+          description: "Modificado"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/UsuariosRoles"
+        "400":
+          description: "Peticion no valida"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "404":
+          description: "No existe"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "409":
+          description: "Incumple una restriccion"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+    delete:
+      tags:
+        - "usuarios_roles"
+      operationId: "deleteUsuariosRoles"
+      summary: "Borra un registro de usuarios_roles"
+      parameters:
+        - name: "usuarioId"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+            format: "uuid"
+          example: "2a48f88a-db7c-582c-aad4-be969ff1089a"
+        - name: "rol"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+          example: "rol-a"
+      responses:
+        "204":
+          description: "Borrado"
+        "404":
+          description: "No existe"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "409":
+          description: "Lo impide una restriccion"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
 components:
   schemas:
-    Role:
-      type: object
-      required: [codigo, descripcion]
-      properties: { codigo: { type: string }, descripcion: { type: string } }
-    Permission:
-      type: object
-      required: [codigo, descripcion]
-      properties: { codigo: { type: string }, descripcion: { type: string } }
-    UserRole:
-      type: object
-      required: [usuarioId, rol, creadoEn]
-      properties:
-        usuarioId: { type: string, format: uuid }
-        rol: { type: string }
-        asignadoPor: { type: string, format: uuid, nullable: true }
-        creadoEn: { type: string, format: date-time }
     Error:
-      type: object
-      required: [code, message]
-      properties: { code: { type: string }, message: { type: string } }
-  responses:
-    BadRequest: { description: Parámetros inválidos, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
-    NotFound: { description: Recurso no encontrado, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+      type: "object"
+      required:
+        - "code"
+        - "message"
+      properties:
+        code:
+          type: "string"
+        message:
+          type: "string"
+      example:
+        code: "RESOURCE_NOT_FOUND"
+        message: "recurso no encontrado"
+    Roles:
+      type: "object"
+      properties:
+        codigo:
+          type: "string"
+        descripcion:
+          type: "string"
+      required:
+        - "codigo"
+        - "descripcion"
+      example:
+        codigo: "codigo-a"
+        descripcion: "descripcion-a"
+    RolesRequest:
+      type: "object"
+      properties:
+        codigo:
+          type: "string"
+        descripcion:
+          type: "string"
+      required:
+        - "codigo"
+        - "descripcion"
+      example:
+        codigo: "codigo-a"
+        descripcion: "descripcion-a"
+    RolesUpdateRequest:
+      type: "object"
+      properties:
+        descripcion:
+          type: "string"
+      required:
+        - "descripcion"
+      example:
+        descripcion: "descripcion-b"
+    Permisos:
+      type: "object"
+      properties:
+        codigo:
+          type: "string"
+        descripcion:
+          type: "string"
+      required:
+        - "codigo"
+        - "descripcion"
+      example:
+        codigo: "codigo-a"
+        descripcion: "descripcion-a"
+    PermisosRequest:
+      type: "object"
+      properties:
+        codigo:
+          type: "string"
+        descripcion:
+          type: "string"
+      required:
+        - "codigo"
+        - "descripcion"
+      example:
+        codigo: "codigo-a"
+        descripcion: "descripcion-a"
+    PermisosUpdateRequest:
+      type: "object"
+      properties:
+        descripcion:
+          type: "string"
+      required:
+        - "descripcion"
+      example:
+        descripcion: "descripcion-b"
+    RolesPermisos:
+      type: "object"
+      properties:
+        rol:
+          type: "string"
+        permiso:
+          type: "string"
+      required:
+        - "rol"
+        - "permiso"
+      example:
+        rol: "rol-a"
+        permiso: "permiso-a"
+    RolesPermisosRequest:
+      type: "object"
+      properties:
+        rol:
+          type: "string"
+        permiso:
+          type: "string"
+      required:
+        - "rol"
+        - "permiso"
+      example:
+        rol: "rol-a"
+        permiso: "permiso-a"
+    UsuariosRoles:
+      type: "object"
+      properties:
+        usuarioId:
+          type: "string"
+          format: "uuid"
+        rol:
+          type: "string"
+        asignadoPor:
+          type: "string"
+          format: "uuid"
+          nullable: true
+        creadoEn:
+          type: "string"
+          format: "date-time"
+      required:
+        - "usuarioId"
+        - "rol"
+        - "creadoEn"
+      example:
+        usuarioId: "2a48f88a-db7c-582c-aad4-be969ff1089a"
+        rol: "rol-a"
+        asignadoPor: "513a9e66-d486-5c9b-80c1-feff54306589"
+        creadoEn: "2026-01-01T10:00:00Z"
+    UsuariosRolesRequest:
+      type: "object"
+      properties:
+        usuarioId:
+          type: "string"
+          format: "uuid"
+        rol:
+          type: "string"
+        asignadoPor:
+          type: "string"
+          format: "uuid"
+          nullable: true
+        creadoEn:
+          type: "string"
+          format: "date-time"
+      required:
+        - "usuarioId"
+        - "rol"
+      example:
+        usuarioId: "2a48f88a-db7c-582c-aad4-be969ff1089a"
+        rol: "rol-a"
+        asignadoPor: "513a9e66-d486-5c9b-80c1-feff54306589"
+        creadoEn: "2026-01-01T10:00:00Z"
+    UsuariosRolesUpdateRequest:
+      type: "object"
+      properties:
+        asignadoPor:
+          type: "string"
+          format: "uuid"
+          nullable: true
+        creadoEn:
+          type: "string"
+          format: "date-time"
+      example:
+        asignadoPor: "4965f070-96b3-5eda-bf6e-984d1ed95473"
+        creadoEn: "2026-02-01T10:00:00Z"

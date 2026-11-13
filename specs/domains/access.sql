@@ -1,26 +1,35 @@
 -- database: access_db
--- Dominio Access (roles, permisos, asignaciones). FK a auth.users eliminadas (uuid simple).
+-- Dominio access: 4 tablas copiadas tal cual de specs/supabase-schema.sql.
+-- Generado por scripts/split_domains.py a partir de specs/domain-map.txt. No editar a mano.
+-- Claves foraneas omitidas (apuntan a tablas de fuera del servicio; en Supabase si existen):
+--   usuarios_roles.usuarios_roles_usuario_id_fkey -> auth.users(id)
+--   usuarios_roles.usuarios_roles_asignado_por_fkey -> auth.users(id)
 
 CREATE TABLE roles (
-    codigo      VARCHAR(64)  PRIMARY KEY,
-    descripcion VARCHAR(255) NOT NULL
+    codigo text NOT NULL,
+    descripcion text NOT NULL,
+    CONSTRAINT roles_pkey PRIMARY KEY (codigo)
 );
 
 CREATE TABLE permisos (
-    codigo      VARCHAR(64)  PRIMARY KEY,
-    descripcion VARCHAR(255) NOT NULL
+    codigo text NOT NULL,
+    descripcion text NOT NULL,
+    CONSTRAINT permisos_pkey PRIMARY KEY (codigo)
 );
 
 CREATE TABLE roles_permisos (
-    rol     VARCHAR(64) NOT NULL REFERENCES roles(codigo) ON DELETE CASCADE,
-    permiso VARCHAR(64) NOT NULL REFERENCES permisos(codigo) ON DELETE CASCADE,
-    CONSTRAINT roles_permisos_pkey PRIMARY KEY (rol, permiso)
+    rol text NOT NULL,
+    permiso text NOT NULL,
+    CONSTRAINT roles_permisos_pkey PRIMARY KEY (rol, permiso),
+    CONSTRAINT roles_permisos_rol_fkey FOREIGN KEY (rol) REFERENCES roles(codigo) ON DELETE CASCADE,
+    CONSTRAINT roles_permisos_permiso_fkey FOREIGN KEY (permiso) REFERENCES permisos(codigo) ON DELETE CASCADE
 );
 
 CREATE TABLE usuarios_roles (
-    usuario_id   UUID        NOT NULL,
-    rol          VARCHAR(64) NOT NULL REFERENCES roles(codigo) ON DELETE CASCADE,
-    asignado_por UUID,
-    creado_en    TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
-    CONSTRAINT usuarios_roles_pkey PRIMARY KEY (usuario_id, rol)
+    usuario_id uuid NOT NULL,
+    rol text NOT NULL,
+    asignado_por uuid,
+    creado_en timestamp with time zone NOT NULL DEFAULT now(),
+    CONSTRAINT usuarios_roles_pkey PRIMARY KEY (usuario_id, rol),
+    CONSTRAINT usuarios_roles_rol_fkey FOREIGN KEY (rol) REFERENCES roles(codigo) ON DELETE CASCADE
 );

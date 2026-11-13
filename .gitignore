@@ -25,3 +25,7 @@ Thumbs.db
 
 # Contexto generado por run-ai-crud (por servicio)
 .ai/project-context.txt
+
+# Python
+__pycache__/
+*.pyc

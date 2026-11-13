@@ -1,147 +1,1494 @@
-openapi: 3.0.3
+# Generado desde el DDL por el generador de servicios. No editar a mano.
+openapi: "3.0.3"
 info:
-  title: Social & Messaging API
-  description: Dominio social (perfiles públicos, seguimientos) y mensajería privada. Derivado del esquema PostgreSQL.
-  version: 1.0.0
+  title: "social-service API"
+  version: "1.0.0"
+  description: "CRUD de las tablas de social-service, derivado del esquema de base de datos."
 servers:
-  - url: https://api.tudominio.com/v1
+  - url: "http://localhost:8087"
+    description: "Local"
+tags:
+  - name: "perfiles"
+  - name: "perfiles_publicos"
+  - name: "seguimientos"
+  - name: "mensajes_privados"
+  - name: "solicitudes_mensaje"
+  - name: "mensajes_vistos"
 paths:
-  /v1/social/public-profiles:
+  "/v1/perfiles":
     post:
-      summary: Crear perfil público
-      operationId: createPublicProfile
-      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/PublicProfileCreate' } } } }
+      tags:
+        - "perfiles"
+      operationId: "createPerfiles"
+      summary: "Crea un registro de perfiles"
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/PerfilesRequest"
       responses:
-        '201': { description: Creado, content: { application/json: { schema: { $ref: '#/components/schemas/PublicProfile' } } } }
-        '400': { $ref: '#/components/responses/BadRequest' }
-        '409': { description: Alias ya en uso (UNIQUE alias), content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
-  /v1/social/public-profiles/{userId}:
-    parameters: [ { name: userId, in: path, required: true, schema: { type: string, format: uuid } } ]
+        "201":
+          description: "Creado"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Perfiles"
+        "400":
+          description: "Peticion no valida"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "409":
+          description: "Ya existe o incumple una restriccion"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
     get:
-      summary: Obtener perfil público
-      operationId: getPublicProfile
+      tags:
+        - "perfiles"
+      operationId: "listPerfiles"
+      summary: "Lista perfiles (paginado)"
+      parameters:
+        - name: "page"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            default: 0
+        - name: "size"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            default: 20
+            maximum: 100
       responses:
-        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/PublicProfile' } } } }
-        '404': { $ref: '#/components/responses/NotFound' }
+        "200":
+          description: "Pagina de resultados"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                properties:
+                  items:
+                    type: "array"
+                    items:
+                      "$ref": "#/components/schemas/Perfiles"
+                  total:
+                    type: "integer"
+                    format: "int64"
+                  page:
+                    type: "integer"
+                  size:
+                    type: "integer"
+        "400":
+          description: "Parametro no valido"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+  "/v1/perfiles/{usuarioId}":
+    get:
+      tags:
+        - "perfiles"
+      operationId: "getPerfiles"
+      summary: "Obtiene un registro de perfiles"
+      parameters:
+        - name: "usuarioId"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+            format: "uuid"
+          example: "f0e20219-9816-5090-a5cb-059b79827d4e"
+      responses:
+        "200":
+          description: "Encontrado"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Perfiles"
+        "404":
+          description: "No existe"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
     put:
-      summary: Actualizar perfil público
-      operationId: updatePublicProfile
-      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/PublicProfileUpdate' } } } }
+      tags:
+        - "perfiles"
+      operationId: "updatePerfiles"
+      summary: "Modifica un registro de perfiles"
+      parameters:
+        - name: "usuarioId"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+            format: "uuid"
+          example: "f0e20219-9816-5090-a5cb-059b79827d4e"
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/PerfilesUpdateRequest"
       responses:
-        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/PublicProfile' } } } }
-        '400': { $ref: '#/components/responses/BadRequest' }
-        '404': { $ref: '#/components/responses/NotFound' }
-  /v1/social/users/{userId}/following:
-    parameters: [ { name: userId, in: path, required: true, schema: { type: string, format: uuid } } ]
-    get:
-      summary: Usuarios seguidos
-      operationId: listFollowing
-      responses:
-        '200': { description: OK, content: { application/json: { schema: { type: array, items: { type: string, format: uuid } } } } }
-    post:
-      summary: Seguir a un usuario
-      operationId: follow
-      requestBody: { required: true, content: { application/json: { schema: { type: object, required: [seguido], properties: { seguido: { type: string, format: uuid } } } } } }
-      responses:
-        '201': { description: Siguiendo }
-        '400': { $ref: '#/components/responses/BadRequest' }
-  /v1/social/users/{userId}/following/{seguido}:
-    parameters:
-      - { name: userId, in: path, required: true, schema: { type: string, format: uuid } }
-      - { name: seguido, in: path, required: true, schema: { type: string, format: uuid } }
+        "200":
+          description: "Modificado"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Perfiles"
+        "400":
+          description: "Peticion no valida"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "404":
+          description: "No existe"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "409":
+          description: "Incumple una restriccion"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
     delete:
-      summary: Dejar de seguir
-      operationId: unfollow
-      responses: { '204': { description: Dejó de seguir }, '404': { $ref: '#/components/responses/NotFound' } }
-  /v1/social/messages:
-    post:
-      summary: Enviar mensaje privado
-      operationId: sendMessage
-      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/MessageCreate' } } } }
+      tags:
+        - "perfiles"
+      operationId: "deletePerfiles"
+      summary: "Borra un registro de perfiles"
+      parameters:
+        - name: "usuarioId"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+            format: "uuid"
+          example: "f0e20219-9816-5090-a5cb-059b79827d4e"
       responses:
-        '201': { description: Enviado, content: { application/json: { schema: { $ref: '#/components/schemas/Message' } } } }
-        '400': { $ref: '#/components/responses/BadRequest' }
-  /v1/social/message-requests:
+        "204":
+          description: "Borrado"
+        "404":
+          description: "No existe"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "409":
+          description: "Lo impide una restriccion"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+  "/v1/perfiles-publicos":
     post:
-      summary: Crear solicitud de mensaje
-      operationId: createMessageRequest
-      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/MessageRequestCreate' } } } }
+      tags:
+        - "perfiles_publicos"
+      operationId: "createPerfilesPublicos"
+      summary: "Crea un registro de perfiles_publicos"
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/PerfilesPublicosRequest"
       responses:
-        '201': { description: Creada, content: { application/json: { schema: { $ref: '#/components/schemas/MessageRequest' } } } }
-        '400': { $ref: '#/components/responses/BadRequest' }
-        '409': { description: Ya existe solicitud (UNIQUE remitente+destinatario), content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
-  /v1/social/message-requests/{id}:
-    parameters: [ { name: id, in: path, required: true, schema: { type: integer, format: int64 } } ]
+        "201":
+          description: "Creado"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/PerfilesPublicos"
+        "400":
+          description: "Peticion no valida"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "409":
+          description: "Ya existe o incumple una restriccion"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+    get:
+      tags:
+        - "perfiles_publicos"
+      operationId: "listPerfilesPublicos"
+      summary: "Lista perfiles_publicos (paginado)"
+      parameters:
+        - name: "page"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            default: 0
+        - name: "size"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            default: 20
+            maximum: 100
+      responses:
+        "200":
+          description: "Pagina de resultados"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                properties:
+                  items:
+                    type: "array"
+                    items:
+                      "$ref": "#/components/schemas/PerfilesPublicos"
+                  total:
+                    type: "integer"
+                    format: "int64"
+                  page:
+                    type: "integer"
+                  size:
+                    type: "integer"
+        "400":
+          description: "Parametro no valido"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+  "/v1/perfiles-publicos/{usuarioId}":
+    get:
+      tags:
+        - "perfiles_publicos"
+      operationId: "getPerfilesPublicos"
+      summary: "Obtiene un registro de perfiles_publicos"
+      parameters:
+        - name: "usuarioId"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+            format: "uuid"
+          example: "b2eb249f-9708-57a5-872f-0d15446cffc3"
+      responses:
+        "200":
+          description: "Encontrado"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/PerfilesPublicos"
+        "404":
+          description: "No existe"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
     put:
-      summary: Responder solicitud (aceptar/rechazar)
-      operationId: respondMessageRequest
-      requestBody: { required: true, content: { application/json: { schema: { type: object, required: [estado], properties: { estado: { type: string, enum: [aceptada, rechazada] } } } } } }
+      tags:
+        - "perfiles_publicos"
+      operationId: "updatePerfilesPublicos"
+      summary: "Modifica un registro de perfiles_publicos"
+      parameters:
+        - name: "usuarioId"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+            format: "uuid"
+          example: "b2eb249f-9708-57a5-872f-0d15446cffc3"
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/PerfilesPublicosUpdateRequest"
       responses:
-        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/MessageRequest' } } } }
-        '400': { $ref: '#/components/responses/BadRequest' }
-        '404': { $ref: '#/components/responses/NotFound' }
+        "200":
+          description: "Modificado"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/PerfilesPublicos"
+        "400":
+          description: "Peticion no valida"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "404":
+          description: "No existe"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "409":
+          description: "Incumple una restriccion"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+    delete:
+      tags:
+        - "perfiles_publicos"
+      operationId: "deletePerfilesPublicos"
+      summary: "Borra un registro de perfiles_publicos"
+      parameters:
+        - name: "usuarioId"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+            format: "uuid"
+          example: "b2eb249f-9708-57a5-872f-0d15446cffc3"
+      responses:
+        "204":
+          description: "Borrado"
+        "404":
+          description: "No existe"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "409":
+          description: "Lo impide una restriccion"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+  "/v1/seguimientos":
+    post:
+      tags:
+        - "seguimientos"
+      operationId: "createSeguimientos"
+      summary: "Crea un registro de seguimientos"
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/SeguimientosRequest"
+      responses:
+        "201":
+          description: "Creado"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Seguimientos"
+        "400":
+          description: "Peticion no valida"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "409":
+          description: "Ya existe o incumple una restriccion"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+    get:
+      tags:
+        - "seguimientos"
+      operationId: "listSeguimientos"
+      summary: "Lista seguimientos (paginado)"
+      parameters:
+        - name: "seguidor"
+          in: "query"
+          required: false
+          schema:
+            type: "string"
+            format: "uuid"
+          example: "ff65697a-6443-57d7-9d42-753509eecfee"
+        - name: "seguido"
+          in: "query"
+          required: false
+          schema:
+            type: "string"
+            format: "uuid"
+          example: "ace7ecad-a499-5727-89e7-eaa2866fe9db"
+        - name: "page"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            default: 0
+        - name: "size"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            default: 20
+            maximum: 100
+      responses:
+        "200":
+          description: "Pagina de resultados"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                properties:
+                  items:
+                    type: "array"
+                    items:
+                      "$ref": "#/components/schemas/Seguimientos"
+                  total:
+                    type: "integer"
+                    format: "int64"
+                  page:
+                    type: "integer"
+                  size:
+                    type: "integer"
+        "400":
+          description: "Parametro no valido"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+  "/v1/seguimientos/{seguidor}/{seguido}":
+    get:
+      tags:
+        - "seguimientos"
+      operationId: "getSeguimientos"
+      summary: "Obtiene un registro de seguimientos"
+      parameters:
+        - name: "seguidor"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+            format: "uuid"
+          example: "ff65697a-6443-57d7-9d42-753509eecfee"
+        - name: "seguido"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+            format: "uuid"
+          example: "ace7ecad-a499-5727-89e7-eaa2866fe9db"
+      responses:
+        "200":
+          description: "Encontrado"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Seguimientos"
+        "404":
+          description: "No existe"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+    put:
+      tags:
+        - "seguimientos"
+      operationId: "updateSeguimientos"
+      summary: "Modifica un registro de seguimientos"
+      parameters:
+        - name: "seguidor"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+            format: "uuid"
+          example: "ff65697a-6443-57d7-9d42-753509eecfee"
+        - name: "seguido"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+            format: "uuid"
+          example: "ace7ecad-a499-5727-89e7-eaa2866fe9db"
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/SeguimientosUpdateRequest"
+      responses:
+        "200":
+          description: "Modificado"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Seguimientos"
+        "400":
+          description: "Peticion no valida"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "404":
+          description: "No existe"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "409":
+          description: "Incumple una restriccion"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+    delete:
+      tags:
+        - "seguimientos"
+      operationId: "deleteSeguimientos"
+      summary: "Borra un registro de seguimientos"
+      parameters:
+        - name: "seguidor"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+            format: "uuid"
+          example: "ff65697a-6443-57d7-9d42-753509eecfee"
+        - name: "seguido"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+            format: "uuid"
+          example: "ace7ecad-a499-5727-89e7-eaa2866fe9db"
+      responses:
+        "204":
+          description: "Borrado"
+        "404":
+          description: "No existe"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "409":
+          description: "Lo impide una restriccion"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+  "/v1/mensajes-privados":
+    post:
+      tags:
+        - "mensajes_privados"
+      operationId: "createMensajesPrivados"
+      summary: "Crea un registro de mensajes_privados"
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/MensajesPrivadosRequest"
+      responses:
+        "201":
+          description: "Creado"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/MensajesPrivados"
+        "400":
+          description: "Peticion no valida"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "409":
+          description: "Ya existe o incumple una restriccion"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+    get:
+      tags:
+        - "mensajes_privados"
+      operationId: "listMensajesPrivados"
+      summary: "Lista mensajes_privados (paginado)"
+      parameters:
+        - name: "page"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            default: 0
+        - name: "size"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            default: 20
+            maximum: 100
+      responses:
+        "200":
+          description: "Pagina de resultados"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                properties:
+                  items:
+                    type: "array"
+                    items:
+                      "$ref": "#/components/schemas/MensajesPrivados"
+                  total:
+                    type: "integer"
+                    format: "int64"
+                  page:
+                    type: "integer"
+                  size:
+                    type: "integer"
+        "400":
+          description: "Parametro no valido"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+  "/v1/mensajes-privados/{id}":
+    get:
+      tags:
+        - "mensajes_privados"
+      operationId: "getMensajesPrivados"
+      summary: "Obtiene un registro de mensajes_privados"
+      parameters:
+        - name: "id"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+          example: 1
+      responses:
+        "200":
+          description: "Encontrado"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/MensajesPrivados"
+        "404":
+          description: "No existe"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+    put:
+      tags:
+        - "mensajes_privados"
+      operationId: "updateMensajesPrivados"
+      summary: "Modifica un registro de mensajes_privados"
+      parameters:
+        - name: "id"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+          example: 1
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/MensajesPrivadosUpdateRequest"
+      responses:
+        "200":
+          description: "Modificado"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/MensajesPrivados"
+        "400":
+          description: "Peticion no valida"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "404":
+          description: "No existe"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "409":
+          description: "Incumple una restriccion"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+    delete:
+      tags:
+        - "mensajes_privados"
+      operationId: "deleteMensajesPrivados"
+      summary: "Borra un registro de mensajes_privados"
+      parameters:
+        - name: "id"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+          example: 1
+      responses:
+        "204":
+          description: "Borrado"
+        "404":
+          description: "No existe"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "409":
+          description: "Lo impide una restriccion"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+  "/v1/solicitudes-mensaje":
+    post:
+      tags:
+        - "solicitudes_mensaje"
+      operationId: "createSolicitudesMensaje"
+      summary: "Crea un registro de solicitudes_mensaje"
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/SolicitudesMensajeRequest"
+      responses:
+        "201":
+          description: "Creado"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/SolicitudesMensaje"
+        "400":
+          description: "Peticion no valida"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "409":
+          description: "Ya existe o incumple una restriccion"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+    get:
+      tags:
+        - "solicitudes_mensaje"
+      operationId: "listSolicitudesMensaje"
+      summary: "Lista solicitudes_mensaje (paginado)"
+      parameters:
+        - name: "destinatario"
+          in: "query"
+          required: false
+          schema:
+            type: "string"
+            format: "uuid"
+          example: "513ea057-9b3d-5a11-af48-426c4473cc4e"
+        - name: "page"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            default: 0
+        - name: "size"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            default: 20
+            maximum: 100
+      responses:
+        "200":
+          description: "Pagina de resultados"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                properties:
+                  items:
+                    type: "array"
+                    items:
+                      "$ref": "#/components/schemas/SolicitudesMensaje"
+                  total:
+                    type: "integer"
+                    format: "int64"
+                  page:
+                    type: "integer"
+                  size:
+                    type: "integer"
+        "400":
+          description: "Parametro no valido"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+  "/v1/solicitudes-mensaje/{id}":
+    get:
+      tags:
+        - "solicitudes_mensaje"
+      operationId: "getSolicitudesMensaje"
+      summary: "Obtiene un registro de solicitudes_mensaje"
+      parameters:
+        - name: "id"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+          example: 1
+      responses:
+        "200":
+          description: "Encontrado"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/SolicitudesMensaje"
+        "404":
+          description: "No existe"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+    put:
+      tags:
+        - "solicitudes_mensaje"
+      operationId: "updateSolicitudesMensaje"
+      summary: "Modifica un registro de solicitudes_mensaje"
+      parameters:
+        - name: "id"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+          example: 1
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/SolicitudesMensajeUpdateRequest"
+      responses:
+        "200":
+          description: "Modificado"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/SolicitudesMensaje"
+        "400":
+          description: "Peticion no valida"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "404":
+          description: "No existe"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "409":
+          description: "Incumple una restriccion"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+    delete:
+      tags:
+        - "solicitudes_mensaje"
+      operationId: "deleteSolicitudesMensaje"
+      summary: "Borra un registro de solicitudes_mensaje"
+      parameters:
+        - name: "id"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+          example: 1
+      responses:
+        "204":
+          description: "Borrado"
+        "404":
+          description: "No existe"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "409":
+          description: "Lo impide una restriccion"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+  "/v1/mensajes-vistos":
+    post:
+      tags:
+        - "mensajes_vistos"
+      operationId: "createMensajesVistos"
+      summary: "Crea un registro de mensajes_vistos"
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/MensajesVistosRequest"
+      responses:
+        "201":
+          description: "Creado"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/MensajesVistos"
+        "400":
+          description: "Peticion no valida"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "409":
+          description: "Ya existe o incumple una restriccion"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+    get:
+      tags:
+        - "mensajes_vistos"
+      operationId: "listMensajesVistos"
+      summary: "Lista mensajes_vistos (paginado)"
+      parameters:
+        - name: "page"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            default: 0
+        - name: "size"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            default: 20
+            maximum: 100
+      responses:
+        "200":
+          description: "Pagina de resultados"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                properties:
+                  items:
+                    type: "array"
+                    items:
+                      "$ref": "#/components/schemas/MensajesVistos"
+                  total:
+                    type: "integer"
+                    format: "int64"
+                  page:
+                    type: "integer"
+                  size:
+                    type: "integer"
+        "400":
+          description: "Parametro no valido"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+  "/v1/mensajes-vistos/{usuarioId}":
+    get:
+      tags:
+        - "mensajes_vistos"
+      operationId: "getMensajesVistos"
+      summary: "Obtiene un registro de mensajes_vistos"
+      parameters:
+        - name: "usuarioId"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+            format: "uuid"
+          example: "94dee8d3-2d11-54fb-aa63-54243e1c79ca"
+      responses:
+        "200":
+          description: "Encontrado"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/MensajesVistos"
+        "404":
+          description: "No existe"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+    put:
+      tags:
+        - "mensajes_vistos"
+      operationId: "updateMensajesVistos"
+      summary: "Modifica un registro de mensajes_vistos"
+      parameters:
+        - name: "usuarioId"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+            format: "uuid"
+          example: "94dee8d3-2d11-54fb-aa63-54243e1c79ca"
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/MensajesVistosUpdateRequest"
+      responses:
+        "200":
+          description: "Modificado"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/MensajesVistos"
+        "400":
+          description: "Peticion no valida"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "404":
+          description: "No existe"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "409":
+          description: "Incumple una restriccion"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+    delete:
+      tags:
+        - "mensajes_vistos"
+      operationId: "deleteMensajesVistos"
+      summary: "Borra un registro de mensajes_vistos"
+      parameters:
+        - name: "usuarioId"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+            format: "uuid"
+          example: "94dee8d3-2d11-54fb-aa63-54243e1c79ca"
+      responses:
+        "204":
+          description: "Borrado"
+        "404":
+          description: "No existe"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
+        "409":
+          description: "Lo impide una restriccion"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Error"
 components:
   schemas:
-    PublicProfile:
-      type: object
-      required: [usuarioId, alias, creadoEn, biografia, avatarEmoji]
-      properties:
-        usuarioId: { type: string, format: uuid }
-        alias: { type: string, pattern: '^[a-z0-9_]{3,24}$' }
-        creadoEn: { type: string, format: date-time }
-        biografia: { type: string, maxLength: 180 }
-        avatarEmoji: { type: string, enum: ['📘','🎓','⭐','🧠','🌍','🚀','📚'] }
-    PublicProfileCreate:
-      type: object
-      required: [usuarioId, alias]
-      properties:
-        usuarioId: { type: string, format: uuid }
-        alias: { type: string, pattern: '^[a-z0-9_]{3,24}$' }
-        biografia: { type: string, maxLength: 180 }
-        avatarEmoji: { type: string, enum: ['📘','🎓','⭐','🧠','🌍','🚀','📚'] }
-    PublicProfileUpdate:
-      type: object
-      properties:
-        biografia: { type: string, maxLength: 180 }
-        avatarEmoji: { type: string, enum: ['📘','🎓','⭐','🧠','🌍','🚀','📚'] }
-    Message:
-      type: object
-      required: [id, remitente, destinatario, contenido, creadoEn]
-      properties:
-        id: { type: integer, format: int64 }
-        remitente: { type: string, format: uuid }
-        destinatario: { type: string, format: uuid }
-        contenido: { type: string, minLength: 1, maxLength: 2000 }
-        creadoEn: { type: string, format: date-time }
-    MessageCreate:
-      type: object
-      required: [remitente, destinatario, contenido]
-      properties:
-        remitente: { type: string, format: uuid }
-        destinatario: { type: string, format: uuid }
-        contenido: { type: string, minLength: 1, maxLength: 2000 }
-    MessageRequest:
-      type: object
-      required: [id, remitente, destinatario, mensajeInicial, estado, creadoEn]
-      properties:
-        id: { type: integer, format: int64 }
-        remitente: { type: string, format: uuid }
-        destinatario: { type: string, format: uuid }
-        mensajeInicial: { type: string, minLength: 1, maxLength: 2000 }
-        estado: { type: string, enum: [pendiente, aceptada, rechazada] }
-        creadoEn: { type: string, format: date-time }
-        respondidoEn: { type: string, format: date-time, nullable: true }
-    MessageRequestCreate:
-      type: object
-      required: [remitente, destinatario, mensajeInicial]
-      properties:
-        remitente: { type: string, format: uuid }
-        destinatario: { type: string, format: uuid }
-        mensajeInicial: { type: string, minLength: 1, maxLength: 2000 }
     Error:
-      type: object
-      required: [code, message]
-      properties: { code: { type: string }, message: { type: string } }
-  responses:
-    BadRequest: { description: Parámetros inválidos, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
-    NotFound: { description: Recurso no encontrado, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+      type: "object"
+      required:
+        - "code"
+        - "message"
+      properties:
+        code:
+          type: "string"
+        message:
+          type: "string"
+      example:
+        code: "RESOURCE_NOT_FOUND"
+        message: "recurso no encontrado"
+    Perfiles:
+      type: "object"
+      properties:
+        usuarioId:
+          type: "string"
+          format: "uuid"
+        nombre:
+          type: "string"
+        actualizadoEn:
+          type: "string"
+          format: "date-time"
+      required:
+        - "usuarioId"
+        - "nombre"
+        - "actualizadoEn"
+      example:
+        usuarioId: "f0e20219-9816-5090-a5cb-059b79827d4e"
+        nombre: "nombre-a"
+        actualizadoEn: "2026-01-01T10:00:00Z"
+    PerfilesRequest:
+      type: "object"
+      properties:
+        usuarioId:
+          type: "string"
+          format: "uuid"
+        nombre:
+          type: "string"
+        actualizadoEn:
+          type: "string"
+          format: "date-time"
+      required:
+        - "usuarioId"
+      example:
+        usuarioId: "f0e20219-9816-5090-a5cb-059b79827d4e"
+        nombre: "nombre-a"
+        actualizadoEn: "2026-01-01T10:00:00Z"
+    PerfilesUpdateRequest:
+      type: "object"
+      properties:
+        nombre:
+          type: "string"
+        actualizadoEn:
+          type: "string"
+          format: "date-time"
+      example:
+        nombre: "nombre-b"
+        actualizadoEn: "2026-02-01T10:00:00Z"
+    PerfilesPublicos:
+      type: "object"
+      properties:
+        usuarioId:
+          type: "string"
+          format: "uuid"
+        alias:
+          type: "string"
+        creadoEn:
+          type: "string"
+          format: "date-time"
+        biografia:
+          type: "string"
+        avatarEmoji:
+          type: "string"
+      required:
+        - "usuarioId"
+        - "alias"
+        - "creadoEn"
+        - "biografia"
+        - "avatarEmoji"
+      example:
+        usuarioId: "b2eb249f-9708-57a5-872f-0d15446cffc3"
+        alias: "alias-a"
+        creadoEn: "2026-01-01T10:00:00Z"
+        biografia: "biografia-a"
+        avatarEmoji: "avatar-emoji-a"
+    PerfilesPublicosRequest:
+      type: "object"
+      properties:
+        usuarioId:
+          type: "string"
+          format: "uuid"
+        alias:
+          type: "string"
+        creadoEn:
+          type: "string"
+          format: "date-time"
+        biografia:
+          type: "string"
+        avatarEmoji:
+          type: "string"
+      required:
+        - "usuarioId"
+        - "alias"
+      example:
+        usuarioId: "b2eb249f-9708-57a5-872f-0d15446cffc3"
+        alias: "alias-a"
+        creadoEn: "2026-01-01T10:00:00Z"
+        biografia: "biografia-a"
+        avatarEmoji: "avatar-emoji-a"
+    PerfilesPublicosUpdateRequest:
+      type: "object"
+      properties:
+        alias:
+          type: "string"
+        creadoEn:
+          type: "string"
+          format: "date-time"
+        biografia:
+          type: "string"
+        avatarEmoji:
+          type: "string"
+      required:
+        - "alias"
+      example:
+        alias: "alias-b"
+        creadoEn: "2026-02-01T10:00:00Z"
+        biografia: "biografia-b"
+        avatarEmoji: "avatar-emoji-b"
+    Seguimientos:
+      type: "object"
+      properties:
+        seguidor:
+          type: "string"
+          format: "uuid"
+        seguido:
+          type: "string"
+          format: "uuid"
+        creadoEn:
+          type: "string"
+          format: "date-time"
+      required:
+        - "seguidor"
+        - "seguido"
+        - "creadoEn"
+      example:
+        seguidor: "ff65697a-6443-57d7-9d42-753509eecfee"
+        seguido: "ace7ecad-a499-5727-89e7-eaa2866fe9db"
+        creadoEn: "2026-01-01T10:00:00Z"
+    SeguimientosRequest:
+      type: "object"
+      properties:
+        seguidor:
+          type: "string"
+          format: "uuid"
+        seguido:
+          type: "string"
+          format: "uuid"
+        creadoEn:
+          type: "string"
+          format: "date-time"
+      required:
+        - "seguidor"
+        - "seguido"
+      example:
+        seguidor: "ff65697a-6443-57d7-9d42-753509eecfee"
+        seguido: "ace7ecad-a499-5727-89e7-eaa2866fe9db"
+        creadoEn: "2026-01-01T10:00:00Z"
+    SeguimientosUpdateRequest:
+      type: "object"
+      properties:
+        creadoEn:
+          type: "string"
+          format: "date-time"
+      example:
+        creadoEn: "2026-02-01T10:00:00Z"
+    MensajesPrivados:
+      type: "object"
+      properties:
+        id:
+          type: "integer"
+          format: "int64"
+        remitente:
+          type: "string"
+          format: "uuid"
+        destinatario:
+          type: "string"
+          format: "uuid"
+        contenido:
+          type: "string"
+        creadoEn:
+          type: "string"
+          format: "date-time"
+      required:
+        - "id"
+        - "remitente"
+        - "destinatario"
+        - "contenido"
+        - "creadoEn"
+      example:
+        id: 1
+        remitente: "0ad2a55e-d23f-5c5b-b41f-8e76b356a3e0"
+        destinatario: "5ea6b124-68e1-5f75-bbc8-e0ea1c467d53"
+        contenido: "contenido-a"
+        creadoEn: "2026-01-01T10:00:00Z"
+    MensajesPrivadosRequest:
+      type: "object"
+      properties:
+        remitente:
+          type: "string"
+          format: "uuid"
+        destinatario:
+          type: "string"
+          format: "uuid"
+        contenido:
+          type: "string"
+        creadoEn:
+          type: "string"
+          format: "date-time"
+      required:
+        - "remitente"
+        - "destinatario"
+        - "contenido"
+      example:
+        remitente: "0ad2a55e-d23f-5c5b-b41f-8e76b356a3e0"
+        destinatario: "5ea6b124-68e1-5f75-bbc8-e0ea1c467d53"
+        contenido: "contenido-a"
+        creadoEn: "2026-01-01T10:00:00Z"
+    MensajesPrivadosUpdateRequest:
+      type: "object"
+      properties:
+        remitente:
+          type: "string"
+          format: "uuid"
+        destinatario:
+          type: "string"
+          format: "uuid"
+        contenido:
+          type: "string"
+        creadoEn:
+          type: "string"
+          format: "date-time"
+      required:
+        - "remitente"
+        - "destinatario"
+        - "contenido"
+      example:
+        remitente: "017b3a0f-bc79-54c4-bca0-5f3472a4fcec"
+        destinatario: "63a790d9-4ad9-5f49-a701-5f8ca0bc56de"
+        contenido: "contenido-b"
+        creadoEn: "2026-02-01T10:00:00Z"
+    SolicitudesMensaje:
+      type: "object"
+      properties:
+        id:
+          type: "integer"
+          format: "int64"
+        remitente:
+          type: "string"
+          format: "uuid"
+        destinatario:
+          type: "string"
+          format: "uuid"
+        mensajeInicial:
+          type: "string"
+        estado:
+          type: "string"
+        creadoEn:
+          type: "string"
+          format: "date-time"
+        respondidoEn:
+          type: "string"
+          format: "date-time"
+          nullable: true
+      required:
+        - "id"
+        - "remitente"
+        - "destinatario"
+        - "mensajeInicial"
+        - "estado"
+        - "creadoEn"
+      example:
+        id: 1
+        remitente: "d7682e79-22f1-5997-8179-e097cdaa3710"
+        destinatario: "513ea057-9b3d-5a11-af48-426c4473cc4e"
+        mensajeInicial: "mensaje-inicial-a"
+        estado: "estado-a"
+        creadoEn: "2026-01-01T10:00:00Z"
+        respondidoEn: "2026-01-01T10:00:00Z"
+    SolicitudesMensajeRequest:
+      type: "object"
+      properties:
+        remitente:
+          type: "string"
+          format: "uuid"
+        destinatario:
+          type: "string"
+          format: "uuid"
+        mensajeInicial:
+          type: "string"
+        estado:
+          type: "string"
+        creadoEn:
+          type: "string"
+          format: "date-time"
+        respondidoEn:
+          type: "string"
+          format: "date-time"
+          nullable: true
+      required:
+        - "remitente"
+        - "destinatario"
+        - "mensajeInicial"
+      example:
+        remitente: "d7682e79-22f1-5997-8179-e097cdaa3710"
+        destinatario: "513ea057-9b3d-5a11-af48-426c4473cc4e"
+        mensajeInicial: "mensaje-inicial-a"
+        estado: "estado-a"
+        creadoEn: "2026-01-01T10:00:00Z"
+        respondidoEn: "2026-01-01T10:00:00Z"
+    SolicitudesMensajeUpdateRequest:
+      type: "object"
+      properties:
+        remitente:
+          type: "string"
+          format: "uuid"
+        destinatario:
+          type: "string"
+          format: "uuid"
+        mensajeInicial:
+          type: "string"
+        estado:
+          type: "string"
+        creadoEn:
+          type: "string"
+          format: "date-time"
+        respondidoEn:
+          type: "string"
+          format: "date-time"
+          nullable: true
+      required:
+        - "remitente"
+        - "destinatario"
+        - "mensajeInicial"
+      example:
+        remitente: "1783b2d6-e3ee-5f93-851b-348aa750fb01"
+        destinatario: "cd38d811-f801-52de-95d8-5a0e724a4f52"
+        mensajeInicial: "mensaje-inicial-b"
+        estado: "estado-b"
+        creadoEn: "2026-02-01T10:00:00Z"
+        respondidoEn: "2026-02-01T10:00:00Z"
+    MensajesVistos:
+      type: "object"
+      properties:
+        usuarioId:
+          type: "string"
+          format: "uuid"
+        vistoEn:
+          type: "string"
+          format: "date-time"
+      required:
+        - "usuarioId"
+        - "vistoEn"
+      example:
+        usuarioId: "94dee8d3-2d11-54fb-aa63-54243e1c79ca"
+        vistoEn: "2026-01-01T10:00:00Z"
+    MensajesVistosRequest:
+      type: "object"
+      properties:
+        usuarioId:
+          type: "string"
+          format: "uuid"
+        vistoEn:
+          type: "string"
+          format: "date-time"
+      required:
+        - "usuarioId"
+      example:
+        usuarioId: "94dee8d3-2d11-54fb-aa63-54243e1c79ca"
+        vistoEn: "2026-01-01T10:00:00Z"
+    MensajesVistosUpdateRequest:
+      type: "object"
+      properties:
+        vistoEn:
+          type: "string"
+          format: "date-time"
+      example:
+        vistoEn: "2026-02-01T10:00:00Z"
