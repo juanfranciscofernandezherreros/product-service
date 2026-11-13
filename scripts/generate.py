@@ -85,11 +85,27 @@ def claude(prompt: str, cwd: Path) -> bool:
     return subprocess.run(command, input=prompt, text=True, encoding="utf-8", cwd=cwd, check=False).returncode == 0
 
 
+def maven_command(backend: Path) -> list[str]:
+    """Comando de Maven con rutas absolutas: el wrapper de backend/ o, si falta, el mvn del sistema."""
+    pom = backend / "pom.xml"
+    wrapper = backend / ("mvnw.cmd" if os.name == "nt" else "mvnw")
+    if wrapper.is_file():
+        launcher = ["cmd", "/c", str(wrapper)] if os.name == "nt" else [str(wrapper)]
+    elif shutil.which("mvn"):
+        launcher = [shutil.which("mvn")]
+    else:
+        sys.exit(f"[ERROR] No hay wrapper de Maven en {backend} ni 'mvn' en el PATH.")
+    return launcher + ["-B", "-f", str(pom), "clean", "verify"]
+
+
 def maven(backend: Path, log: Path) -> bool:
-    wrapper = "mvnw.cmd" if os.name == "nt" else "./mvnw"
+    """Compila el proyecto de backend/ (donde esta el pom.xml), sea cual sea el directorio actual."""
+    if not (backend / "pom.xml").is_file():
+        log.write_text(f"No existe {backend / 'pom.xml'}\n", encoding="utf-8")
+        return False
     with log.open("w", encoding="utf-8") as output:
-        result = subprocess.run([wrapper, "-B", "clean", "verify"], cwd=backend, stdout=output,
-                                stderr=subprocess.STDOUT, check=False, shell=os.name == "nt")
+        result = subprocess.run(maven_command(backend), cwd=backend, stdout=output,
+                                stderr=subprocess.STDOUT, check=False)
     return result.returncode == 0
 
 
@@ -99,7 +115,7 @@ def tail(log: Path) -> str:
 
 def build(entry: Entry, ai_fix: int) -> bool:
     backend, log = entry.target / "backend", entry.target / ".ai" / "build.log"
-    print("  build: mvnw clean verify ...")
+    print(f"  build: mvnw clean verify en {backend} ...")
     if maven(backend, log):
         print("  build: correcto")
         return True
@@ -111,6 +127,8 @@ def build(entry: Entry, ai_fix: int) -> bool:
         if maven(backend, log):
             print("  build: correcto tras la correccion")
             return True
+    errors = [line for line in tail(log).splitlines() if "ERROR" in line or "FAIL" in line][:15]
+    print("\n".join("    " + line for line in errors))
     print(f"  [ERROR] El build falla. Registro completo en {log}")
     return False
 

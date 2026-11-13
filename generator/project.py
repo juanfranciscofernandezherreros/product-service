@@ -73,6 +73,12 @@ def write_project(root: Path, name: str, ddl: Path, target: Path, port: int, con
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(content, encoding="utf-8", newline="\n")
 
+    # Restos de la disposicion con el proyecto en la raiz (el pom.xml va siempre en backend/).
+    if not (target / "pom.xml").exists():
+        for leftover in ("mvnw", "mvnw.cmd"):
+            (target / leftover).unlink(missing_ok=True)
+        shutil.rmtree(target / ".mvn", ignore_errors=True)
+
     # Copias literales: reglas y skills, plantillas comunes, wrapper de Maven y el DDL del servicio.
     shutil.copy2(root / "CLAUDE.md", target / "CLAUDE.md")
     if (target / ".claude").exists():

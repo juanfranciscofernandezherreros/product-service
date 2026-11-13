@@ -70,7 +70,7 @@ jobs:
         run: python scripts/generate.py -s ${{ matrix.service }} --force
       - name: mvnw clean verify
         working-directory: ../${{ matrix.service }}/backend
-        run: ./mvnw -B -ntp clean verify
+        run: python ../../product-service/scripts/generate.py -s ${{ matrix.service }} --build --force
       - name: Cobertura
         if: always()
         working-directory: ../${{ matrix.service }}/backend
