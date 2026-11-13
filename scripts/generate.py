@@ -11,11 +11,13 @@ Uso:
   python scripts/generate.py --build --ai-fix 2      # si el build falla, la IA lo corrige (max. 2 intentos)
   python scripts/generate.py --build --ai-rules      # aplica specs/business-rules/<servicio>.md con IA
   python scripts/generate.py --build --push          # commit y push al remoto del servicio si el build pasa
+  python scripts/generate.py --build --create-repos --push   # crea antes en GitHub los repositorios que falten
   python scripts/generate.py --openapi               # solo regenera specs/openapi/*.yaml en el generador
   python scripts/generate.py --mode ai               # pipeline antiguo: todo el codigo lo escribe la IA
 
 Un servicio cuyo DDL, generador y plantillas no han cambiado se omite (usa --force para regenerarlo).
 Variables opcionales: MODEL (modelo de Claude) y CLAUDE_ARGS (argumentos extra de la CLI).
+--create-repos necesita GITHUB_TOKEN (o GH_TOKEN) con permiso para crear repositorios.
 """
 from __future__ import annotations
 
@@ -31,6 +33,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
+import create_repos  # noqa: E402
 from generator import openapi  # noqa: E402
 from generator.model import load_service  # noqa: E402
 from generator.project import fingerprint, is_current, write_project  # noqa: E402
@@ -203,6 +206,10 @@ def main() -> int:
     parser.add_argument("--ai-rules", action="store_true",
                         help="aplica con IA specs/business-rules/<servicio>.md si existe")
     parser.add_argument("--push", action="store_true", help="commit y push al remoto del servicio")
+    parser.add_argument("--create-repos", action="store_true",
+                        help="crea en GitHub el repositorio del servicio si no existe (necesita GITHUB_TOKEN)")
+    parser.add_argument("--public", action="store_true",
+                        help="con --create-repos, crea los repositorios publicos (por defecto, privados)")
     parser.add_argument("--openapi", action="store_true", help="solo regenera specs/openapi/*.yaml")
     args = parser.parse_args()
 
@@ -224,6 +231,12 @@ def main() -> int:
         sys.exit("[ERROR] No se encuentra la CLI 'claude' en el PATH.")
     if (args.push or args.mode == "ai") and shutil.which("git") is None:
         sys.exit("[ERROR] No se encuentra 'git' en el PATH.")
+    github_token = None
+    if args.create_repos:
+        try:
+            github_token = create_repos.token()
+        except create_repos.GitHubError as error:
+            sys.exit(f"[ERROR] {error}")
 
     failed = []
     for entry in entries:
@@ -236,6 +249,16 @@ def main() -> int:
             print("  [ERROR] TARGET_DIR queda dentro del generador: un servicio = un repositorio.")
             failed.append(entry.name)
             continue
+        if github_token:
+            try:
+                state = create_repos.ensure_repo(
+                    entry.remote, github_token, private=not args.public,
+                    description=f"{entry.name}: API CRUD generada desde el esquema de base de datos")
+                print(f"  repositorio: {state} ({entry.remote})")
+            except create_repos.GitHubError as error:
+                print(f"  [ERROR] {error}")
+                failed.append(entry.name)
+                continue
         if (args.push or args.mode == "ai") and not remote_exists(entry):
             print(f"  [ERROR] El remoto {entry.remote} no existe o no es accesible. Crealo antes de generar.")
             failed.append(entry.name)

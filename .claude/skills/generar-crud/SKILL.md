@@ -14,7 +14,10 @@ python scripts/generate.py                      # todos los servicios del manifi
 python scripts/generate.py -s access-service    # solo uno
 python scripts/generate.py --build              # además mvnw clean verify
 python scripts/generate.py --build --push       # y commit + push al remoto del servicio
+python scripts/generate.py --build --create-repos --push   # crea antes en GitHub los repositorios que falten
 ```
+
+`--create-repos` (o `python scripts/create_repos.py` por separado) necesita `GITHUB_TOKEN` en el entorno y crea los repositorios privados salvo que se pase `--public`. No pidas ni escribas el token: lo define el usuario en su entorno.
 
 Qué hace por cada servicio de `.ai/services.txt`:
 1. Lee su DDL (`DB_SPEC`) y construye el modelo: tablas, columnas, claves, tipos.
@@ -31,7 +34,7 @@ Solo en estos dos casos, y con el contexto mínimo:
 - **Build roto** (`--ai-fix N`): el script te pasa `.ai/prompts/fix-build.md` y el final del registro. Abre solo los ficheros que nombra el error, aplica el cambio mínimo y no ejecutes el build (lo relanza el script). Si el fallo viene de una plantilla, corrígelo en `generator/` para que no se repita en los demás servicios.
 - **Reglas de negocio** (`--ai-rules`): si existe `specs/business-rules/<SERVICE_NAME>.md` en el generador, el script te pasa `.ai/prompts/business-rules.md` con esas reglas. Impleméntalas en la capa de aplicación o dominio, con su test unitario y su escenario Cucumber en un `.feature` nuevo.
 
-`run-ai-crud.bat` / `run-ai-crud.sh` equivalen a `python scripts/generate.py --build --ai-fix 2 --ai-rules --push`.
+`run-ai-crud.bat` / `run-ai-crud.sh` equivalen a `python scripts/generate.py --build --ai-fix 2 --ai-rules --push`, con `--create-repos` si hay un token de GitHub en el entorno.
 
 ## Cambiar lo que se genera
 

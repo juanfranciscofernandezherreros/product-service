@@ -27,6 +27,7 @@ Supabase ──export──▶ specs/supabase-schema.sql
 |------|-----------|
 | `generator/` | Plantillas: modelo desde el DDL, código Java, tests, migraciones, OpenAPI y documentación. |
 | `scripts/generate.py` | Orquestador: genera, compila, llama a la IA si se pide y sube cada servicio. |
+| `scripts/create_repos.py` | Crea en GitHub los repositorios de los servicios que aún no existan. |
 | `scripts/export_supabase_schema.py` | Exporta el esquema `public` de Supabase (usa `scripts/export-schema.sql`). |
 | `scripts/split_domains.py` | Recorta el export en un DDL por servicio según `specs/domain-map.txt`. |
 | `scripts/check_domains.py` | Comprueba que los DDL de los servicios son iguales que Supabase. |
@@ -56,13 +57,28 @@ python scripts/generate.py --build              # además ejecuta mvnw clean ver
 python scripts/generate.py --build --ai-fix 2   # si el build falla, la IA lo corrige (máx. 2 intentos)
 python scripts/generate.py --build --ai-rules   # la IA aplica specs/business-rules/<servicio>.md
 python scripts/generate.py --build --push       # commit y push al remoto del servicio
+python scripts/generate.py --build --create-repos --push   # crea antes los repositorios que falten
 ```
 
-`run-ai-crud.bat` (Windows) y `./run-ai-crud.sh` (Linux/macOS) son el pipeline completo: `--build --ai-fix 2 --ai-rules --push`.
+`run-ai-crud.bat` (Windows) y `./run-ai-crud.sh` (Linux/macOS) son el pipeline completo: `--build --ai-fix 2 --ai-rules --push`, más `--create-repos` si hay un token de GitHub en el entorno.
 
 Un servicio cuyo DDL, generador y plantillas no han cambiado se omite; `--force` lo regenera. Al regenerar solo se tocan los ficheros generados: lo que hayas escrito a mano se conserva.
 
 Variables opcionales para la IA: `MODEL` (modelo de Claude) y `CLAUDE_ARGS` (argumentos extra de la CLI, por ejemplo el modo de permisos, ya que se ejecuta sin intervención con `claude -p`).
+
+## Crear los repositorios en GitHub
+
+Cada servicio se sube a su propio repositorio (`REMOTE_URL` en el manifiesto). Para crear los que aún no existan:
+
+```
+set GITHUB_TOKEN=<token>            (CMD)      export GITHUB_TOKEN=<token>   (bash)
+python scripts/create_repos.py --dry-run     # dice cuáles existen y cuáles crearía
+python scripts/create_repos.py               # los crea, privados (--public para públicos)
+```
+
+El token es un secreto (nunca en el repositorio) y debe poder crear repositorios: un token clásico con el ámbito `repo`, o uno de grano fino con permiso de administración de repositorios. Si el propietario de la URL no es la cuenta del token, el repositorio se crea en esa organización.
+
+Para hacerlo todo seguido —generar, compilar, crear el repositorio si falta y subir—: `python scripts/generate.py --build --create-repos --push`. El push usa tus credenciales de git habituales, no el token.
 
 ## Qué se genera por servicio
 

@@ -27,7 +27,8 @@ En el generador (este repositorio):
 - Regenerar los contratos OpenAPI desde el DDL: `python scripts/generate.py --openapi`
 - Validar manifiesto y contratos: `python scripts/validate_specs.py` (requiere `pyyaml` y `openapi-spec-validator`)
 - Generar servicios sin IA: `python scripts/generate.py [-s <servicio>] [--build]`
-- Pipeline completo (generar, compilar, IA solo si falla, push): `run-ai-crud.bat` o `./run-ai-crud.sh`
+- Crear en GitHub los repositorios de los servicios que falten: `python scripts/create_repos.py` (requiere `GITHUB_TOKEN`; privados salvo `--public`), o `--create-repos` en `generate.py`
+- Pipeline completo (generar, compilar, IA solo si falla, crear repositorios si hay token, push): `run-ai-crud.bat` o `./run-ai-crud.sh`
 
 En un servicio generado (en su `backend/`):
 - Levantar PostgreSQL local: `docker compose up -d`

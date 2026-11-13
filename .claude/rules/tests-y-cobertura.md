@@ -15,4 +15,3 @@ El microservicio completo debe superar el **80% de cobertura** (líneas/instrucc
 
 ## Perfil de test
 Los tests (`backend/src/test/resources/application-test.yml`) usan un **PostgreSQL real embebido** (`io.zonky.test:embedded-postgres`), no H2: el esquema de Supabase usa `jsonb` y arrays, que H2 no soporta. No necesita Docker ni una base externa, así que `mvnw.cmd clean verify` es autónomo. Flyway aplica `db/testmigration/V1__init.sql` (mismas columnas, tipos, PK y UNIQUE que el DDL, sin CHECK ni FK) y JPA lo valida. Detalle en `base-de-datos-sdd.md`.
-Para tests automatizados (`backend/src/test/resources/application-test.yml`): usa H2 en memoria en modo PostgreSQL (`jdbc:h2:mem:testdb;MODE=PostgreSQL`) o Testcontainers para que `mvnw.cmd clean verify` funcione sin depender de contenedores activos. Detalle del esquema en tests: ver `base-de-datos-sdd.md`.

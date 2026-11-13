@@ -7,4 +7,7 @@
 set -eu
 cd "$(dirname "${BASH_SOURCE[0]}")"
 PYTHON="$(command -v python3 || command -v python)" || { echo "[ERROR] Hace falta Python 3."; exit 1; }
-exec "$PYTHON" scripts/generate.py --build --ai-fix 2 --ai-rules --push "$@"
+# Con un token de GitHub en el entorno, crea antes los repositorios que falten (privados).
+CREATE=""
+[ -n "${GITHUB_TOKEN:-${GH_TOKEN:-}}" ] && CREATE="--create-repos"
+exec "$PYTHON" scripts/generate.py --build --ai-fix 2 --ai-rules $CREATE --push "$@"

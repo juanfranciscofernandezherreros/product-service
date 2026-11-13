@@ -29,7 +29,7 @@ jobs:
           python scripts/generate.py --openapi
           git diff --exit-code -- specs/openapi
       - name: Sintaxis de run-ai-crud.sh
-        run: bash -n run-ai-crud.sh
+        run: bash -n run-ai-crud.sh && python -m py_compile scripts/*.py
       - name: No hay servicios generados en el generador
         run: |
           if ls -d backend* 2>/dev/null; then

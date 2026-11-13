@@ -10,5 +10,8 @@ if errorlevel 1 (
     echo [ERROR] Hace falta Python 3 en el PATH.
     exit /b 1
 )
-python scripts\generate.py --build --ai-fix 2 --ai-rules --push %*
+rem Con un token de GitHub en el entorno, crea antes los repositorios que falten (privados).
+set "CREATE="
+if not "%GITHUB_TOKEN%%GH_TOKEN%"=="" set "CREATE=--create-repos"
+python scripts\generate.py --build --ai-fix 2 --ai-rules %CREATE% --push %*
 exit /b %errorlevel%
