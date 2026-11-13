@@ -98,7 +98,7 @@ def tail(log: Path) -> str:
 
 
 def build(entry: Entry, ai_fix: int) -> bool:
-    backend, log = entry.target / "backend", entry.target / ".ai" / "build.log"
+    backend, log = entry.target, entry.target / ".ai" / "build.log"
     print("  build: mvnw clean verify ...")
     if maven(backend, log):
         print("  build: correcto")

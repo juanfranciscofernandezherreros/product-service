@@ -29,7 +29,7 @@ servicio generado**, en su propio repositorio.
 En el servicio generado quedan como `specs/database-spec.sql` y `specs/crud-spec.yaml`.
 
 ## 3. Documentación funcional (una por microservicio)
-- `backend/docs/index.html` — propósito, endpoints con **request/response**,
+- `docs/index.html` — propósito, endpoints con **request/response**,
   **modelo de datos exacto**, **diagrama SVG** y evidencias de calidad.
 
 ## 4. Criterios de aceptación y evidencia (por microservicio)

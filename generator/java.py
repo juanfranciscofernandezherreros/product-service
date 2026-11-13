@@ -812,7 +812,7 @@ class {t.cls}ControllerTest {{
 
 
 def java_sources(s: Service) -> dict[str, str]:
-    """Ficheros Java por tabla: ruta relativa a backend/ -> contenido."""
+    """Ficheros Java por tabla: ruta relativa a la carpeta del servicio -> contenido."""
     pkg = s.package
     main = "src/main/java/" + pkg.replace(".", "/")
     test = "src/test/java/" + pkg.replace(".", "/")

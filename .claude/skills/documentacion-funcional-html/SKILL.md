@@ -1,13 +1,13 @@
 ---
 name: documentacion-funcional-html
-description: Genera o actualiza la Documentación Funcional Oficial en HTML de un microservicio (backend/docs/index.html) con request/response por endpoint, modelo de datos exacto y diagrama SVG. Úsala en la Fase 5, o cuando cambie un endpoint, el esquema o se pida regenerar la documentación.
+description: Genera o actualiza la Documentación Funcional Oficial en HTML de un microservicio (docs/index.html) con request/response por endpoint, modelo de datos exacto y diagrama SVG. Úsala en la Fase 5, o cuando cambie un endpoint, el esquema o se pida regenerar la documentación.
 ---
 
-# Documentación Funcional Oficial en HTML (`backend/docs/index.html`)
+# Documentación Funcional Oficial en HTML (`docs/index.html`)
 
 En el modo por defecto este documento lo escribe el generador (`generator/docs.py`) desde el DDL: para cambiarlo, cambia esa plantilla y regenera; no edites el HTML del servicio. Esta skill describe el contenido que debe tener, y es el procedimiento a seguir a mano solo en `--mode ai` o al documentar reglas de negocio añadidas.
 
-Es **OBLIGATORIO** generar un documento HTML autocontenido (CSS embebido, limpio, navegable y listo para publicar en GitHub/GitLab Pages) en `backend/docs/index.html` que explique **de forma funcional** todo lo desarrollado.
+Es **OBLIGATORIO** generar un documento HTML autocontenido (CSS embebido, limpio, navegable y listo para publicar en GitHub/GitLab Pages) en `docs/index.html` que explique **de forma funcional** todo lo desarrollado.
 
 ## Fuentes
 - `.ai/project-context.txt` → `SERVICE_NAME`.
