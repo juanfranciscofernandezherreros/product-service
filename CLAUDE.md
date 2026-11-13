@@ -20,6 +20,8 @@ Este repositorio es **solo el generador** de microservicios CRUD (API-First o Da
 ## Comandos
 En el generador (este repositorio):
 - Validar manifiesto y contratos OpenAPI: `python scripts/validate_specs.py` (requiere `pyyaml` y `openapi-spec-validator`)
+- Exportar el esquema real de Supabase a `specs/supabase-schema.sql`: `python scripts/export_supabase_schema.py` (requiere `psql` y la variable de entorno `SUPABASE_DB_URL`; solo lee el catálogo)
+- Comparar los dominios con ese export: `python scripts/check_domains.py`
 - Generar los servicios del manifiesto: `run-ai-crud.bat` (Windows) o `./run-ai-crud.sh` (Linux/macOS)
 
 En un servicio generado (en su `backend/`):
@@ -32,7 +34,7 @@ En un servicio generado (en su `backend/`):
 ## Índice del generador
 - **Manifiesto:** `.ai/services.txt` (una línea por servicio: nombre, carpeta, remoto, OpenAPI, DDL).
 - **Prompts del pipeline:** `.ai/prompts/00..05`.
-- **Esquemas (fuente de verdad del modelo):** `specs/domains/<servicio>.sql`; export completo de referencia en `specs/supabase-schema.sql`.
+- **Esquemas (fuente de verdad del modelo):** `specs/domains/<servicio>.sql`. Deben coincidir con las tablas reales de Supabase: el export completo está en `specs/supabase-schema.sql` (se regenera con el script, no se edita a mano).
 - **Contratos OpenAPI:** `specs/openapi/<servicio>.yaml` (derivados del DDL).
 - **Criterios de aceptación de entrada (opcional, API-First):** `specs/acceptance/<SERVICE_NAME>.md`.
 - **Plantillas que se copian a cada servicio:** `templates/` (`checkstyle.xml`, `.editorconfig`, `plans/`, y `database-spec.sql` como ejemplo de DDL).

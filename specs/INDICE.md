@@ -21,7 +21,8 @@ servicio generado**, en su propio repositorio.
 - `specs/domains/<servicio>.sql` — DDL PostgreSQL por servicio (fuente de verdad del modelo).
 - `specs/openapi/<servicio>.yaml` — OpenAPI por servicio (derivado del DDL, o aportado en API-First).
 - `specs/acceptance/<SERVICE_NAME>.md` — criterios de aceptación de entrada (opcional).
-- `specs/supabase-schema.sql` — export completo del esquema de Supabase.
+- `specs/supabase-schema.sql` — export completo del esquema de Supabase (lo genera `scripts/export_supabase_schema.py`).
+- `scripts/check_domains.py` — compara `specs/domains/` con ese export (tablas, columnas y tipos).
 - `templates/database-spec.sql` — plantilla comentada para escribir un DDL nuevo.
 - `examples/fund-service/` — ejemplo de contrato y criterios en API-First.
 

@@ -13,11 +13,13 @@ Este repositorio contiene **solo el generador**. Cada microservicio se genera en
 | `.ai/services.txt` | Manifiesto: qué servicios se generan, dónde y a qué remoto. |
 | `specs/domains/*.sql` | DDL PostgreSQL por servicio (fuente de verdad del modelo). |
 | `specs/openapi/*.yaml` | Contrato OpenAPI por servicio (derivado del DDL). |
-| `specs/supabase-schema.sql` | Export completo del esquema de Supabase (referencia). |
+| `specs/supabase-schema.sql` | Export completo del esquema de Supabase. Se regenera con `scripts/export_supabase_schema.py`; no se edita a mano. |
 | `templates/` | Ficheros que se copian a cada servicio (`checkstyle.xml`, `.editorconfig`, `plans/`) y plantilla de DDL. |
 | `examples/fund-service/` | Ejemplo de contrato y criterios en modo API-First. |
 | `evidence/` | Evidencia de aceptación de una ejecución anterior (histórico). |
 | `scripts/validate_specs.py` | Valida el manifiesto y los contratos OpenAPI (también en CI). |
+| `scripts/export_supabase_schema.py` | Exporta el esquema `public` de Supabase (usa `scripts/export-schema.sql`). |
+| `scripts/check_domains.py` | Compara los DDL de `specs/domains/` con el export de Supabase. |
 
 ## Requisitos
 - [Claude Code CLI](https://docs.claude.com/en/docs/claude-code) (`claude`) y `git` en el `PATH`.
@@ -66,6 +68,34 @@ Prepara `TARGET_DIR` con las reglas, skills, prompts, plantillas y especificacio
 | 3 | `03-application.md` | Puertos, casos de uso y tests JUnit 5. |
 | 4 | `04-adapters-and-tests.md` | Microservicio en `backend/`: REST + JPA, Flyway, `docker-compose.yml`, perfiles `local`/`dev`/`test`, Cucumber BDD, ArchUnit, JaCoCo. |
 | 5 | `05-e2e-verification.md` | `mvnw clean verify`, reporte de Cucumber, `backend/docs/index.html`, entregables de aceptación, commit y push al remoto del servicio. |
+
+## Mantener los esquemas iguales que Supabase
+
+Los DDL de `specs/domains/` deben coincidir con las tablas reales. Para comprobarlo:
+
+1. Define la cadena de conexión en el entorno (es un secreto: nunca en el repositorio):
+
+   ```
+   set SUPABASE_DB_URL=postgresql://postgres:<password>@db.<ref>.supabase.co:5432/postgres      (CMD)
+   export SUPABASE_DB_URL='postgresql://postgres:<password>@db.<ref>.supabase.co:5432/postgres'  (bash)
+   ```
+
+2. Exporta el esquema (necesita `psql`; solo lee el catálogo, no toca datos):
+
+   ```
+   python scripts/export_supabase_schema.py           # actualiza specs/supabase-schema.sql
+   python scripts/export_supabase_schema.py --check   # solo avisa si está desfasado
+   ```
+
+   Sin `psql`, pega `scripts/export-schema.sql` en el SQL Editor de Supabase y guarda el resultado.
+
+3. Compara los dominios con el export:
+
+   ```
+   python scripts/check_domains.py
+   ```
+
+   Lista, por dominio, las tablas que no existen en Supabase, las columnas que faltan o sobran y los tipos distintos, y al final las tablas de Supabase que ningún servicio cubre.
 
 ## Añadir un servicio nuevo desde un esquema
 
