@@ -23,6 +23,7 @@ from __future__ import annotations
 
 import argparse
 import os
+import re
 import shlex
 import shutil
 import subprocess
@@ -98,6 +99,32 @@ def maven_command(backend: Path) -> list[str]:
     return launcher + ["-B", "-f", str(pom), "clean", "verify"]
 
 
+def check_java() -> None:
+    """Comprueba antes de compilar que hay un JDK 21 o superior; si no, se para con un mensaje claro."""
+    home = os.environ.get("JAVA_HOME", "").strip().strip('"')
+    java = Path(home) / "bin" / ("java.exe" if os.name == "nt" else "java") if home else None
+    if java is not None and not java.is_file():
+        sys.exit(f"[ERROR] JAVA_HOME apunta a '{home}', pero ahi no hay un JDK (falta {java}). "
+                 "Corrige JAVA_HOME para que apunte a la carpeta de un JDK 21.")
+    executable = str(java) if java else shutil.which("java")
+    if not executable:
+        sys.exit("[ERROR] No se encuentra Java. Instala un JDK 21 y define JAVA_HOME con su carpeta "
+                 "(o anade su carpeta bin al PATH).")
+    result = subprocess.run([executable, "-version"], capture_output=True, text=True, check=False)
+    output = result.stderr + result.stdout
+    match = re.search(r'version "(\d+)(?:\.(\d+))?', output)
+    major = int(match.group(1)) if match else 0
+    if major == 1 and match.group(2):
+        major = int(match.group(2))
+    if major < 21:
+        found = output.strip().splitlines()[0] if output.strip() else "version desconocida"
+        sys.exit(f"[ERROR] Hace falta un JDK 21 o superior y se ha encontrado: {found} ({executable}). "
+                 "Instala un JDK 21 y apunta JAVA_HOME a el.")
+    if not home:
+        print(f"[AVISO] JAVA_HOME no esta definido; se usara {executable}. Si el build falla al arrancar "
+              "Maven, define JAVA_HOME con la carpeta del JDK 21.")
+
+
 def maven(backend: Path, log: Path) -> bool:
     """Compila el proyecto de backend/ (donde esta el pom.xml), sea cual sea el directorio actual."""
     if not (backend / "pom.xml").is_file():
@@ -127,8 +154,10 @@ def build(entry: Entry, ai_fix: int) -> bool:
         if maven(backend, log):
             print("  build: correcto tras la correccion")
             return True
-    errors = [line for line in tail(log).splitlines() if "ERROR" in line or "FAIL" in line][:15]
-    print("\n".join("    " + line for line in errors))
+    lines = [line for line in tail(log).splitlines() if line.strip()]
+    errors = [line for line in lines if "ERROR" in line or "FAIL" in line][:15]
+    # Si Maven no llego a arrancar no hay lineas [ERROR]: se muestra el final del registro tal cual.
+    print("\n".join("    " + line for line in (errors or lines[-15:] or ["(el registro esta vacio)"])))
     print(f"  [ERROR] El build falla. Registro completo en {log}")
     return False
 
@@ -249,6 +278,8 @@ def main() -> int:
         sys.exit("[ERROR] No se encuentra la CLI 'claude' en el PATH.")
     if (args.push or args.mode == "ai") and shutil.which("git") is None:
         sys.exit("[ERROR] No se encuentra 'git' en el PATH.")
+    if args.build and args.mode == "template":
+        check_java()
     github_token = None
     if args.create_repos:
         try:
