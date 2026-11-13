@@ -71,12 +71,31 @@ Variables opcionales para la IA: `MODEL` (modelo de Claude) y `CLAUDE_ARGS` (arg
 Cada servicio se sube a su propio repositorio (`REMOTE_URL` en el manifiesto). Para crear los que aún no existan:
 
 ```
-set GITHUB_TOKEN=<token>            (CMD)      export GITHUB_TOKEN=<token>   (bash)
 python scripts/create_repos.py --dry-run     # dice cuáles existen y cuáles crearía
 python scripts/create_repos.py               # los crea, privados (--public para públicos)
 ```
 
-El token es un secreto (nunca en el repositorio) y debe poder crear repositorios: un token clásico con el ámbito `repo`, o uno de grano fino con permiso de administración de repositorios. Si el propietario de la URL no es la cuenta del token, el repositorio se crea en esa organización.
+### Cómo obtener el token
+
+GitHub solo muestra el token una vez, al crearlo; si lo pierdes hay que generar otro.
+
+1. En GitHub, pulsa tu foto (arriba a la derecha) y entra en **Settings**.
+2. Al final del menú izquierdo, **Developer settings**.
+3. **Personal access tokens** → **Tokens (classic)** → **Generate new token (classic)** (enlace directo: https://github.com/settings/tokens).
+4. Ponle un nombre y una caducidad, y marca el ámbito **`repo`**.
+5. Pulsa **Generate token** y copia el valor (empieza por `ghp_`).
+
+Con un token de grano fino (**Fine-grained tokens**, en el mismo menú), dale acceso a «All repositories» y el permiso **Administration: Read and write**, que es el que permite crear repositorios.
+
+Defínelo en la terminal desde la que lances el script:
+
+```
+set GITHUB_TOKEN=ghp_...            (CMD)
+$env:GITHUB_TOKEN="ghp_..."         (PowerShell)
+export GITHUB_TOKEN=ghp_...         (bash)
+```
+
+El token es un secreto: no lo guardes en el repositorio ni lo pegues en un chat. Si el propietario de la URL del manifiesto no es la cuenta del token, el repositorio se crea en esa organización.
 
 Para hacerlo todo seguido —generar, compilar, crear el repositorio si falta y subir—: `python scripts/generate.py --build --create-repos --push`. El push usa tus credenciales de git habituales, no el token.
 
