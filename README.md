@@ -1,77 +1,83 @@
 # AI CRUD Generator (Java 21 + Hexagonal + Spec-Driven + BDD + PostgreSQL)
 
-Generador de microservicios CRUD en **Java 21** (Spring Boot 3, arquitectura hexagonal, PostgreSQL) dirigido por especificaciones y ejecutado por un agente de IA (Claude Code CLI).
+Generador de microservicios CRUD en **Java 21** (Spring Boot 3, arquitectura hexagonal, PostgreSQL) a partir del esquema de base de datos.
 
 Este repositorio contiene **solo el generador**. Cada microservicio se genera en su propia carpeta y se publica en su propio repositorio Git: un servicio = un repositorio.
+
+El código sale de **plantillas deterministas**: no se usa IA ni se gastan tokens para generar un CRUD. La IA (Claude Code CLI) queda para lo que el esquema no dice —reglas de negocio— y para corregir un build que falle.
+
+## Cómo funciona
+
+```
+Supabase ──export──▶ specs/supabase-schema.sql
+                          │  specs/domain-map.txt (qué tabla va a qué servicio)
+                          ▼
+                 specs/domains/<dominio>.sql ──▶ specs/openapi/<dominio>.yaml
+                          │
+                          ▼  scripts/generate.py (plantillas de generator/)
+            ../<servicio>/  backend completo, tests, docs, contrato
+                          │
+                          ▼  solo si hace falta
+              IA: reglas de negocio y arreglo de builds rotos
+```
 
 ## Qué hay aquí
 
 | Ruta | Contenido |
 |------|-----------|
-| `CLAUDE.md`, `.claude/rules/`, `.claude/skills/` | Normas y procedimientos que sigue el agente (se copian a cada servicio). |
-| `.ai/prompts/00..05` | Un prompt por fase del pipeline. |
-| `.ai/services.txt` | Manifiesto: qué servicios se generan, dónde y a qué remoto. |
-| `specs/domains/*.sql` | DDL PostgreSQL por servicio (fuente de verdad del modelo). |
-| `specs/openapi/*.yaml` | Contrato OpenAPI por servicio (derivado del DDL). |
-| `specs/supabase-schema.sql` | Export completo del esquema de Supabase. Se regenera con `scripts/export_supabase_schema.py`; no se edita a mano. |
-| `templates/` | Ficheros que se copian a cada servicio (`checkstyle.xml`, `.editorconfig`, `plans/`) y plantilla de DDL. |
-| `examples/fund-service/` | Ejemplo de contrato y criterios en modo API-First. |
-| `evidence/` | Evidencia de aceptación de una ejecución anterior (histórico). |
-| `scripts/validate_specs.py` | Valida el manifiesto y los contratos OpenAPI (también en CI). |
+| `generator/` | Plantillas: modelo desde el DDL, código Java, tests, migraciones, OpenAPI y documentación. |
+| `scripts/generate.py` | Orquestador: genera, compila, llama a la IA si se pide y sube cada servicio. |
 | `scripts/export_supabase_schema.py` | Exporta el esquema `public` de Supabase (usa `scripts/export-schema.sql`). |
-| `scripts/check_domains.py` | Compara los DDL de `specs/domains/` con el export de Supabase. |
+| `scripts/split_domains.py` | Recorta el export en un DDL por servicio según `specs/domain-map.txt`. |
+| `scripts/check_domains.py` | Comprueba que los DDL de los servicios son iguales que Supabase. |
+| `scripts/validate_specs.py` | Valida el manifiesto y los contratos OpenAPI. |
+| `.ai/services.txt` | Manifiesto: qué servicios se generan, dónde y a qué remoto. |
+| `specs/supabase-schema.sql` | Export del esquema de Supabase. No se edita a mano. |
+| `specs/domain-map.txt` | Reparto de tablas entre servicios. Este sí se edita. |
+| `specs/domains/*.sql`, `specs/openapi/*.yaml` | DDL y contrato de cada servicio, derivados. |
+| `specs/business-rules/<servicio>.md` | Opcional: reglas de negocio que la IA añade al CRUD. |
+| `CLAUDE.md`, `.claude/rules/`, `.claude/skills/` | Normas y procedimientos para el agente (se copian a cada servicio). |
+| `.ai/prompts/` | Prompts de la IA: arreglo de build, reglas de negocio y el pipeline antiguo por fases. |
+| `templates/` | Ficheros que se copian a cada servicio (Checkstyle, `.gitignore`, wrapper de Maven). |
+| `examples/`, `evidence/` | Ejemplo API-First e histórico de una ejecución anterior. |
 
 ## Requisitos
-- [Claude Code CLI](https://docs.claude.com/en/docs/claude-code) (`claude`) y `git` en el `PATH`.
-- Para compilar y probar los servicios generados: JDK 21 y Docker.
-- Un repositorio remoto **ya creado** por cada servicio del manifiesto (el script lo comprueba antes de empezar).
+- Python 3.10 o superior (el generador solo usa la librería estándar).
+- JDK 21 para compilar los servicios. Docker solo para arrancar un servicio en local; los tests no lo necesitan.
+- `psql` para exportar el esquema de Supabase.
+- Claude Code CLI (`claude`) y `git`, solo si usas `--ai-fix`, `--ai-rules`, `--mode ai` o `--push`.
 
 ## Uso
 
-1. **Define el servicio** en `.ai/services.txt`, una línea con cinco campos separados por `;`:
+```
+python scripts/generate.py                      # genera todos los servicios (sin IA)
+python scripts/generate.py -s access-service    # solo uno
+python scripts/generate.py --build              # además ejecuta mvnw clean verify
+python scripts/generate.py --build --ai-fix 2   # si el build falla, la IA lo corrige (máx. 2 intentos)
+python scripts/generate.py --build --ai-rules   # la IA aplica specs/business-rules/<servicio>.md
+python scripts/generate.py --build --push       # commit y push al remoto del servicio
+```
 
-   ```
-   SERVICE_NAME;TARGET_DIR;REMOTE_URL;SPEC_FILE;DB_SPEC
-   ```
+`run-ai-crud.bat` (Windows) y `./run-ai-crud.sh` (Linux/macOS) son el pipeline completo: `--build --ai-fix 2 --ai-rules --push`.
 
-   - `TARGET_DIR`: absoluta o relativa a la raíz del generador, siempre fuera de este repositorio (p. ej. `../access-service`).
-   - `SPEC_FILE`: el OpenAPI (**API-First**). Déjalo vacío para **Database-First**: el contrato se deriva del DDL en la Fase 0.
-   - `DB_SPEC`: el DDL del servicio (obligatorio).
+Un servicio cuyo DDL, generador y plantillas no han cambiado se omite; `--force` lo regenera. Al regenerar solo se tocan los ficheros generados: lo que hayas escrito a mano se conserva.
 
-2. **Valida** las especificaciones:
+Variables opcionales para la IA: `MODEL` (modelo de Claude) y `CLAUDE_ARGS` (argumentos extra de la CLI, por ejemplo el modo de permisos, ya que se ejecuta sin intervención con `claude -p`).
 
-   ```
-   pip install pyyaml openapi-spec-validator
-   python scripts/validate_specs.py
-   ```
+## Qué se genera por servicio
 
-3. **Genera**:
+Por cada tabla: `POST`, `GET` paginado con filtros, `GET` por clave, `PUT` y `DELETE` bajo `/v1/<tabla>`, con:
 
-   ```
-   run-ai-crud.bat        (Windows, CMD o PowerShell)
-   ./run-ai-crud.sh       (Linux, macOS, Git Bash)
-   ```
+- dominio (`record`), puertos y caso de uso sin dependencias de Spring;
+- controlador, DTO con validación, entidad JPA, repositorio y adaptador;
+- tests unitarios del caso de uso y del controlador, y una feature de Cucumber contra la API real y un PostgreSQL embebido;
+- ArchUnit, Checkstyle y JaCoCo con mínimo del 80 %.
 
-   Variables opcionales:
-   - `MODEL`: modelo de Claude a usar (por defecto, el de la CLI).
-   - `CLAUDE_ARGS`: argumentos extra para la CLI. Las fases se ejecutan sin intervención (`claude -p`), así que normalmente hará falta indicar aquí el modo de permisos con el que quieres que el agente pueda escribir ficheros y ejecutar comandos.
+Y por servicio: migraciones Flyway, perfiles `local`/`dev`/`test`, `docker-compose.yml`, wrapper de Maven, `docs/index.html`, `specs/crud-spec.yaml` y `specs/PRUEBAS-CURL-CRUD.html`.
 
-## Qué hace el script por cada servicio
-
-Prepara `TARGET_DIR` con las reglas, skills, prompts, plantillas y especificaciones del servicio, escribe su `.ai/project-context.txt` y ejecuta las fases en esa carpeta:
-
-| Fase | Prompt | Resultado |
-|------|--------|-----------|
-| 0 *(solo Database-First)* | `00-db-to-openapi.md` | `specs/crud-spec.yaml` (CRUD completo + subrecursos) y `specs/acceptance-criteria.md` derivados del DDL. |
-| 1 | `01-plan-and-tasks.md` | `plans/IMPLEMENTATION_PLAN.md` y `plans/TASKS.md`. |
-| 2 | `02-domain.md` | Dominio puro en Java 21. |
-| 3 | `03-application.md` | Puertos, casos de uso y tests JUnit 5. |
-| 4 | `04-adapters-and-tests.md` | Microservicio en `backend/`: REST + JPA, Flyway, `docker-compose.yml`, perfiles `local`/`dev`/`test`, Cucumber BDD, ArchUnit, JaCoCo. |
-| 5 | `05-e2e-verification.md` | `mvnw clean verify`, reporte de Cucumber, `backend/docs/index.html`, entregables de aceptación, commit y push al remoto del servicio. |
+La CI de este repositorio genera los nueve servicios y ejecuta `mvnw clean verify` en cada uno en cada cambio.
 
 ## Mantener los esquemas iguales que Supabase
-
-Los DDL de `specs/domains/` deben coincidir con las tablas reales. Para comprobarlo:
 
 1. Define la cadena de conexión en el entorno (es un secreto: nunca en el repositorio):
 
@@ -80,28 +86,25 @@ Los DDL de `specs/domains/` deben coincidir con las tablas reales. Para comproba
    export SUPABASE_DB_URL='postgresql://postgres:<password>@db.<ref>.supabase.co:5432/postgres'  (bash)
    ```
 
-2. Exporta el esquema (necesita `psql`; solo lee el catálogo, no toca datos):
+2. Exporta el esquema (solo lee el catálogo, no toca datos). Sin `psql`, pega `scripts/export-schema.sql` en el SQL Editor de Supabase.
 
    ```
-   python scripts/export_supabase_schema.py           # actualiza specs/supabase-schema.sql
-   python scripts/export_supabase_schema.py --check   # solo avisa si está desfasado
+   python scripts/export_supabase_schema.py
    ```
 
-   Sin `psql`, pega `scripts/export-schema.sql` en el SQL Editor de Supabase y guarda el resultado.
+3. Si hay tablas nuevas, asígnalas a un servicio en `specs/domain-map.txt`.
 
-3. Compara los dominios con el export:
+4. Regenera y comprueba:
 
    ```
-   python scripts/check_domains.py
+   python scripts/split_domains.py      # reescribe specs/domains/*.sql
+   python scripts/check_domains.py      # debe dar 0 diferencias
+   python scripts/generate.py --openapi # reescribe specs/openapi/*.yaml
+   python scripts/generate.py --build   # regenera solo los servicios que han cambiado
    ```
 
-   Lista, por dominio, las tablas que no existen en Supabase, las columnas que faltan o sobran y los tipos distintos, y al final las tablas de Supabase que ningún servicio cubre.
+## Modo antiguo: todo con IA
 
-## Añadir un servicio nuevo desde un esquema
+`python scripts/generate.py --mode ai` ejecuta el pipeline por fases de `.ai/prompts/00..05`, en el que la IA escribe el servicio entero. Úsalo solo para servicios que no sean un CRUD derivable del esquema.
 
-1. Guarda el DDL en `specs/domains/<servicio>.sql` (plantilla: `templates/database-spec.sql`).
-2. Añade su línea al manifiesto con `SPEC_FILE` vacío.
-3. Crea el repositorio remoto del servicio.
-4. Ejecuta el script.
-
-Detalle en `.claude/skills/nuevo-esquema-database-first/SKILL.md` y en `specs/INDICE.md`.
+Más detalle en `.claude/skills/` y en `specs/INDICE.md`.

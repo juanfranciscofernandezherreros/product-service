@@ -1,36 +1,55 @@
 ---
 name: generar-crud
-description: Ejecuta o continúa el pipeline de generación de un microservicio CRUD (Fases 0→5, API-First o Database-First) en el orden obligatorio que automatiza run-ai-crud.bat. Úsala cuando se pida generar, ejecutar o continuar el flujo del CRUD, o una fase concreta de .ai/prompts.
+description: Genera o regenera microservicios CRUD con scripts/generate.py (plantillas deterministas desde el DDL, sin IA) y decide cuándo hace falta la IA. Úsala cuando se pida generar, regenerar, compilar o subir un servicio, ejecutar el pipeline, o usar el modo antiguo por fases de .ai/prompts.
 ---
 
-# Generar un microservicio CRUD (pipeline por fases)
+# Generar un microservicio CRUD
 
-## 0. Dónde se ejecuta
-El pipeline se ejecuta **en la carpeta del servicio** (`TARGET_DIR`), nunca dentro del repositorio del generador. Si estás en el generador, lanza `run-ai-crud.bat` / `run-ai-crud.sh` o prepara antes la carpeta del servicio.
+El generador vive en el repositorio del generador (`generator/` y `scripts/generate.py`). Cada servicio se escribe en su `TARGET_DIR`, **fuera** de ese repositorio. Si estás dentro de un servicio generado, no lo regeneres desde ahí: ve al generador.
 
-## 1. Lee el contexto del proyecto
-Antes de ejecutar cualquier fase, lee `.ai/project-context.txt` (creado automáticamente por `run-ai-crud.bat` / `run-ai-crud.sh` en la carpeta del servicio) para conocer:
-- **Nombre del Microservicio (`SERVICE_NAME`):** úsalo en `pom.xml` (`<artifactId>` y `<name>`), en `application.yml` (`spring.application.name`), en `README.md` y en `docs/index.html`.
-- **Repositorio Remoto (`REMOTE_URL`):** úsalo para configurar `git remote add origin <REMOTE_URL>` y hacer `git push -u origin main`.
-- **Modo (`GENERATION_MODE`):** `api-first` | `db-first`.
+## Modo por defecto: plantillas (sin IA)
 
-## 2. Determina el modo de generación
-El flujo admite dos puntos de partida; ambos acaban en el mismo pipeline (dominio → aplicación → adaptadores → verificación → docs → push):
-- **API-First (por defecto):** la especificación de entrada es el OpenAPI (`specs/crud-spec.yaml`) y, opcionalmente, el esquema (`specs/database-spec.sql`). Se ejecutan las Fases 1→5.
-- **Database-First:** la especificación de entrada es **solo el esquema** (`specs/database-spec.sql`). Se ejecuta primero la **Fase 0** (`.ai/prompts/00-db-to-openapi.md`), que **genera** `specs/crud-spec.yaml` y `specs/acceptance-criteria.md` a partir de las tablas del DDL; después continúan las Fases 1→5 con ese contrato derivado. El esquema SQL sigue siendo la fuente de verdad (SDD): Flyway crea las tablas y JPA valida.
-- Se selecciona con `GENERATION_MODE` en `.ai/project-context.txt`; en el manifiesto (`.ai/services.txt`), una línea con `SPEC_FILE` vacío implica `db-first` (el OpenAPI se derivará del `DB_SPEC`).
+```
+python scripts/generate.py                      # todos los servicios del manifiesto
+python scripts/generate.py -s access-service    # solo uno
+python scripts/generate.py --build              # además mvnw clean verify
+python scripts/generate.py --build --push       # y commit + push al remoto del servicio
+```
 
-## 3. Ejecuta las fases en orden estricto
-**DEBES seguir estrictamente este orden** (automatizado en `run-ai-crud.bat` / `run-ai-crud.sh`). Cada fase tiene su prompt en `.ai/prompts/`; léelo y síguelo. En modo Database-First se antepone la Fase 0.
+Qué hace por cada servicio de `.ai/services.txt`:
+1. Lee su DDL (`DB_SPEC`) y construye el modelo: tablas, columnas, claves, tipos.
+2. Si el DDL, el generador y las plantillas no han cambiado desde la última vez, **lo omite** (`--force` para regenerar).
+3. Escribe en `TARGET_DIR`: `backend/` completo (dominio, puertos, casos de uso, controladores, DTO, entidades JPA, adaptadores, tests unitarios, features de Cucumber, ArchUnit, migraciones, perfiles, `pom.xml`, wrapper de Maven, `docker-compose.yml`, `docs/index.html`, README y CLAUDE.md), `specs/crud-spec.yaml`, `specs/database-spec.sql`, `specs/PRUEBAS-CURL-CRUD.html`, las reglas y skills, y `.ai/project-context.txt`.
+4. Solo toca los ficheros que genera (lista en `.ai/generated-files.txt`); lo escrito a mano se conserva.
 
-0. `00-db-to-openapi.md` *(solo Database-First)* → Derivar `specs/crud-spec.yaml` y `specs/acceptance-criteria.md` del DDL.
-1. `01-plan-and-tasks.md` → Analizar specs y actualizar `plans/IMPLEMENTATION_PLAN.md` y `plans/TASKS.md`.
-2. `02-domain.md` → Implementar capa de dominio puro en **Java 21**.
-3. `03-application.md` → Implementar puertos, casos de uso y tests JUnit 5.
-4. `04-adapters-and-tests.md` → Implementar microservicio en `backend/` (Java 21, REST/JPA PostgreSQL, `docker-compose.yml` para local, perfiles `local`/`dev`/`test`, JUnit 5, Cucumber BDD con reporte HTML, ArchUnit, `backend/README.md` y `backend/CLAUDE.md`).
-5. `05-e2e-verification.md` → Ejecutar `mvnw.cmd clean verify`, verificar reporte HTML de Cucumber, generar la **Documentación Funcional Oficial en HTML** (`backend/docs/index.html`, ver skill `documentacion-funcional-html`), generar/actualizar los entregables de aceptación (`specs/VERIFICACION-DATOS.md`, `specs/PRUEBAS-CURL-CRUD.html` [CA-11], `specs/CRITERIOS-ACEPTACION.html`), aplicar la política de acceso a Supabase, y hacer commit y push al repositorio Git remoto indicado.
+No leas ni revises el código generado «por si acaso»: es idéntico en estilo en todos los servicios y lo valida la CI del generador. Para comprobar un servicio, ejecuta el build.
 
-No saltes fases ni las ejecutes en paralelo: cada una parte del resultado de la anterior. Si se pide «continuar», consulta `plans/TASKS.md` para saber en qué fase quedó el trabajo.
+## Cuándo interviene la IA
 
-## Reglas que aplican durante todo el pipeline
-Viven en `.claude/rules/` y se cargan siempre: `un-servicio-un-repositorio.md`, `arquitectura-hexagonal.md`, `tests-y-cobertura.md`, `base-de-datos-sdd.md`, `supabase-acceso-datos.md`, `verificacion-final.md`.
+Solo en estos dos casos, y con el contexto mínimo:
+
+- **Build roto** (`--ai-fix N`): el script te pasa `.ai/prompts/fix-build.md` y el final del registro. Abre solo los ficheros que nombra el error, aplica el cambio mínimo y no ejecutes el build (lo relanza el script). Si el fallo viene de una plantilla, corrígelo en `generator/` para que no se repita en los demás servicios.
+- **Reglas de negocio** (`--ai-rules`): si existe `specs/business-rules/<SERVICE_NAME>.md` en el generador, el script te pasa `.ai/prompts/business-rules.md` con esas reglas. Impleméntalas en la capa de aplicación o dominio, con su test unitario y su escenario Cucumber en un `.feature` nuevo.
+
+`run-ai-crud.bat` / `run-ai-crud.sh` equivalen a `python scripts/generate.py --build --ai-fix 2 --ai-rules --push`.
+
+## Cambiar lo que se genera
+
+- Otro modelo de datos → cambia el DDL (ver skill `nuevo-esquema-database-first`), nunca el código generado.
+- Otro estilo de código, endpoint o test → cambia la plantilla en `generator/` (`java.py`, `fixed.py`, `resources.py`, `openapi.py`, `docs.py`) y regenera. La CI del generador compila todos los servicios en cada cambio.
+
+## Modo antiguo: la IA escribe todo (`--mode ai`)
+
+`python scripts/generate.py --mode ai` copia las reglas, los prompts y las plantillas a `TARGET_DIR` y ejecuta las fases en orden estricto, cada una con su prompt de `.ai/prompts/`:
+
+0. `00-db-to-openapi.md` *(solo si `SPEC_FILE` está vacío)* → derivar `specs/crud-spec.yaml` y `specs/acceptance-criteria.md` del DDL.
+1. `01-plan-and-tasks.md` → `plans/IMPLEMENTATION_PLAN.md` y `plans/TASKS.md`.
+2. `02-domain.md` → dominio puro en Java 21.
+3. `03-application.md` → puertos, casos de uso y tests JUnit 5.
+4. `04-adapters-and-tests.md` → adaptadores, perfiles, Cucumber, ArchUnit.
+5. `05-e2e-verification.md` → `mvnw clean verify`, documentación, entregables y push.
+
+Úsalo solo cuando el servicio no sea un CRUD derivable del esquema. Consume muchos más tokens y el resultado no es reproducible.
+
+## Reglas que aplican siempre
+`.claude/rules/`: `un-servicio-un-repositorio.md`, `arquitectura-hexagonal.md`, `tests-y-cobertura.md`, `base-de-datos-sdd.md`, `supabase-acceso-datos.md`, `verificacion-final.md`.

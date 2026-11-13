@@ -11,32 +11,31 @@ servicio generado**, en su propio repositorio.
 - [`../CLAUDE.md`](../CLAUDE.md) — SDD raíz (índice). Las normas están en [`../.claude/rules/`](../.claude/rules/)
   (arquitectura, Database-First/SDD, perfiles, **política de acceso a Supabase**, verificación final)
   y los procedimientos en [`../.claude/skills/`](../.claude/skills/) (pipeline y **flujo para un esquema nuevo**).
-- `.ai/prompts/00-db-to-openapi.md` — **Fase 0**: de DDL a OpenAPI **CRUD completo** + subrecursos.
-- `.ai/prompts/01..05` — Fases: plan → dominio → aplicación → adaptadores/tests → verificación E2E.
-- `.ai/services.txt` — manifiesto (un servicio = un repositorio; `SPEC_FILE` vacío ⇒ Database-First).
-- `run-ai-crud.bat` / `run-ai-crud.sh` — ejecutan el pipeline por cada servicio del manifiesto.
+- `generator/` + `scripts/generate.py` — generador determinista: del DDL al servicio completo, sin IA.
+- `.ai/prompts/fix-build.md`, `.ai/prompts/business-rules.md` — lo único que hace la IA en el modo por defecto.
+- `.ai/prompts/00..05` — pipeline antiguo por fases (`--mode ai`): plan → dominio → aplicación → adaptadores/tests → verificación.
+- `.ai/services.txt` — manifiesto (un servicio = un repositorio).
+- `run-ai-crud.bat` / `run-ai-crud.sh` — pipeline completo por cada servicio del manifiesto.
 - `scripts/validate_specs.py` — valida el manifiesto y los contratos OpenAPI (también en CI).
 
 ## 2. Contrato y modelo de datos (entradas del generador)
-- `specs/domains/<servicio>.sql` — DDL PostgreSQL por servicio (fuente de verdad del modelo).
-- `specs/openapi/<servicio>.yaml` — OpenAPI por servicio (derivado del DDL, o aportado en API-First).
-- `specs/acceptance/<SERVICE_NAME>.md` — criterios de aceptación de entrada (opcional).
-- `specs/supabase-schema.sql` — export completo del esquema de Supabase (lo genera `scripts/export_supabase_schema.py`).
-- `scripts/check_domains.py` — compara `specs/domains/` con ese export (tablas, columnas y tipos).
-- `templates/database-spec.sql` — plantilla comentada para escribir un DDL nuevo.
-- `examples/fund-service/` — ejemplo de contrato y criterios en API-First.
+- `specs/supabase-schema.sql` — export del esquema de Supabase (`scripts/export_supabase_schema.py`). Origen de todo.
+- `specs/domain-map.txt` — reparto de tablas entre servicios.
+- `specs/domains/<dominio>.sql` — DDL por servicio, recortado del export (`scripts/split_domains.py`); `scripts/check_domains.py` comprueba que es igual que Supabase.
+- `specs/openapi/<dominio>.yaml` — OpenAPI por servicio, derivado del DDL (`scripts/generate.py --openapi`).
+- `specs/business-rules/<SERVICE_NAME>.md` — reglas de negocio que no salen del esquema (opcional).
+- `examples/fund-service/` — ejemplo de contrato y criterios en API-First (modo `--mode ai`).
 
-En el servicio generado, el script los deja como `specs/database-spec.sql`, `specs/crud-spec.yaml`
-y `specs/acceptance-criteria.md`.
+En el servicio generado quedan como `specs/database-spec.sql` y `specs/crud-spec.yaml`.
 
 ## 3. Documentación funcional (una por microservicio)
 - `backend/docs/index.html` — propósito, endpoints con **request/response**,
   **modelo de datos exacto**, **diagrama SVG** y evidencias de calidad.
 
 ## 4. Criterios de aceptación y evidencia (por microservicio)
-- `specs/CRITERIOS-ACEPTACION.html` — criterios **CA-01..CA-11** (Dado/Cuando/Entonces) + evidencia (build, cobertura, datos).
+- `specs/CRITERIOS-ACEPTACION.html` — criterios **CA-01..CA-11** + evidencia (no lo escribe el generador; se elabora al aceptar la entrega).
 - `specs/PRUEBAS-CURL-CRUD.html` — **CA-11**: un `curl` por CADA endpoint (secuencia CRUD + subrecursos).
-- `specs/VERIFICACION-DATOS.md` — prueba de que cada endpoint principal **devuelve datos reales** de Supabase + política de acceso.
+- `specs/VERIFICACION-DATOS.md` — prueba de que cada endpoint principal **devuelve datos reales** de Supabase (requiere credenciales; no lo escribe el generador).
 
 Evidencia histórica de la ejecución anterior (nueve servicios, cuando vivían en este repositorio):
 [`../evidence/`](../evidence/README.md).

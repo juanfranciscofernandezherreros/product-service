@@ -14,5 +14,8 @@
 ## Inyección de dependencias
 - **SIEMPRE** inyección por constructor (`private final`). **PROHIBIDO** `@Autowired` en campos.
 
-## Planificación y tareas
+## Código generado
+- El código de un servicio lo escriben las plantillas de `generator/` a partir del DDL. No se edita a mano: se cambia el DDL o la plantilla y se regenera. Las reglas de negocio se añaden en la capa de aplicación o dominio, con sus tests.
+
+## Planificación y tareas (solo `--mode ai`)
 - Antes de escribir código, actualiza `plans/IMPLEMENTATION_PLAN.md` y `plans/TASKS.md` marcando el progreso.
