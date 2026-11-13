@@ -4,7 +4,7 @@ Este repositorio es **solo el generador** de microservicios CRUD. Cada microserv
 
 El código de un servicio sale de **plantillas deterministas** a partir de su DDL (`generator/` + `scripts/generate.py`): sin IA y sin tokens. La IA solo interviene para lo que el esquema no dice (reglas de negocio) o para corregir un build que falla. El pipeline antiguo, en el que la IA escribe todo fase a fase (`.ai/prompts/00..05`), sigue disponible con `--mode ai`.
 
-Este fichero es el índice; las normas viven en **reglas** (siempre activas) y los procedimientos en **skills** (se cargan cuando la tarea lo pide). `CLAUDE.md` y `.claude/` se copian tal cual a cada servicio generado, así que deben valer en los dos sitios: en el servicio, las rutas `specs/…` y `backend/…` son relativas a su carpeta.
+Este fichero es el índice; las normas viven en **reglas** (siempre activas) y los procedimientos en **skills** (se cargan cuando la tarea lo pide). `.claude/` (reglas y skills) se copia tal cual a cada servicio generado, así que debe valer en los dos sitios: en el servicio, las rutas `specs/…`, `src/…` y `docs/…` son relativas a su carpeta. Cada servicio tiene su propio `CLAUDE.md`, que escribe el generador.
 
 ## Reglas (`.claude/rules/`) — se aplican siempre
 - `un-servicio-un-repositorio.md` — un microservicio = una carpeta = un repositorio Git; manifiesto `.ai/services.txt`; Git y remoto.
@@ -17,7 +17,7 @@ Este fichero es el índice; las normas viven en **reglas** (siempre activas) y l
 ## Skills (`.claude/skills/`) — procedimientos
 - `generar-crud` — generar o regenerar servicios con `scripts/generate.py` y cuándo usar la IA.
 - `nuevo-esquema-database-first` — de un cambio en Supabase (tabla o servicio nuevo) a un microservicio actualizado.
-- `documentacion-funcional-html` — contenido obligatorio de `backend/docs/index.html`.
+- `documentacion-funcional-html` — contenido obligatorio de `docs/index.html`.
 
 ## Comandos
 En el generador (este repositorio):
@@ -30,7 +30,7 @@ En el generador (este repositorio):
 - Crear en GitHub los repositorios de los servicios que falten: `python scripts/create_repos.py` (requiere `GITHUB_TOKEN`; privados salvo `--public`), o `--create-repos` en `generate.py`
 - Pipeline completo (generar, compilar, IA solo si falla, crear repositorios si hay token, push): `run-ai-crud.bat` o `./run-ai-crud.sh`
 
-En un servicio generado (en su `backend/`):
+En un servicio generado (en la raíz de su repositorio, donde está el `pom.xml`):
 - Levantar PostgreSQL local: `docker compose up -d`
 - Build & Full Verify: `mvnw.cmd clean verify` (o `./mvnw clean verify`); no necesita Docker
 - Tests unitarios y Cucumber: `mvnw.cmd test`
@@ -51,6 +51,6 @@ En un servicio generado (en su `backend/`):
 ## Índice de un servicio generado
 - **Contexto:** `.ai/project-context.txt` (`SERVICE_NAME`, `REMOTE_URL`, `TARGET_DIR`, `GENERATION_MODE`).
 - **Contrato y esquema:** `specs/crud-spec.yaml` (OpenAPI) y `specs/database-spec.sql` (DDL, fuente de verdad del modelo).
-- **Código y guía operativa:** `backend/` (`backend/README.md`, `backend/CLAUDE.md`).
-- **Documentación funcional:** `backend/docs/index.html`. **Pruebas cURL (CA-11):** `specs/PRUEBAS-CURL-CRUD.html`.
+- **Proyecto Maven en la raíz del repositorio:** `pom.xml`, `src/`, `mvnw`, `docker-compose.yml`, `README.md` y `CLAUDE.md`.
+- **Documentación funcional:** `docs/index.html`. **Pruebas cURL (CA-11):** `specs/PRUEBAS-CURL-CRUD.html`.
 - **Código generado:** no se edita a mano (la lista está en `.ai/generated-files.txt` y se sobrescribe al regenerar). Las reglas de negocio van en ficheros nuevos o se piden al generador.

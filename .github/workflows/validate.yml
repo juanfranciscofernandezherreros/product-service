@@ -69,11 +69,11 @@ jobs:
       - name: Generar el servicio (sin IA)
         run: python scripts/generate.py -s ${{ matrix.service }} --force
       - name: mvnw clean verify
-        working-directory: ../${{ matrix.service }}/backend
+        working-directory: ../${{ matrix.service }}
         run: ./mvnw -B -ntp clean verify
       - name: Cobertura
         if: always()
-        working-directory: ../${{ matrix.service }}/backend
+        working-directory: ../${{ matrix.service }}
         run: |
           if [ -f target/site/jacoco/jacoco.csv ]; then
             awk -F, 'NR>1 {m+=$8; c+=$9} END {printf "Cobertura de lineas: %.1f%% (%d de %d)\n", 100*c/(m+c), c, m+c}' target/site/jacoco/jacoco.csv

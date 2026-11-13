@@ -71,7 +71,7 @@ def pom(s: Service) -> str:
                 <artifactId>maven-checkstyle-plugin</artifactId>
                 <version>${{checkstyle.plugin.version}}</version>
                 <configuration>
-                    <configLocation>${{project.basedir}}/../checkstyle.xml</configLocation>
+                    <configLocation>${{project.basedir}}/checkstyle.xml</configLocation>
                     <consoleOutput>true</consoleOutput>
                     <failsOnError>true</failsOnError>
                     <violationSeverity>error</violationSeverity>
