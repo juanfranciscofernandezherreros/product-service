@@ -1,6 +1,8 @@
 # CLAUDE.md - Orquestador AI CRUD (Java 21 + Spring Boot 3 + Hexagonal + Docker PGSQL)
 
-Este repositorio genera microservicios CRUD (API-First o Database-First) mediante un pipeline por fases (`run-ai-crud.bat` + `.ai/prompts/00..05`). Este fichero es el índice; las normas viven en **reglas** (siempre activas) y los procedimientos en **skills** (se cargan cuando la tarea lo pide).
+Este repositorio es **solo el generador** de microservicios CRUD (API-First o Database-First): reglas, skills, prompts, plantillas y especificaciones de entrada. Cada microservicio se genera en su propia carpeta y repositorio (`run-ai-crud.bat` / `run-ai-crud.sh` + `.ai/prompts/00..05`); aquí no se guarda código de ningún servicio. Este fichero es el índice; las normas viven en **reglas** (siempre activas) y los procedimientos en **skills** (se cargan cuando la tarea lo pide).
+
+`CLAUDE.md`, `.claude/` y `.ai/prompts/` se copian tal cual a cada servicio generado, así que deben valer en los dos sitios: en el servicio, las rutas `specs/…`, `plans/…` y `backend/…` son relativas a su carpeta.
 
 ## Reglas (`.claude/rules/`) — se aplican siempre
 - `un-servicio-un-repositorio.md` — un microservicio = una carpeta = un repositorio Git; manifiesto `.ai/services.txt`; Git y remoto.
@@ -15,18 +17,33 @@ Este repositorio genera microservicios CRUD (API-First o Database-First) mediant
 - `nuevo-esquema-database-first` — de un `.sql` nuevo a un microservicio CRUD completo.
 - `documentacion-funcional-html` — generar `backend/docs/index.html` (request/response, modelo de datos, diagrama SVG).
 
-## Comandos de Compilación, Calidad y Test (en `backend/`)
+## Comandos
+En el generador (este repositorio):
+- Validar manifiesto y contratos OpenAPI: `python scripts/validate_specs.py` (requiere `pyyaml` y `openapi-spec-validator`)
+- Generar los servicios del manifiesto: `run-ai-crud.bat` (Windows) o `./run-ai-crud.sh` (Linux/macOS)
+
+En un servicio generado (en su `backend/`):
 - Levantar PostgreSQL local: `docker compose up -d`
 - Build & Full Verify: `mvnw.cmd clean verify` (o `./mvnw clean verify`)
 - Tests Unitarios (JUnit 5): `mvnw.cmd test`
 - Tests de Aceptación (Cucumber BDD): `mvnw.cmd verify -Dspring.profiles.active=test`
 - Análisis Estático: `mvnw.cmd checkstyle:check`
 
-## Índice de especificaciones y entregables
-- **SDD / reglas:** este `CLAUDE.md` + `.claude/rules/` (fuente de verdad del proceso) + `backend-<servicio>/CLAUDE.md`.
-- **Contexto del proyecto:** `.ai/project-context.txt` (`SERVICE_NAME`, `REMOTE_URL`, `GENERATION_MODE`), generado por `run-ai-crud.bat`.
-- **Contrato y esquema:** `specs/crud-spec.yaml` (OpenAPI) y `specs/<servicio>.sql` (DDL, fuente de verdad del modelo).
+## Índice del generador
+- **Manifiesto:** `.ai/services.txt` (una línea por servicio: nombre, carpeta, remoto, OpenAPI, DDL).
 - **Prompts del pipeline:** `.ai/prompts/00..05`.
-- **Documentación funcional:** `backend-<servicio>/docs/index.html` (uno por servicio).
-- **Aceptación y evidencia:** `specs/CRITERIOS-ACEPTACION.html` (CA-01..CA-11), `specs/PRUEBAS-CURL-CRUD.html` (CA-11, `curl` por endpoint), `specs/VERIFICACION-DATOS.md` (datos reales por servicio), `ACTA-CONFORMIDAD.html`.
+- **Esquemas (fuente de verdad del modelo):** `specs/domains/<servicio>.sql`; export completo de referencia en `specs/supabase-schema.sql`.
+- **Contratos OpenAPI:** `specs/openapi/<servicio>.yaml` (derivados del DDL).
+- **Criterios de aceptación de entrada (opcional, API-First):** `specs/acceptance/<SERVICE_NAME>.md`.
+- **Plantillas que se copian a cada servicio:** `templates/` (`checkstyle.xml`, `.editorconfig`, `plans/`, y `database-spec.sql` como ejemplo de DDL).
+- **Ejemplo API-First:** `examples/fund-service/`.
+- **Evidencia histórica de aceptación:** `evidence/` (resultado de una ejecución anterior; no es entrada).
 - **Índice navegable:** `specs/INDICE.md`.
+
+## Índice de un servicio generado
+- **Contexto:** `.ai/project-context.txt` (`SERVICE_NAME`, `REMOTE_URL`, `TARGET_DIR`, `GENERATION_MODE`), escrito por el script.
+- **Contrato y esquema:** `specs/crud-spec.yaml` (OpenAPI) y `specs/database-spec.sql` (DDL, fuente de verdad del modelo).
+- **Plan:** `plans/IMPLEMENTATION_PLAN.md` y `plans/TASKS.md`.
+- **Código y guía operativa:** `backend/` (`backend/README.md`, `backend/CLAUDE.md`).
+- **Documentación funcional:** `backend/docs/index.html`.
+- **Aceptación y evidencia:** `specs/CRITERIOS-ACEPTACION.html` (CA-01..CA-11), `specs/PRUEBAS-CURL-CRUD.html` (CA-11, `curl` por endpoint), `specs/VERIFICACION-DATOS.md` (datos reales).

@@ -5,21 +5,31 @@
 #
 #   SERVICE_NAME : nombre del microservicio (artifactId, spring.application.name, docs).
 #   TARGET_DIR   : carpeta destino DONDE se genera el proyecto (su propio repo git).
+#                  Absoluta, o relativa a la raiz del generador. Debe quedar FUERA de este
+#                  repositorio (p. ej. ../access-service = carpeta hermana).
 #   REMOTE_URL   : repositorio Git remoto propio del servicio (push -u origin main).
+#                  Debe existir antes de generar: el script lo comprueba y aborta si no.
 #   SPEC_FILE    : ruta (relativa a la raiz) del contrato OpenAPI del servicio.
 #                  API-First: indica el OpenAPI. DATABASE-FIRST: dejalo VACIO
 #                  (el OpenAPI se derivara del esquema en la Fase 0).
 #   DB_SPEC      : ruta (relativa a la raiz) del esquema PostgreSQL (DDL) del servicio.
-#                  Opcional: si se omite, se usa specs/database-spec.sql.
+#                  OBLIGATORIO (plantilla de partida: templates/database-spec.sql).
 #
 # Ejemplo DATABASE-FIRST (SPEC_FILE vacio -> se genera el OpenAPI desde el .sql):
-# catalog-service;C:\Develop\repos\catalog-service;https://github.com/tu-usuario/catalog-service.git;;specs/catalog-service.sql
+# catalog-service;../catalog-service;https://github.com/tu-usuario/catalog-service.git;;specs/domains/catalog.sql
 #
 # Las lineas que empiezan por # y las vacias se ignoran.
 # Cada servicio se genera en SU carpeta y se sube a SU remoto: NUNCA se combinan en el mismo repo.
 # El OpenAPI y el esquema SQL son las especificaciones (fuente de verdad) de cada servicio.
 #
-# Ejemplos (descomenta y ajusta):
-# product-service;C:\Develop\repos\product-service;https://github.com/tu-usuario/product-service.git;specs/product-service.yaml;specs/product-service.sql
-# transaction-service;C:\Develop\repos\transaction-service;https://github.com/tu-usuario/transaction-service.git;specs/transaction-service.yaml;specs/transaction-service.sql
-# fund-service;C:\Develop\repos\fund-service;https://github.com/tu-usuario/fund-service.git;specs/fund-service.yaml;specs/fund-service.sql
+# Servicios del proyecto. Cada uno usa su DDL (specs/domains) y el OpenAPI ya derivado de el
+# (specs/openapi). Para volver a derivar el contrato desde el DDL, deja SPEC_FILE vacio.
+access-service;../access-service;https://github.com/juanfranciscofernandezherreros/access-service.git;specs/openapi/access.yaml;specs/domains/access.sql
+battle-service;../battle-service;https://github.com/juanfranciscofernandezherreros/battle-service.git;specs/openapi/battle.yaml;specs/domains/battle.sql
+content-service;../content-service;https://github.com/juanfranciscofernandezherreros/content-service.git;specs/openapi/content.yaml;specs/domains/content.sql
+courses-service;../courses-service;https://github.com/juanfranciscofernandezherreros/courses-service.git;specs/openapi/courses.yaml;specs/domains/courses.sql
+exams-service;../exams-service;https://github.com/juanfranciscofernandezherreros/exams-service.git;specs/openapi/exams.yaml;specs/domains/exams.sql
+misc-service;../misc-service;https://github.com/juanfranciscofernandezherreros/misc-service.git;specs/openapi/misc.yaml;specs/domains/misc.sql
+social-service;../social-service;https://github.com/juanfranciscofernandezherreros/social-service.git;specs/openapi/social.yaml;specs/domains/social.sql
+study-plan-service;../study-plan-service;https://github.com/juanfranciscofernandezherreros/study-plan-service.git;specs/openapi/study-plan.yaml;specs/domains/study-plan.sql
+vocabulary-service;../vocabulary-service;https://github.com/juanfranciscofernandezherreros/vocabulary-service.git;specs/openapi/vocabulary.yaml;specs/domains/vocabulary.sql

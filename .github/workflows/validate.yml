@@ -1,0 +1,29 @@
+name: Validar especificaciones
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install pyyaml openapi-spec-validator
+      - name: Manifiesto y contratos OpenAPI
+        run: python scripts/validate_specs.py
+      - name: Sintaxis de run-ai-crud.sh
+        run: bash -n run-ai-crud.sh
+      - name: No hay servicios generados en el generador
+        run: |
+          if ls -d backend* 2>/dev/null; then
+            echo "Este repositorio es solo el generador: los servicios van en su propio repositorio."
+            exit 1
+          fi
