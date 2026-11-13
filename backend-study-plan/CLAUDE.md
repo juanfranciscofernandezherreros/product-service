@@ -20,7 +20,7 @@ Adaptaciones portables: jsonb→VARCHAR JSON; integer[]→CSV.
 `BAD_REQUEST` (400), `RESOURCE_NOT_FOUND` (404), `INTERNAL_ERROR` (500).
 
 ## Acceso a datos en Supabase (dev)
-Política completa en el SDD raíz (`../CLAUDE.md`) y en `../specs/VERIFICACION-DATOS.md`.
+Política completa en el SDD raíz (`../.claude/rules/supabase-acceso-datos.md`) y en `../specs/VERIFICACION-DATOS.md`.
 - Lecturas en nombre del usuario: por la **API REST de Supabase** reenviando su **JWT** (`Authorization: Bearer <jwt>` + `apikey: <clave publicable>`), respetando RLS. Sin secretos en el repo.
 - Tareas de backend sin usuario: **`service_role` key** como secreto en variable de entorno (`SUPABASE_SERVICE_ROLE_KEY`), nunca en Git.
 - La clave publicable solo alcanza tablas públicas; la contraseña `postgres` (JDBC) se salta RLS y queda para administración controlada.

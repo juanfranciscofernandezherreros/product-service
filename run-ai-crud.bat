@@ -91,6 +91,7 @@ if not exist "%TARGET_DIR%" mkdir "%TARGET_DIR%"
 
 echo Copiando reglas y especificaciones a "%TARGET_DIR%"...
 copy /Y "%ROOT%CLAUDE.md" "%TARGET_DIR%\" >nul
+xcopy /E /I /Y "%ROOT%.claude" "%TARGET_DIR%\.claude" >nul
 copy /Y "%ROOT%checkstyle.xml" "%TARGET_DIR%\" >nul
 copy /Y "%ROOT%.editorconfig" "%TARGET_DIR%\" >nul
 xcopy /E /I /Y "%ROOT%plans" "%TARGET_DIR%\plans" >nul

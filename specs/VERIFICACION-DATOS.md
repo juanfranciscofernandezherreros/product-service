@@ -95,7 +95,7 @@ Confirmado con los permisos reales (`information_schema.role_table_grants`): las
 devuelven 401 al anónimo solo conceden `SELECT` al rol `authenticated`; por eso en la web
 funcionan (el usuario va autenticado y su petición lleva el **JWT** de rol `authenticated`).
 
-Política recomendada (recogida también en el SDD raíz `CLAUDE.md`):
+Política recomendada (recogida también en el SDD raíz, `.claude/rules/supabase-acceso-datos.md`):
 1. **Lecturas de un usuario → REST + reenvío de su JWT.** El microservicio reenvía
    `Authorization: Bearer <jwt_del_usuario>` + `apikey: <clave publicable>` a
    `…/rest/v1/<tabla>`. Respeta RLS, replica exactamente la web y **no guarda secretos**.

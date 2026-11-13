@@ -1,0 +1,17 @@
+# Base de datos: esquema como especificación (SDD + Flyway) y entornos
+
+## Esquema de base de datos como especificación
+Además del contrato OpenAPI (`specs/crud-spec.yaml`), el esquema PostgreSQL se define como especificación en **`specs/database-spec.sql`** (DDL) y es la **fuente de verdad** del modelo de datos:
+- **Creación de la base de datos:** el nombre se toma de la directiva `-- database: <nombre_db>` del fichero (si falta, `<SERVICE_NAME>_db`). `docker-compose.yml` crea esa base con `POSTGRES_DB`, y **`application-local.yml`** apunta a ella. En **`dev`** el servicio apunta a **Supabase**, cuyo esquema ya existe (ver `supabase-acceso-datos.md`).
+- **Creación de las tablas (Flyway):** copia el DDL de `specs/database-spec.sql` a `src/main/resources/db/migration/V1__init.sql`. Añade `flyway-core` (y `flyway-database-postgresql`) y deja que Flyway cree las tablas al arrancar. **Configura `spring.jpa.hibernate.ddl-auto: validate`** en `local` (con Flyway): Hibernate NO crea el esquema, solo valida que las entidades JPA coinciden 1:1 con las tablas declaradas (columnas, tipos, PK/FK, UNIQUE, NOT NULL). Si no coinciden, el arranque falla: eso es SDD. En **`dev` contra Supabase** se usa `ddl-auto: none` y `flyway.enabled: false` (Supabase gestiona el esquema; el servicio no lo crea ni valida).
+- **Tests:** para que `mvnw.cmd clean verify` sea autónomo, el perfil `test` usa H2 (modo PostgreSQL) con `ddl-auto: create-drop` y Flyway deshabilitado, **o** Testcontainers PostgreSQL aplicando el mismo `V1__init.sql` (opción más fiel; úsala si Docker está disponible).
+- **Coherencia obligatoria:** las entidades JPA, los nombres de tabla/columna y los tipos deben derivarse del DDL, no al revés. Cualquier cambio de modelo empieza en `specs/database-spec.sql`.
+
+## Entornos (PostgreSQL + Docker + Spring Profiles)
+- Persistencia obligatoria en **PostgreSQL** usando Spring Data JPA.
+- Genera un `docker-compose.yml` en la raíz del microservicio `backend/` para levantar PostgreSQL en local (`port: 5432`, `db: product_db`, `user: postgres`, `password: postgres`).
+- Genera los siguientes perfiles en `backend/src/main/resources/`:
+  - `application.yml`: Configuración común con `spring.application.name: <SERVICE_NAME>`, **`spring.profiles.active: ${SPRING_PROFILES_ACTIVE:dev}`** (perfil **`dev`** activo por defecto) y `open-in-view: false`.
+  - `application-local.yml`: Conexión a PostgreSQL local vía Docker (`jdbc:postgresql://localhost:5432/<db_local>`, `show-sql: true`), con Flyway (SDD) y `ddl-auto: validate` del común.
+  - `application-dev.yml`: Conexión a **Supabase (dev)** (`jdbc:postgresql://${DB_HOST_DEV:db.<ref>.supabase.co}:5432/${DB_NAME_DEV:postgres}`, `${DB_USER_DEV:postgres}`; contraseña **solo** por `${DB_PASS_DEV}`, **nunca** en el repo). Como el esquema ya existe y lo gestiona Supabase, en `dev` se usa **`ddl-auto: none`** y **`flyway.enabled: false`** (el servicio solo se conecta; no crea ni valida el esquema). Ver `supabase-acceso-datos.md`.
+- Perfil `test` (`backend/src/test/resources/application-test.yml`): ver `tests-y-cobertura.md`.

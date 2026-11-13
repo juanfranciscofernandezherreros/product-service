@@ -5,8 +5,9 @@ Objetivo: al añadir un **esquema nuevo**, se genera un **OpenAPI CRUD completo*
 desarrollo sigue **todas** las especificaciones, produciendo todos los entregables.
 
 ## 1. Proceso (fuente de verdad)
-- [`../CLAUDE.md`](../CLAUDE.md) — SDD raíz: reglas de arquitectura, Database-First, perfiles,
-  **política de acceso a Supabase**, verificación final y **flujo para un esquema nuevo**.
+- [`../CLAUDE.md`](../CLAUDE.md) — SDD raíz (índice). Las normas están en [`../.claude/rules/`](../.claude/rules/)
+  (arquitectura, Database-First/SDD, perfiles, **política de acceso a Supabase**, verificación final)
+  y los procedimientos en [`../.claude/skills/`](../.claude/skills/) (pipeline y **flujo para un esquema nuevo**).
 - `.ai/prompts/00-db-to-openapi.md` — **Fase 0**: de DDL a OpenAPI **CRUD completo** + subrecursos.
 - `.ai/prompts/01..05` — Fases: plan → dominio → aplicación → adaptadores/tests → verificación E2E.
 - `.ai/services.txt` — manifiesto (un servicio = un repositorio; `SPEC_FILE` vacío ⇒ Database-First).
@@ -37,7 +38,7 @@ desarrollo sigue **todas** las especificaciones, produciendo todos los entregabl
 | CA-05 | Aislamiento hexagonal (ArchUnit) | `HexagonalArchitectureTest` |
 | CA-06 | `docs/index.html`: diagrama + request/response + esquema | docs por servicio |
 | CA-07 | Cada endpoint principal devuelve datos reales | VERIFICACION-DATOS.md |
-| CA-08 | Política de acceso Supabase (REST+JWT / service_role) | CLAUDE.md + VERIFICACION-DATOS.md |
+| CA-08 | Política de acceso Supabase (REST+JWT / service_role) | `.claude/rules/supabase-acceso-datos.md` + VERIFICACION-DATOS.md |
 | CA-09 | Un servicio = un repositorio | manifiesto `.ai/services.txt` |
 | CA-10 | Prueba por HTTP real del servicio | pendiente de credencial |
 | CA-11 | `curl` CRUD completo por endpoint | PRUEBAS-CURL-CRUD.html |
